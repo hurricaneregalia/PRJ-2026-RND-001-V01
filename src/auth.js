@@ -3,6 +3,8 @@ import Google from "next-auth/providers/google";
 
 import { findUserByAuthId, isUserBootstrapAvailable } from "@/repositories/user-repository";
 
+import { connectGoogleAccount } from "@/services/user-management-service";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
 
@@ -20,18 +22,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ profile }) {
       const authUserId = profile?.sub;
+      const email = profile?.email;
+      const emailVerified = profile?.email_verified;
 
-      if (!authUserId) {
+      if (!authUserId || !email || emailVerified !== true) {
         return false;
       }
 
-      const user = await findUserByAuthId(authUserId);
+      try {
+        const user = await findUserByAuthId(authUserId);
 
-      if (user) {
-        return user.account_status === "active";
+        if (user) {
+          return user.account_status === "active";
+        }
+
+        if (await isUserBootstrapAvailable()) {
+          return true;
+        }
+
+        await connectGoogleAccount(email, authUserId);
+
+        return true;
+      } catch (error) {
+        console.error("Google sign-in validation failed:", error);
+        return false;
       }
-
-      return await isUserBootstrapAvailable();
     },
 
     async jwt({ token, account, profile }) {

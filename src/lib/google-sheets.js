@@ -1,3 +1,5 @@
+import "server-only";
+
 import { google } from "googleapis";
 
 const requiredEnv = ["GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_PRIVATE_KEY", "GOOGLE_CLOUD_PROJECT_ID", "GOOGLE_SHEETS_SPREADSHEET_ID"];
@@ -10,10 +12,12 @@ for (const key of requiredEnv) {
 
 const auth = new google.auth.GoogleAuth({
   projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+
   credentials: {
     client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
   },
+
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 

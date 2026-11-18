@@ -1,3 +1,5 @@
+// src/app/admin/page.js
+
 import { requireRole } from "@/lib/authorization";
 import { getSchoolInformation } from "@/repositories/school-information-repository";
 
@@ -21,9 +23,15 @@ export default async function AdminPage() {
 
       <h2>Administrasi</h2>
 
-      <p>Sistem berhasil diinisialisasi dan siap untuk pengembangan fitur administrasi.</p>
+      <nav>
+        <ul>
+          <li>
+            <a href="/admin/users">Manajemen Pengguna</a>
+          </li>
+        </ul>
+      </nav>
 
-      <p>Tahap berikutnya adalah pengelolaan pengguna dan hak akses.</p>
+      <p>Sistem berhasil diinisialisasi dan siap untuk pengembangan fitur administrasi.</p>
     </main>
   );
 }
