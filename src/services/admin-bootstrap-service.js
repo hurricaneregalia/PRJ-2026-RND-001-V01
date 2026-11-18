@@ -8,7 +8,17 @@ const SHEET_NAME = "Users";
 const HEADERS = ["user_id", "auth_user_id", "username", "email", "full_name", "gender", "role", "account_status", "created_at", "updated_at"];
 
 export async function createInitialAdministrator(data) {
-  if (!data.auth_user_id || !data.username?.trim() || !data.email?.trim() || !data.full_name?.trim() || !["Laki-laki", "Perempuan"].includes(data.gender)) {
+  if (
+    typeof data.auth_user_id !== "string" ||
+    !data.auth_user_id.trim() ||
+    typeof data.username !== "string" ||
+    !data.username.trim() ||
+    typeof data.email !== "string" ||
+    !data.email.trim() ||
+    typeof data.full_name !== "string" ||
+    !data.full_name.trim() ||
+    !["Laki-laki", "Perempuan"].includes(data.gender)
+  ) {
     throw new Error("INVALID_ADMIN_DATA");
   }
 
@@ -25,9 +35,7 @@ export async function createInitialAdministrator(data) {
     throw new Error("USERS_HEADER_NOT_FOUND");
   }
 
-  const headers = rows[0];
-
-  const validHeaders = headers.length === HEADERS.length && HEADERS.every((header, index) => headers[index] === header);
+  const validHeaders = rows[0].length === HEADERS.length && HEADERS.every((header, index) => rows[0][index] === header);
 
   if (!validHeaders) {
     throw new Error("USERS_HEADER_INVALID");
@@ -39,7 +47,7 @@ export async function createInitialAdministrator(data) {
 
   const now = new Date().toISOString();
 
-  const adminData = [randomUUID(), data.auth_user_id, data.username.trim(), data.email.trim().toLowerCase(), data.full_name.trim(), data.gender, "Administrator", "active", now, now];
+  const adminData = [randomUUID(), data.auth_user_id.trim(), data.username.trim(), data.email.trim().toLowerCase(), data.full_name.trim(), data.gender, "Administrator", "active", now, now];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,

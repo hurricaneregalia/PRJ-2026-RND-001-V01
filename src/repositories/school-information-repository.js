@@ -22,42 +22,62 @@ async function getSheetData() {
     throw new Error("SCHOOL_INFORMATION_HEADERS_NOT_FOUND");
   }
 
-  const headers = rows[0];
+  const validHeaders = rows[0].length === HEADERS.length && HEADERS.every((header, index) => header === rows[0][index]);
 
-  if (headers.length !== HEADERS.length || !HEADERS.every((header, index) => headers[index] === header)) {
+  if (!validHeaders) {
     throw new Error("SCHOOL_INFORMATION_HEADERS_INVALID");
   }
 
-  return { sheets, rows };
+  return rows;
 }
 
-export async function getSchoolInformation() {
-  const { rows } = await getSheetData();
+export async function getSchoolInformationRecord() {
+  const rows = await getSheetData();
 
   if (rows.length < 2) {
-    return getSchoolDisplayData();
+    return null;
   }
 
   if (rows.length > 2) {
     throw new Error("MULTIPLE_SCHOOL_INFORMATION_RECORDS");
   }
 
-  const schoolInformation = Object.fromEntries(HEADERS.map((header, index) => [header, rows[1][index] ?? ""]));
+  return Object.fromEntries(HEADERS.map((header, index) => [header, rows[1][index] ?? ""]));
+}
 
-  return getSchoolDisplayData(schoolInformation);
+export async function getSchoolInformation() {
+  const record = await getSchoolInformationRecord();
+
+  return getSchoolDisplayData(record);
 }
 
 export async function createSchoolInformation(data) {
-  if (typeof data.school_name !== "string" || !data.school_name.trim() || typeof data.school_address !== "string" || !data.school_address.trim() || !data.active_academic_year_id) {
+  if (
+    typeof data.school_name !== "string" ||
+    !data.school_name.trim() ||
+    typeof data.school_address !== "string" ||
+    !data.school_address.trim() ||
+    typeof data.active_academic_year_id !== "string" ||
+    !data.active_academic_year_id.trim()
+  ) {
     throw new Error("INVALID_SCHOOL_INFORMATION");
   }
 
-  const { sheets, rows } = await getSheetData();
+  const optionalFields = ["school_phone", "school_email", "school_logo_url", "principal_name"];
+
+  for (const field of optionalFields) {
+    if (data[field] !== undefined && typeof data[field] !== "string") {
+      throw new Error("INVALID_SCHOOL_INFORMATION");
+    }
+  }
+
+  const rows = await getSheetData();
 
   if (rows.length > 1) {
     throw new Error("INFORMATION_ALREADY_EXISTS");
   }
 
+  const sheets = await getGoogleSheetsClient();
   const now = new Date().toISOString();
 
   const values = [
@@ -68,7 +88,7 @@ export async function createSchoolInformation(data) {
     data.school_email?.trim() ?? "",
     data.school_logo_url?.trim() ?? "",
     data.principal_name?.trim() ?? "",
-    data.active_academic_year_id,
+    data.active_academic_year_id.trim(),
     now,
     now,
   ];
