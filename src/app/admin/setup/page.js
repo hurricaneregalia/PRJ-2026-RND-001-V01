@@ -18,16 +18,9 @@ export default async function AdminSetupPage({ searchParams }) {
   const errorMessages = {
     INVALID_INITIALIZATION_DATA: "Data inisialisasi tidak lengkap.",
     INVALID_SCHOOL_INFORMATION: "Informasi sekolah tidak valid.",
-    INVALID_ACADEMIC_YEAR_DATA: "Data tahun ajaran tidak valid.",
-    ACADEMIC_YEAR_PERIOD_OVERLAP: "Periode tahun ajaran bertumpang tindih.",
-    EXISTING_ACADEMIC_YEAR_PERIOD_INVALID: "Periode tahun ajaran lama tidak valid.",
-    ACADEMIC_YEARS_ALREADY_EXIST: "Data tahun ajaran sudah tersedia.",
     SCHOOL_INFORMATION_ALREADY_EXISTS: "Informasi sekolah sudah tersedia.",
     SCHOOL_INFORMATION_HEADERS_NOT_FOUND: "Header School_Information tidak ditemukan.",
     SCHOOL_INFORMATION_HEADERS_INVALID: "Struktur School_Information tidak sesuai.",
-    ACADEMIC_YEAR_HEADERS_NOT_FOUND: "Header Academic_Years tidak ditemukan.",
-    ACADEMIC_YEAR_HEADERS_INVALID: "Struktur Academic_Years tidak sesuai.",
-    INITIALIZATION_SHEET_NOT_FOUND: "Sheet database tidak ditemukan.",
     INITIALIZATION_IN_PROGRESS: "Proses inisialisasi sedang berlangsung.",
     INITIALIZATION_FAILED: "Inisialisasi gagal. Periksa database dan server.",
   };
@@ -36,7 +29,7 @@ export default async function AdminSetupPage({ searchParams }) {
     <main>
       <h1>Inisialisasi Sekolah</h1>
 
-      <p>Lengkapi informasi sekolah dan tahun ajaran pertama untuk mulai menggunakan sistem.</p>
+      <p>Lengkapi informasi sekolah untuk mulai menggunakan sistem. Tahun ajaran akan dihitung secara otomatis.</p>
 
       {params?.success === "1" && <p>Inisialisasi sekolah berhasil.</p>}
 
@@ -75,24 +68,7 @@ export default async function AdminSetupPage({ searchParams }) {
           <input id="principal_name" name="principal_name" type="text" />
         </div>
 
-        <h2>Tahun Ajaran Pertama</h2>
-
-        <div>
-          <label htmlFor="academic_year_name">Nama Tahun Ajaran</label>
-          <input id="academic_year_name" name="academic_year_name" type="text" placeholder="2026/2027" required />
-        </div>
-
-        <div>
-          <label htmlFor="start_date">Tanggal Mulai</label>
-          <input id="start_date" name="start_date" type="date" required />
-        </div>
-
-        <div>
-          <label htmlFor="end_date">Tanggal Berakhir</label>
-          <input id="end_date" name="end_date" type="date" required />
-        </div>
-
-        <button type="submit">Simpan Inisialisasi</button>
+        <button type="submit">Simpan Informasi Sekolah</button>
       </form>
     </main>
   );

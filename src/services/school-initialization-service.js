@@ -1,12 +1,11 @@
 import "server-only";
+
 import { randomUUID } from "node:crypto";
 import { getGoogleSheetsClient } from "@/lib/google-sheets";
-import { getAcademicYears } from "@/repositories/academic-year-repository";
-import { validateAcademicYearData } from "@/services/academic-year-service";
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 
-const SCHOOL_HEADERS = ["school_id", "school_name", "school_address", "school_phone", "school_email", "school_logo_url", "principal_name", "active_academic_year_id", "created_at", "updated_at"];
+const SCHOOL_HEADERS = ["school_id", "school_name", "school_address", "school_phone", "school_email", "school_logo_url", "principal_name", "created_at", "updated_at"];
 
 let initializationInProgress = false;
 
@@ -33,18 +32,10 @@ function validateSchoolData(data) {
   };
 }
 
-function toCellData(values) {
-  return values.map((value) => ({
-    userEnteredValue: {
-      stringValue: String(value ?? ""),
-    },
-  }));
-}
-
 async function getSchoolSheetRows(sheets) {
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: "School_Information!A:J",
+    range: "School_Information!A:I",
   });
 
   const rows = response.data.values || [];
@@ -62,26 +53,12 @@ async function getSchoolSheetRows(sheets) {
   return rows;
 }
 
-async function getSheetIds(sheets) {
-  const response = await sheets.spreadsheets.get({
-    spreadsheetId: SPREADSHEET_ID,
-    fields: "sheets.properties(sheetId,title)",
-  });
-
-  const sheetProperties = response.data.sheets || [];
-
-  const academicSheet = sheetProperties.find((sheet) => sheet.properties?.title === "Academic_Years");
-
-  const schoolSheet = sheetProperties.find((sheet) => sheet.properties?.title === "School_Information");
-
-  if (!academicSheet || !schoolSheet) {
-    throw new Error("INITIALIZATION_SHEET_NOT_FOUND");
-  }
-
-  return {
-    academicSheetId: academicSheet.properties.sheetId,
-    schoolSheetId: schoolSheet.properties.sheetId,
-  };
+function toCellData(values) {
+  return values.map((value) => ({
+    userEnteredValue: {
+      stringValue: String(value ?? ""),
+    },
+  }));
 }
 
 export async function initializeSchool(data) {
@@ -92,89 +69,42 @@ export async function initializeSchool(data) {
   initializationInProgress = true;
 
   try {
-    if (!data || !data.school || !data.academicYear) {
+    if (!data || !data.school) {
       throw new Error("INVALID_INITIALIZATION_DATA");
     }
 
     const schoolData = validateSchoolData(data.school);
-
-    const academicYearData = await validateAcademicYearData(data.academicYear);
-
     const sheets = await getGoogleSheetsClient();
 
-    const [academicYears, schoolRows] = await Promise.all([getAcademicYears(), getSchoolSheetRows(sheets)]);
-
-    if (academicYears.length > 0) {
-      throw new Error("ACADEMIC_YEARS_ALREADY_EXIST");
-    }
+    const schoolRows = await getSchoolSheetRows(sheets);
 
     if (schoolRows.length > 1) {
       throw new Error("SCHOOL_INFORMATION_ALREADY_EXISTS");
     }
 
-    const { academicSheetId, schoolSheetId } = await getSheetIds(sheets);
-
     const now = new Date().toISOString();
-    const academicYearId = randomUUID();
     const schoolId = randomUUID();
 
-    const academicYearRow = [academicYearId, academicYearData.academic_year_name, academicYearData.start_date, academicYearData.end_date, "active", now, now];
+    const schoolRow = [schoolId, schoolData.school_name, schoolData.school_address, schoolData.school_phone, schoolData.school_email, schoolData.school_logo_url, schoolData.principal_name, now, now];
 
-    const schoolRow = [
-      schoolId,
-      schoolData.school_name,
-      schoolData.school_address,
-      schoolData.school_phone,
-      schoolData.school_email,
-      schoolData.school_logo_url,
-      schoolData.principal_name,
-      academicYearId,
-      now,
-      now,
-    ];
-
-    await sheets.spreadsheets.batchUpdate({
+    await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
+      range: "School_Information!A:I",
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
       requestBody: {
-        requests: [
-          {
-            appendCells: {
-              sheetId: academicSheetId,
-              rows: [
-                {
-                  values: toCellData(academicYearRow),
-                },
-              ],
-              fields: "userEnteredValue",
-            },
-          },
-          {
-            appendCells: {
-              sheetId: schoolSheetId,
-              rows: [
-                {
-                  values: toCellData(schoolRow),
-                },
-              ],
-              fields: "userEnteredValue",
-            },
-          },
-        ],
+        values: [schoolRow],
       },
     });
 
     return {
       success: true,
       message: "Inisialisasi sekolah berhasil.",
-      academicYear: {
-        academic_year_id: academicYearId,
-        ...academicYearData,
-        academic_year_status: "active",
-      },
       school: {
         school_id: schoolId,
         ...schoolData,
-        active_academic_year_id: academicYearId,
+        created_at: now,
+        updated_at: now,
       },
     };
   } finally {

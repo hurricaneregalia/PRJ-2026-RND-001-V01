@@ -1,4 +1,5 @@
 import "server-only";
+
 import { randomUUID } from "node:crypto";
 import { getGoogleSheetsClient } from "@/lib/google-sheets";
 import { getSchoolDisplayData } from "@/config/school-defaults";
@@ -6,14 +7,14 @@ import { getSchoolDisplayData } from "@/config/school-defaults";
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 const SHEET_NAME = "School_Information";
 
-const HEADERS = ["school_id", "school_name", "school_address", "school_phone", "school_email", "school_logo_url", "principal_name", "active_academic_year_id", "created_at", "updated_at"];
+const HEADERS = ["school_id", "school_name", "school_address", "school_phone", "school_email", "school_logo_url", "principal_name", "created_at", "updated_at"];
 
 async function getSheetData() {
   const sheets = await getGoogleSheetsClient();
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:J`,
+    range: `${SHEET_NAME}!A:I`,
   });
 
   const rows = response.data.values || [];
@@ -52,14 +53,7 @@ export async function getSchoolInformation() {
 }
 
 export async function createSchoolInformation(data) {
-  if (
-    typeof data.school_name !== "string" ||
-    !data.school_name.trim() ||
-    typeof data.school_address !== "string" ||
-    !data.school_address.trim() ||
-    typeof data.active_academic_year_id !== "string" ||
-    !data.active_academic_year_id.trim()
-  ) {
+  if (typeof data.school_name !== "string" || !data.school_name.trim() || typeof data.school_address !== "string" || !data.school_address.trim()) {
     throw new Error("INVALID_SCHOOL_INFORMATION");
   }
 
@@ -88,14 +82,13 @@ export async function createSchoolInformation(data) {
     data.school_email?.trim() ?? "",
     data.school_logo_url?.trim() ?? "",
     data.principal_name?.trim() ?? "",
-    data.active_academic_year_id.trim(),
     now,
     now,
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:J`,
+    range: `${SHEET_NAME}!A:I`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {

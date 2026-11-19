@@ -16,12 +16,6 @@ export async function initializeSchoolAction(formData) {
       school_logo_url: formData.get("school_logo_url"),
       principal_name: formData.get("principal_name"),
     },
-
-    academicYear: {
-      academic_year_name: formData.get("academic_year_name"),
-      start_date: formData.get("start_date"),
-      end_date: formData.get("end_date"),
-    },
   };
 
   try {
@@ -30,16 +24,9 @@ export async function initializeSchoolAction(formData) {
     const allowedErrors = [
       "INVALID_INITIALIZATION_DATA",
       "INVALID_SCHOOL_INFORMATION",
-      "INVALID_ACADEMIC_YEAR_DATA",
-      "ACADEMIC_YEAR_PERIOD_OVERLAP",
-      "EXISTING_ACADEMIC_YEAR_PERIOD_INVALID",
-      "ACADEMIC_YEARS_ALREADY_EXIST",
       "SCHOOL_INFORMATION_ALREADY_EXISTS",
       "SCHOOL_INFORMATION_HEADERS_NOT_FOUND",
       "SCHOOL_INFORMATION_HEADERS_INVALID",
-      "ACADEMIC_YEAR_HEADERS_NOT_FOUND",
-      "ACADEMIC_YEAR_HEADERS_INVALID",
-      "INITIALIZATION_SHEET_NOT_FOUND",
       "INITIALIZATION_IN_PROGRESS",
     ];
 

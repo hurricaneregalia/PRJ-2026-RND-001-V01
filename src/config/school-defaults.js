@@ -5,9 +5,7 @@ export const SCHOOL_DEFAULTS = {
   school_phone: "",
   school_email: "",
   school_logo_url: "",
-  principal_name: "Nama Kepala Sekolah",
-  active_academic_year_id: "",
-  academic_year_name: "Tahun Ajaran",
+  principal_name: "",
 };
 
 export function getSchoolDisplayData(schoolInformation = null) {

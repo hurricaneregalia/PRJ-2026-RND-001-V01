@@ -1,3 +1,4 @@
+// src/lib/authorization.js
 import "server-only";
 import { auth } from "@/auth";
 import { findUserByAuthId } from "@/repositories/user-repository";
