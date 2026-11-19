@@ -1,3 +1,4 @@
+// src/repositories/class-repository.js
 import "server-only";
 
 import { randomUUID } from "node:crypto";
@@ -96,6 +97,7 @@ export async function createClass(data, auditData) {
   }
 
   const sheets = await getGoogleSheetsClient();
+
   const { classesSheetId, auditSheetId } = await getRequiredSheetIds(sheets);
 
   const now = new Date().toISOString();
@@ -103,14 +105,22 @@ export async function createClass(data, auditData) {
 
   const row = [classId, className, data.class_status || "active", now, now];
 
-  const auditRow = prepareAdministrativeAudit({
+  // Siapkan data audit sebelum penulisan ke Google Sheets.
+  const auditRow = await prepareAdministrativeAudit({
     ...auditData,
     action_type: "CREATE",
     table_name: SHEET_NAME,
     record_id: classId,
-    new_data: JSON.stringify(row),
+    new_data: {
+      class_id: classId,
+      class_name: className,
+      class_status: row[2],
+      created_at: now,
+      updated_at: now,
+    },
   });
 
+  // Data kelas dan audit ditulis dalam satu batch.
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
@@ -170,21 +180,36 @@ export async function updateClass(classId, data, auditData) {
   }
 
   const sheets = await getGoogleSheetsClient();
+
   const { classesSheetId, auditSheetId } = await getRequiredSheetIds(sheets);
 
   const now = new Date().toISOString();
 
   const updatedRow = [classId, className, classStatus, existing.created_at, now];
 
-  const auditRow = prepareAdministrativeAudit({
+  // Siapkan data audit sebelum penulisan ke Google Sheets.
+  const auditRow = await prepareAdministrativeAudit({
     ...auditData,
     action_type: "UPDATE",
     table_name: SHEET_NAME,
     record_id: classId,
-    old_data: JSON.stringify(existing),
-    new_data: JSON.stringify(updatedRow),
+    old_data: {
+      class_id: existing.class_id,
+      class_name: existing.class_name,
+      class_status: existing.class_status,
+      created_at: existing.created_at,
+      updated_at: existing.updated_at,
+    },
+    new_data: {
+      class_id: classId,
+      class_name: className,
+      class_status: classStatus,
+      created_at: existing.created_at,
+      updated_at: now,
+    },
   });
 
+  // Perubahan kelas dan pencatatan audit dilakukan dalam satu batch.
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {

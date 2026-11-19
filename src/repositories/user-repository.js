@@ -3,12 +3,38 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { getGoogleSheetsClient } from "@/lib/google-sheets";
-import { USER_HEADERS, USER_ROLES } from "@/config/user-config";
+import { USER_HEADERS, USER_ROLES, USER_STATUS } from "@/config/user-config";
 import { prepareAdministrativeAudit } from "@/repositories/administrative-audit-repository";
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
 const SHEET_NAME = "Users";
 const AUDIT_SHEET_NAME = "Administrative_Audit_Logs";
+
+function normalizeEmail(email) {
+  return String(email || "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeAuthUserId(authUserId) {
+  return String(authUserId || "").trim();
+}
+
+function mapUserRows(rows) {
+  return rows.map((row, index) => ({
+    user_id: row[0] || "",
+    auth_user_id: row[1] || "",
+    username: row[2] || "",
+    email: row[3] || "",
+    full_name: row[4] || "",
+    gender: row[5] || "",
+    role: row[6] || "",
+    account_status: row[7] || "",
+    created_at: row[8] || "",
+    updated_at: row[9] || "",
+    row_number: index + 2,
+  }));
+}
 
 async function getUsersData() {
   const sheets = await getGoogleSheetsClient();
@@ -19,30 +45,26 @@ async function getUsersData() {
   });
 
   const rows = response.data.values || [];
+  const headers = rows[0] || [];
 
-  if (!rows.length) {
-    throw new Error("USERS_HEADER_NOT_FOUND");
+  if (headers.length !== USER_HEADERS.length || !USER_HEADERS.every((header, index) => headers[index] === header)) {
+    throw new Error("INVALID_USERS_HEADERS");
   }
 
-  const validHeaders = rows[0].length === USER_HEADERS.length && USER_HEADERS.every((header, index) => header === rows[0][index]);
-
-  if (!validHeaders) {
-    throw new Error("USERS_HEADER_INVALID");
+  return mapUserRows(rows.slice(1));
+}
+export async function isUserBootstrapAvailable() {
+  // Bootstrap hanya diperbolehkan di lingkungan development.
+  if (process.env.NODE_ENV !== "development") {
+    return false;
   }
 
-  return rows;
+  const users = await getUsersData();
+
+  // Hanya tersedia jika worksheet Users belum memiliki record pengguna.
+  return users.length === 0;
 }
-
-function mapUserRows(rows) {
-  return rows.slice(1).map((row, index) => ({
-    ...Object.fromEntries(USER_HEADERS.map((header, columnIndex) => [header, row[columnIndex] ?? ""])),
-    row_number: index + 2,
-  }));
-}
-
-async function getSheetIds() {
-  const sheets = await getGoogleSheetsClient();
-
+async function getSheetIds(sheets) {
   const response = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
     fields: "sheets.properties",
@@ -50,107 +72,226 @@ async function getSheetIds() {
 
   const properties = response.data.sheets || [];
 
-  const userSheet = properties.find((item) => item.properties.title === SHEET_NAME);
+  const usersSheet = properties.find((sheet) => sheet.properties.title === SHEET_NAME);
 
-  const auditSheet = properties.find((item) => item.properties.title === AUDIT_SHEET_NAME);
+  const auditSheet = properties.find((sheet) => sheet.properties.title === AUDIT_SHEET_NAME);
 
-  if (!userSheet || !auditSheet) {
+  if (!usersSheet || !auditSheet) {
     throw new Error("REQUIRED_SHEET_NOT_FOUND");
   }
 
   return {
-    userSheetId: userSheet.properties.sheetId,
+    usersSheetId: usersSheet.properties.sheetId,
     auditSheetId: auditSheet.properties.sheetId,
   };
 }
 
-function toCellData(values) {
-  return values.map((value) => ({
+function toCellData(value) {
+  return {
     userEnteredValue: {
       stringValue: String(value ?? ""),
     },
-  }));
+  };
+}
+
+function assertUniqueUserId(users, userId) {
+  const matches = users.filter((user) => user.user_id === userId);
+
+  if (matches.length !== 1) {
+    throw new Error(matches.length === 0 ? "USER_NOT_FOUND" : "USER_ID_AMBIGUOUS");
+  }
+
+  return matches[0];
+}
+
+function assertUniqueEmail(users, email) {
+  const normalizedEmail = normalizeEmail(email);
+
+  const matches = users.filter((user) => normalizeEmail(user.email) === normalizedEmail);
+
+  if (matches.length !== 1) {
+    throw new Error(matches.length === 0 ? "USER_NOT_FOUND" : "USER_EMAIL_AMBIGUOUS");
+  }
+
+  return matches[0];
+}
+
+function assertIdentityAvailable(users, authUserId, targetUserId) {
+  const matches = users.filter((user) => normalizeAuthUserId(user.auth_user_id) === authUserId);
+
+  const linkedToOtherUser = matches.some((user) => user.user_id !== targetUserId);
+
+  if (linkedToOtherUser || matches.length > 1) {
+    throw new Error("GOOGLE_IDENTITY_ALREADY_LINKED");
+  }
+}
+
+async function persistGoogleIdentityBinding({ userId, authUserId, reason }) {
+  const normalizedAuthUserId = normalizeAuthUserId(authUserId);
+
+  if (!userId || !normalizedAuthUserId) {
+    throw new Error("INVALID_GOOGLE_IDENTITY");
+  }
+
+  const users = await getUsersData();
+  const user = assertUniqueUserId(users, userId);
+
+  if (user.account_status !== USER_STATUS.ACTIVE) {
+    throw new Error("USER_ACCOUNT_INACTIVE");
+  }
+
+  if (user.role !== USER_ROLES.ADMINISTRATOR && user.role !== USER_ROLES.TEACHER) {
+    throw new Error("USER_ROLE_NOT_ALLOWED");
+  }
+
+  const uniqueEmailUser = assertUniqueEmail(users, user.email);
+
+  if (uniqueEmailUser.user_id !== user.user_id) {
+    throw new Error("USER_EMAIL_AMBIGUOUS");
+  }
+
+  assertIdentityAvailable(users, normalizedAuthUserId, user.user_id);
+
+  if (normalizeAuthUserId(user.auth_user_id) === normalizedAuthUserId) {
+    return {
+      success: true,
+      alreadyLinked: true,
+      user_id: user.user_id,
+    };
+  }
+
+  if (normalizeAuthUserId(user.auth_user_id)) {
+    throw new Error("USER_ALREADY_LINKED_TO_ANOTHER_GOOGLE_ACCOUNT");
+  }
+
+  const audit = await prepareAdministrativeAudit({
+    actor_user_id: user.user_id,
+    action_type: "GOOGLE_IDENTITY_BOUND",
+    table_name: "Users",
+    record_id: user.user_id,
+    old_data: {
+      auth_user_id: "",
+    },
+    new_data: {
+      auth_user_id: normalizedAuthUserId,
+    },
+    reason,
+  });
+
+  const sheets = await getGoogleSheetsClient();
+
+  const { usersSheetId, auditSheetId } = await getSheetIds(sheets);
+
+  const timestamp = new Date().toISOString();
+
+  const requests = [
+    {
+      updateCells: {
+        range: {
+          sheetId: usersSheetId,
+          startRowIndex: user.row_number - 1,
+          endRowIndex: user.row_number,
+          startColumnIndex: 1,
+          endColumnIndex: 2,
+        },
+        rows: [
+          {
+            values: [toCellData(normalizedAuthUserId)],
+          },
+        ],
+        fields: "userEnteredValue",
+      },
+    },
+    {
+      appendCells: {
+        sheetId: auditSheetId,
+        rows: [
+          {
+            values: audit.map(toCellData),
+          },
+        ],
+        fields: "userEnteredValue",
+      },
+    },
+  ];
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests,
+    },
+  });
+
+  return {
+    success: true,
+    alreadyLinked: false,
+    user_id: user.user_id,
+    auth_user_id: normalizedAuthUserId,
+    linked_at: timestamp,
+  };
 }
 
 export async function getAllUsers() {
-  const rows = await getUsersData();
-  return mapUserRows(rows);
+  return getUsersData();
 }
 
 export async function getUserById(userId) {
-  if (typeof userId !== "string" || !userId.trim()) {
-    return null;
-  }
-
-  const users = await getAllUsers();
+  const users = await getUsersData();
 
   return users.find((user) => user.user_id === userId) || null;
 }
 
 export async function findUserByEmail(email) {
-  if (typeof email !== "string" || !email.trim()) {
-    return null;
-  }
+  const users = await getUsersData();
 
-  const normalizedEmail = email.trim().toLowerCase();
-  const users = await getAllUsers();
+  const normalizedEmail = normalizeEmail(email);
 
-  return users.find((user) => user.email.toLowerCase() === normalizedEmail) || null;
+  return users.find((user) => normalizeEmail(user.email) === normalizedEmail) || null;
 }
 
 export async function findUserByAuthId(authUserId) {
-  if (typeof authUserId !== "string" || !authUserId.trim()) {
-    return null;
-  }
+  const users = await getUsersData();
 
-  const users = await getAllUsers();
+  const normalizedAuthUserId = normalizeAuthUserId(authUserId);
 
-  return users.find((user) => user.auth_user_id === authUserId) || null;
-}
-
-export async function isUserBootstrapAvailable() {
-  if (process.env.NODE_ENV !== "development") {
-    return false;
-  }
-
-  const users = await getAllUsers();
-
-  return users.length === 0;
-}
-
-export async function isUserActive(authUserId) {
-  const user = await findUserByAuthId(authUserId);
-
-  return Boolean(user && user.account_status === "active");
+  return users.find((user) => normalizeAuthUserId(user.auth_user_id) === normalizedAuthUserId && normalizedAuthUserId !== "") || null;
 }
 
 export async function createUser(data, auditData) {
-  const users = await getAllUsers();
-  const normalizedEmail = data.email.trim().toLowerCase();
+  const sheets = await getGoogleSheetsClient();
 
-  if (users.some((user) => user.email.toLowerCase() === normalizedEmail)) {
+  const users = await getUsersData();
+
+  const normalizedEmail = normalizeEmail(data.email);
+
+  if (users.some((user) => normalizeEmail(user.email) === normalizedEmail)) {
     throw new Error("USER_EMAIL_ALREADY_EXISTS");
   }
 
-  if (data.auth_user_id && users.some((user) => user.auth_user_id === data.auth_user_id)) {
-    throw new Error("GOOGLE_ID_ALREADY_LINKED");
-  }
+  const userId = randomUUID();
+  const timestamp = new Date().toISOString();
 
-  const now = new Date().toISOString();
+  const row = [userId, data.auth_user_id || "", data.username, normalizedEmail, data.full_name, data.gender, data.role, data.account_status, timestamp, timestamp];
 
-  const userData = [randomUUID(), data.auth_user_id || "", data.username.trim(), normalizedEmail, data.full_name.trim(), data.gender, data.role, data.account_status, now, now];
-
-  const auditRow = await prepareAdministrativeAudit({
-    ...auditData,
-    action_type: auditData.action_type || "USER_CREATED",
-    table_name: SHEET_NAME,
-    record_id: userData[0],
+  const audit = await prepareAdministrativeAudit({
+    actor_user_id: auditData.actor_user_id,
+    action_type: "USER_CREATED",
+    table_name: "Users",
+    record_id: userId,
     old_data: null,
-    new_data: Object.fromEntries(USER_HEADERS.map((header, index) => [header, userData[index]])),
+    new_data: {
+      user_id: userId,
+      username: data.username,
+      email: normalizedEmail,
+      full_name: data.full_name,
+      gender: data.gender,
+      role: data.role,
+      account_status: data.account_status,
+    },
+    reason: auditData.reason,
   });
 
-  const { userSheetId, auditSheetId } = await getSheetIds();
-  const sheets = await getGoogleSheetsClient();
+  const { usersSheetId, auditSheetId } = await getSheetIds(sheets);
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
@@ -158,10 +299,10 @@ export async function createUser(data, auditData) {
       requests: [
         {
           appendCells: {
-            sheetId: userSheetId,
+            sheetId: usersSheetId,
             rows: [
               {
-                values: toCellData(userData),
+                values: row.map(toCellData),
               },
             ],
             fields: "userEnteredValue",
@@ -172,7 +313,7 @@ export async function createUser(data, auditData) {
             sheetId: auditSheetId,
             rows: [
               {
-                values: toCellData(auditRow),
+                values: audit.map(toCellData),
               },
             ],
             fields: "userEnteredValue",
@@ -184,57 +325,62 @@ export async function createUser(data, auditData) {
 
   return {
     success: true,
-    user_id: userData[0],
+    user_id: userId,
   };
 }
 
 export async function updateUser(userId, updates, auditData) {
-  const users = await getAllUsers();
+  const sheets = await getGoogleSheetsClient();
 
-  const user = users.find((item) => item.user_id === userId);
+  const users = await getUsersData();
+  const user = assertUniqueUserId(users, userId);
 
-  if (!user) {
-    throw new Error("USER_NOT_FOUND");
-  }
-
-  const allowedFields = ["username", "email", "full_name", "gender", "role", "account_status"];
-
-  for (const field of Object.keys(updates)) {
-    if (!allowedFields.includes(field)) {
-      throw new Error("INVALID_USER_UPDATE_FIELD");
-    }
-  }
-
-  const newEmail = (updates.email ?? user.email).trim().toLowerCase();
-
-  if (users.some((item) => item.user_id !== userId && item.email.toLowerCase() === newEmail)) {
-    throw new Error("USER_EMAIL_ALREADY_EXISTS");
-  }
-
-  const updatedUser = {
-    ...user,
-    ...updates,
-    email: newEmail,
-    updated_at: new Date().toISOString(),
+  const allowedFields = {
+    username: 2,
+    email: 3,
+    full_name: 4,
+    gender: 5,
+    role: 6,
+    account_status: 7,
   };
 
-  const values = USER_HEADERS.map((header) => updatedUser[header] ?? "");
+  const oldData = {};
+  const newData = {};
 
-  const oldData = Object.fromEntries(USER_HEADERS.map((header) => [header, user[header] ?? ""]));
+  for (const [field, value] of Object.entries(updates)) {
+    if (!(field in allowedFields)) {
+      throw new Error("INVALID_USER_UPDATE_FIELD");
+    }
 
-  const newData = Object.fromEntries(USER_HEADERS.map((header, index) => [header, values[index]]));
+    oldData[field] = user[field];
 
-  const auditRow = await prepareAdministrativeAudit({
-    ...auditData,
-    action_type: auditData.action_type || "USER_UPDATED",
-    table_name: SHEET_NAME,
+    newData[field] = field === "email" ? normalizeEmail(value) : value;
+  }
+
+  const updatedRow = [
+    user.user_id,
+    user.auth_user_id,
+    updates.username ?? user.username,
+    updates.email !== undefined ? normalizeEmail(updates.email) : user.email,
+    updates.full_name ?? user.full_name,
+    updates.gender ?? user.gender,
+    updates.role ?? user.role,
+    updates.account_status ?? user.account_status,
+    user.created_at,
+    new Date().toISOString(),
+  ];
+
+  const audit = await prepareAdministrativeAudit({
+    actor_user_id: auditData.actor_user_id,
+    action_type: auditData.action_type || "USER_PROFILE_UPDATED",
+    table_name: "Users",
     record_id: userId,
     old_data: oldData,
     new_data: newData,
+    reason: auditData.reason,
   });
 
-  const { userSheetId, auditSheetId } = await getSheetIds();
-  const sheets = await getGoogleSheetsClient();
+  const { usersSheetId, auditSheetId } = await getSheetIds(sheets);
 
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
@@ -243,7 +389,7 @@ export async function updateUser(userId, updates, auditData) {
         {
           updateCells: {
             range: {
-              sheetId: userSheetId,
+              sheetId: usersSheetId,
               startRowIndex: user.row_number - 1,
               endRowIndex: user.row_number,
               startColumnIndex: 0,
@@ -251,7 +397,7 @@ export async function updateUser(userId, updates, auditData) {
             },
             rows: [
               {
-                values: toCellData(values),
+                values: updatedRow.map(toCellData),
               },
             ],
             fields: "userEnteredValue",
@@ -262,7 +408,7 @@ export async function updateUser(userId, updates, auditData) {
             sheetId: auditSheetId,
             rows: [
               {
-                values: toCellData(auditRow),
+                values: audit.map(toCellData),
               },
             ],
             fields: "userEnteredValue",
@@ -274,59 +420,24 @@ export async function updateUser(userId, updates, auditData) {
 
   return {
     success: true,
+    user_id: userId,
   };
 }
 
 export async function bindGoogleIdentity(email, authUserId) {
-  if (typeof email !== "string" || !email.trim() || typeof authUserId !== "string" || !authUserId.trim()) {
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedAuthUserId = normalizeAuthUserId(authUserId);
+
+  if (!normalizedEmail || !normalizedAuthUserId) {
     throw new Error("INVALID_GOOGLE_IDENTITY");
   }
 
-  const normalizedEmail = email.trim().toLowerCase();
-  const users = await getAllUsers();
+  const users = await getUsersData();
+  const user = assertUniqueEmail(users, normalizedEmail);
 
-  const user = users.find((item) => item.email.toLowerCase() === normalizedEmail);
-
-  if (!user) {
-    throw new Error("USER_EMAIL_NOT_REGISTERED");
-  }
-
-  if (user.account_status !== "active") {
-    throw new Error("USER_ACCOUNT_INACTIVE");
-  }
-
-  // Pengaitan pertama hanya diperbolehkan untuk akun Guru.
-  if (user.role !== USER_ROLES.TEACHER) {
-    throw new Error("GOOGLE_ID_BINDING_ROLE_NOT_ALLOWED");
-  }
-
-  if (user.auth_user_id === authUserId) {
-    return user;
-  }
-
-  if (user.auth_user_id) {
-    throw new Error("USER_GOOGLE_ID_ALREADY_BOUND");
-  }
-
-  const existingIdentity = users.find((item) => item.auth_user_id === authUserId);
-
-  if (existingIdentity) {
-    throw new Error("GOOGLE_ID_ALREADY_LINKED");
-  }
-
-  const sheets = await getGoogleSheetsClient();
-
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!B${user.row_number}`,
-    valueInputOption: "RAW",
-    requestBody: {
-      values: [[authUserId]],
-    },
+  return persistGoogleIdentityBinding({
+    userId: user.user_id,
+    authUserId: normalizedAuthUserId,
+    reason: "Pengaitan otomatis melalui Google OAuth",
   });
-
-  return {
-    ...user,
-    auth_user_id: authUserId,
-  };
 }

@@ -27,7 +27,7 @@ export async function createAdministrator(formData) {
       gender,
     });
   } catch (error) {
-    const allowedErrors = ["INVALID_ADMIN_DATA", "USERS_HEADER_NOT_FOUND", "USERS_HEADER_INVALID", "ADMIN_BOOTSTRAP_ALREADY_USED"];
+    const allowedErrors = ["INVALID_ADMIN_DATA", "GOOGLE_SHEETS_SPREADSHEET_ID_MISSING", "ADMIN_BOOTSTRAP_NOT_ALLOWED", "ADMIN_BOOTSTRAP_ALREADY_USED"];
 
     const errorCode = allowedErrors.includes(error.message) ? error.message : "BOOTSTRAP_FAILED";
 

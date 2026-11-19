@@ -1,435 +1,617 @@
-# IMPLEMENTATION_PLAN.md
+# IMPLEMENTATION PLAN
 
-# Sistem Absensi Sekolah Terpusat
+## SISTEM ABSENSI SEKOLAH TERPUSAT
 
-**Versi:** 1.0  
-**Tanggal:** 17 November 2026  
-**Status:** Rencana implementasi
-
-## 1. Tujuan
-
-Dokumen ini menjadi panduan pelaksanaan teknis berdasarkan tiga dokumen utama:
-
-1. `PRD.md`
-2. `DATABASE.md`
-3. `ARCHITECTURE.md`
-
-Implementasi dilakukan secara bertahap. Setiap tahap harus selesai dan diuji sebelum melanjutkan ke tahap berikutnya.
-
-Prinsip utama:
-
-- Fungsi didahulukan daripada styling.
-- Tidak menggunakan custom CSS, Tailwind CSS, daisyUI, React Icons, atau Lenis sebelum ada persetujuan.
-- Tidak menambahkan tabel database.
-- Tidak mengubah aturan bisnis yang telah disepakati.
-- Menggunakan JavaScript.
-- Mengutamakan mobile-first.
-- Menggunakan Google Sheets sebagai database awal.
-- Deployment menggunakan GitHub dan Vercel.
+**Project ID:** PRJ-2026-RND-001-V01  
+**Versi:** 2.0  
+**Tanggal:** 19 November 2026  
+**Status:** Tahap 6 sedang berjalan
 
 ---
 
-## 2. Tahapan Implementasi
+# 1. TUJUAN
 
-### Tahap 1 — Persiapan Proyek
+Dokumen ini menjadi panduan pelaksanaan pengembangan Sistem Absensi Sekolah Terpusat.
 
-**Pekerjaan:**
+Implementasi dilakukan secara bertahap untuk memastikan:
+
+1. Setiap modul memiliki fungsi yang jelas.
+2. Relasi data konsisten.
+3. Hak akses diterapkan di backend.
+4. Perubahan data tercatat dengan benar.
+5. Aplikasi dapat dikembangkan dan dipelihara.
+6. Database awal dapat dimigrasikan ke PostgreSQL.
+
+# 2. TEKNOLOGI
+
+| Komponen            | Teknologi             |
+| ------------------- | --------------------- |
+| Framework           | Next.js 16 App Router |
+| Bahasa              | JavaScript            |
+| Authentication      | Auth.js v5            |
+| OAuth               | Google OAuth          |
+| Database awal       | Google Sheets         |
+| Database API        | Google Sheets API     |
+| Hosting             | Vercel                |
+| Repository          | GitHub                |
+| Database berikutnya | PostgreSQL            |
+
+# 3. ARSITEKTUR
+
+Alur aplikasi:
+
+Frontend
+↓
+Next.js Server Actions / Server Components
+↓
+Authentication & Authorization
+↓
+Service Layer
+↓
+Repository Layer
+↓
+Google Sheets API
+
+Ketentuan:
+
+- Frontend tidak mengakses Google Sheets secara langsung.
+- Business logic berada di Service Layer.
+- Operasi database berada di Repository Layer.
+- Semua validasi hak akses dilakukan di backend.
+- Kredensial database hanya tersedia di server.
+- Repository dirancang agar dapat diganti dengan adapter PostgreSQL.
+
+# 4. STRUKTUR DATABASE
+
+Sistem menggunakan 11 worksheet:
+
+1. Users
+2. Students
+3. Classes
+4. Class_Members
+5. Teacher_Assignments
+6. Attendance_Sessions
+7. Attendance_Records
+8. Attendance_Audit_Logs
+9. Student_Contact_Logs
+10. School_Information
+11. Administrative_Audit_Logs
+
+Tidak menggunakan worksheet Academic_Years.
+
+Tahun ajaran dihitung otomatis berdasarkan tanggal absensi.
+
+Format identifier:
+YYYY/YYYY
+
+Periode:
+1 Juli sampai 30 Juni tahun berikutnya.
+
+Identifier tahun ajaran disimpan pada Attendance_Sessions.academic_year_id.
+
+# 5. TAHAP IMPLEMENTASI
+
+## TAHAP 1 — PERSIAPAN PROYEK
+
+Status: SELESAI
+
+Pekerjaan:
 
 - Membuat repository GitHub.
-- Membuat proyek Next.js 16.
-- Mengaktifkan App Router.
-- Menggunakan JavaScript.
-- Menyiapkan struktur folder.
-- Membuat `.env.example`.
-- Menyiapkan `.gitignore`.
-- Menjalankan aplikasi secara lokal.
+- Membuat proyek Next.js.
+- Mengatur JavaScript.
+- Mengatur struktur direktori.
+- Menyiapkan konfigurasi lingkungan.
+- Menyiapkan dependensi awal.
+- Menyiapkan konfigurasi deployment.
 
-**Hasil:**
+Kriteria selesai:
 
-- Proyek Next.js berjalan.
-- Repository siap digunakan.
-- Struktur dasar tersedia.
+- Proyek dapat dijalankan.
+- Struktur direktori tersedia.
+- Repository GitHub berfungsi.
 
-**Kriteria selesai:**
+## TAHAP 2 — PERSIAPAN GOOGLE SHEETS
 
-- Aplikasi berhasil dijalankan.
-- Tidak ada error konfigurasi.
-- Kode berhasil di-push ke GitHub.
+Status: SELESAI
 
-### Tahap 2 — Integrasi Google Sheets
-
-**Pekerjaan:**
+Pekerjaan:
 
 - Membuat Google Spreadsheet.
-- Membuat 12 worksheet.
-- Menentukan header setiap worksheet sesuai `DATABASE.md`.
-- Menyiapkan Google Service Account.
-- Mengintegrasikan Google Sheets API.
-- Membuat fungsi membaca dan menulis data.
-- Membuat fungsi pencarian berdasarkan ID.
-- Membuat validasi ID dan relasi.
-- Menyiapkan mekanisme pengamanan operasi multi-sheet.
+- Menyiapkan Service Account.
+- Mengaktifkan Google Sheets API.
+- Memberikan akses spreadsheet kepada Service Account.
+- Menyiapkan environment variables.
+- Membuat koneksi Google Sheets dari backend.
 
-**Hasil:**
+Kriteria selesai:
 
-- Backend dapat membaca dan menulis seluruh 12 worksheet.
+- Backend dapat mengakses spreadsheet.
+- Kredensial tidak terekspos ke frontend.
+- Koneksi menggunakan Service Account.
 
-**Kriteria selesai:**
+## TAHAP 3 — FONDASI BACKEND DAN REPOSITORY
 
-- Semua worksheet dapat diakses backend.
-- Data dapat ditambah, dibaca, diperbarui, dan diambil berdasarkan ID.
-- Tidak ada akses database langsung dari browser.
-- Validasi dasar berhasil.
+Status: SELESAI
 
-### Tahap 3 — Authentication dan Authorization
+Pekerjaan:
 
-**Pekerjaan:**
+- Membuat konfigurasi database.
+- Membuat Google Sheets client.
+- Membuat database schema.
+- Membuat repository dasar.
+- Membuat service dasar.
+- Membuat validasi header worksheet.
+- Membuat administrative audit repository.
+- Menyiapkan pemisahan Service dan Repository Layer.
 
-- Mengintegrasikan Auth.js.
+Kriteria selesai:
+
+- Struktur backend tersedia.
+- Repository dapat mengakses Google Sheets.
+- Validasi header tersedia.
+- Audit administrasi memiliki fondasi.
+
+## TAHAP 4 — AUTHENTICATION DAN AUTHORIZATION
+
+Status: SELESAI
+
+Pekerjaan:
+
+- Mengintegrasikan Auth.js v5.
 - Mengatur Google OAuth.
-- Membuat proses bootstrap administrator pertama.
-- Menonaktifkan bootstrap setelah administrator pertama dibuat.
-- Menghubungkan Google `sub` dengan `auth_user_id`.
-- Memeriksa status akun.
-- Memuat role dari database.
-- Membuat pemeriksaan hak akses.
-- Membatasi akses halaman berdasarkan role.
+- Membuat konfigurasi session.
+- Menggunakan Google sub sebagai identitas stabil.
+- Membuat middleware atau pemeriksaan akses sesuai kebutuhan.
+- Membuat fungsi requireRole.
+- Memeriksa status pengguna.
+- Membatasi akses berdasarkan role.
 
-**Hasil:**
-
-- Login administrator dan guru berfungsi.
-
-**Kriteria selesai:**
+Kriteria selesai:
 
 - Administrator dapat login.
-- Guru terdaftar dapat login.
-- Akun tidak terdaftar ditolak.
-- Akun inactive ditolak.
-- Role tidak dapat dimanipulasi melalui browser.
-- Halaman internal terlindungi.
+- Guru dapat login.
+- Pengguna tidak terdaftar ditolak.
+- Pengguna inactive ditolak.
+- Akses halaman dilindungi backend.
 
-### Tahap 4 — Modul Pengguna dan Guru
+## TAHAP 5 — MANAJEMEN PENGGUNA
 
-**Pekerjaan:**
+Status: SELESAI
 
-- Menambahkan akun guru.
-- Mengedit data guru.
-- Mengaktifkan dan menonaktifkan akun.
-- Mengelola informasi pengguna.
-- Menampilkan daftar guru.
-- Mengelola identitas Google OAuth.
-- Mencatat perubahan administratif.
+Pekerjaan:
 
-**Hasil:**
+- Membuat konfigurasi Users.
+- Membuat user repository.
+- Membuat user service.
+- Membuat halaman manajemen pengguna.
+- Membuat Server Actions.
+- Menambahkan pengguna.
+- Mengubah informasi pengguna.
+- Mengaktifkan dan menonaktifkan pengguna.
+- Mengatur role Administrator dan Guru.
+- Mencatat perubahan melalui Administrative_Audit_Logs.
 
-- Modul pengelolaan pengguna dan guru tersedia.
+Kriteria selesai:
 
-**Kriteria selesai:**
+- Administrator dapat mengelola pengguna.
+- Pengguna tidak dapat dihapus permanen.
+- Validasi role dan status berjalan.
+- Audit administrasi tersimpan.
 
-- Administrator dapat mengelola akun guru.
-- Akun inactive tidak dapat digunakan.
-- Data guru tidak dapat dihapus permanen.
-- Perubahan tercatat di `Administrative_Audit_Logs`.
+## TAHAP 6 — MANAJEMEN KELAS DAN PENUGASAN GURU
 
-### Tahap 5 — Modul Tahun Ajaran dan Kelas
+Status: SEDANG BERJALAN
 
-**Pekerjaan:**
+### 6.1 Manajemen Kelas
 
-- Membuat tahun ajaran.
-- Mengedit periode tahun ajaran.
-- Memvalidasi periode agar tidak bertumpang tindih.
-- Menentukan tahun ajaran aktif.
-- Mengelola informasi sekolah.
-- Membuat kelas.
-- Mengedit kelas.
+Pekerjaan:
+
+- Membuat konfigurasi Classes.
+- Membuat class repository.
+- Membuat class service.
+- Membuat halaman daftar kelas.
+- Membuat halaman detail kelas.
+- Membuat Server Actions.
+- Menambahkan kelas.
+- Mengubah nama kelas.
 - Mengaktifkan dan menonaktifkan kelas.
-- Menyinkronkan status tahun ajaran.
+- Mencatat perubahan melalui Administrative_Audit_Logs.
 
-**Hasil:**
+Ketentuan:
 
-- Pengelolaan tahun ajaran dan kelas berfungsi.
+- class_id permanen.
+- Nama kelas unik.
+- Kelas tidak terikat tahun ajaran.
+- Kelas dapat digunakan lintas tahun ajaran.
+- Kelas tidak dihapus permanen.
 
-**Kriteria selesai:**
+### 6.2 Penugasan Guru
 
-- Hanya satu tahun ajaran aktif.
-- `School_Information.active_academic_year_id` menjadi sumber kebenaran.
-- Periode tahun ajaran tidak bertumpang tindih.
-- Nama kelas unik dalam satu tahun ajaran.
-- Perubahan administratif tercatat.
+Pekerjaan:
 
-### Tahap 6 — Modul Siswa dan Keanggotaan Kelas
+- Membuat konfigurasi Teacher_Assignments.
+- Membuat teacher assignment repository.
+- Membuat teacher assignment service.
+- Membuat halaman penugasan guru.
+- Membuat Server Actions.
+- Menambahkan penugasan guru.
+- Mengakhiri penugasan guru.
+- Menampilkan riwayat penugasan.
+- Mencatat perubahan melalui Administrative_Audit_Logs.
 
-**Pekerjaan:**
+Ketentuan:
 
-- Menambah siswa.
-- Mengedit data siswa.
+1. Satu kelas hanya memiliki satu guru penanggung jawab pada waktu yang sama.
+2. Satu guru maksimal menangani dua kelas secara bersamaan.
+3. Guru inactive tidak dapat menerima penugasan.
+4. Kelas inactive tidak dapat menerima penugasan baru.
+5. Penugasan menggunakan effective_from dan effective_to.
+6. Penugasan tidak dibatasi tahun ajaran.
+7. Riwayat penugasan tidak boleh ditimpa.
+
+### 6.3 Kriteria Selesai
+
+- Administrator dapat mengelola kelas.
+- Administrator dapat mengelola penugasan guru.
+- Validasi maksimal dua kelas per guru berjalan.
+- Validasi satu guru per kelas berjalan.
+- Riwayat penugasan tersimpan.
+- Audit administrasi tersimpan.
+- Halaman dapat digunakan melalui smartphone.
+
+## TAHAP 7 — MANAJEMEN SISWA DAN KEANGGOTAAN KELAS
+
+Status: BELUM DIMULAI
+
+### 7.1 Manajemen Siswa
+
+Pekerjaan:
+
+- Membuat konfigurasi Students.
+- Membuat student repository.
+- Membuat student service.
+- Membuat halaman daftar siswa.
+- Membuat halaman detail siswa.
+- Membuat Server Actions.
+- Menambahkan siswa.
+- Mengubah data siswa.
 - Mengaktifkan dan menonaktifkan siswa.
-- Menyimpan informasi orang tua.
-- Mengelola keanggotaan siswa dalam kelas.
-- Mengelola tanggal efektif keanggotaan.
-- Menampilkan riwayat kelas siswa.
-- Mencatat perubahan administratif.
+- Mengubah status siswa.
+- Mengelola informasi orang tua.
+- Mencatat riwayat perubahan kontak.
 
-**Hasil:**
+Ketentuan:
 
-- Pengelolaan siswa dan keanggotaan kelas berfungsi.
+- student_id permanen.
+- student_number opsional.
+- Data siswa tidak dihapus permanen.
+- Satu nomor WhatsApp dapat digunakan beberapa siswa.
 
-**Kriteria selesai:**
+### 7.2 Keanggotaan Kelas
 
-- Siswa memiliki ID permanen.
-- Satu siswa tidak memiliki keanggotaan kelas yang bertumpang tindih.
-- Informasi orang tua tersimpan dengan benar.
-- Data siswa tidak dapat dihapus permanen.
+Pekerjaan:
 
-### Tahap 7 — Modul Penugasan Guru
+- Membuat konfigurasi Class_Members.
+- Membuat class member repository.
+- Membuat class member service.
+- Membuat pengelolaan keanggotaan siswa.
+- Membuat perpindahan siswa.
+- Membuat proses kenaikan kelas.
+- Membuat preview perubahan kelas.
+- Membuat konfirmasi perubahan.
+- Mencatat audit administrasi.
 
-**Pekerjaan:**
+Ketentuan:
 
-- Menugaskan guru ke kelas.
-- Mengganti guru penanggung jawab.
-- Mengakhiri penugasan.
-- Memvalidasi periode efektif.
-- Membatasi satu guru maksimal dua kelas aktif.
-- Membatasi satu kelas memiliki satu guru aktif.
-- Menampilkan daftar guru yang tersedia.
-- Menyimpan riwayat penugasan.
+- Menggunakan effective_from dan effective_to.
+- Riwayat keanggotaan dipertahankan.
+- Keanggotaan tidak boleh bertumpang tindih.
+- Kenaikan kelas tidak mengubah student_id.
+- Kelas dapat digunakan lintas tahun ajaran.
 
-**Hasil:**
+### 7.3 Kriteria Selesai
 
-- Sistem penugasan guru berfungsi.
+- Administrator dapat mengelola siswa.
+- Administrator dapat mengelola keanggotaan kelas.
+- Perpindahan kelas berjalan.
+- Kenaikan kelas berjalan.
+- Riwayat keanggotaan tersimpan.
+- Validasi effective dates berjalan.
+- Audit administrasi tersimpan.
 
-**Kriteria selesai:**
+## TAHAP 8 — MODUL ABSENSI DAN AUDIT
 
-- Guru maksimal memiliki dua kelas aktif.
-- Satu kelas hanya memiliki satu guru penanggung jawab.
-- Guru dengan dua kelas aktif tidak muncul dalam pilihan penugasan baru.
-- Riwayat penugasan tetap tersedia.
+Status: BELUM DIMULAI
 
-### Tahap 8 — Modul Absensi
+### 8.1 Perhitungan Tahun Ajaran
 
-**Pekerjaan:**
+Pekerjaan:
 
-- Menampilkan kelas yang menjadi tanggung jawab guru.
-- Mengambil daftar siswa berdasarkan keanggotaan kelas.
-- Membuat sesi absensi.
-- Menghasilkan tanggal otomatis dari backend.
-- Mengisi status default Hadir.
-- Mengubah status menjadi Sakit, Izin, atau Alpa.
-- Menyimpan seluruh record dalam satu operasi.
-- Mengedit sesi menggunakan `session_id` yang sama.
+- Membuat fungsi perhitungan tahun ajaran.
+- Menggunakan zona waktu Asia/Jakarta.
+- Menghitung periode 1 Juli sampai 30 Juni.
+- Menghasilkan identifier YYYY/YYYY.
+- Menghitung berdasarkan attendance_date.
+
+Ketentuan:
+
+- Tidak ada tabel Academic_Years.
+- Tidak ada pengelolaan tahun ajaran manual.
+- Riwayat tahun ajaran tersimpan pada sesi absensi.
+
+### 8.2 Pembuatan Absensi
+
+Pekerjaan:
+
+- Membuat konfigurasi Attendance_Sessions.
+- Membuat konfigurasi Attendance_Records.
+- Membuat attendance session repository.
+- Membuat attendance record repository.
+- Membuat attendance service.
+- Membuat halaman absensi guru.
+- Membuat formulir absensi.
+- Membuat daftar siswa berdasarkan keanggotaan kelas.
+- Menyimpan status kehadiran.
+- Menyimpan lokasi pembelajaran.
+- Menyimpan materi pelajaran.
+
+Ketentuan:
+
+1. Guru hanya dapat membuat absensi untuk kelas yang ditugaskan kepadanya.
+2. Tanggal absensi ditentukan backend.
+3. Zona waktu menggunakan Asia/Jakarta.
+4. Satu guru dan kelas maksimal memiliki satu sesi dalam satu minggu kalender.
+5. Minggu dihitung Senin sampai Minggu.
+6. Jadwal dapat digeser berdasarkan kesepakatan.
+7. Absensi dibuat pada tanggal pertemuan aktual.
+8. Semua siswa yang menjadi anggota kelas pada tanggal tersebut menjadi dasar absensi.
+9. Status default siswa adalah Hadir.
+10. Tidak ada sesi kedua untuk kombinasi guru dan kelas dalam minggu yang sama.
+
+### 8.3 Lokasi dan Materi
+
+Pekerjaan:
+
+- Menyimpan location_name.
+- Menyimpan location_note.
+- Menyimpan lesson_material.
+- Menampilkan informasi lokasi.
+- Menampilkan materi pembelajaran.
+- Mengizinkan perubahan setelah sesi dibuat.
+
+### 8.4 Pengeditan Absensi
+
+Pekerjaan:
+
+- Mengubah status siswa.
+- Mengoreksi status berkali-kali.
+- Mengubah lokasi.
+- Mengubah keterangan lokasi.
+- Mengubah materi pembelajaran.
+- Membatasi akses guru pada sesi miliknya.
+- Memberikan akses administratif sesuai role.
+
+### 8.5 Audit Absensi
+
+Pekerjaan:
+
+- Membuat attendance audit repository.
+- Membuat attendance audit service.
+- Mencatat perubahan status.
+- Mencatat perubahan lokasi.
+- Mencatat perubahan materi.
+- Mencatat penghapusan sesi.
+- Menyimpan data lama dan baru.
+- Menyimpan actor_user_id.
+- Menyimpan alasan perubahan sesuai aturan.
+
+Audit harus tersimpan sebelum perubahan atau penghapusan dinyatakan berhasil.
+
+### 8.6 Kriteria Selesai
+
+- Guru dapat membuat absensi.
+- Validasi satu sesi per minggu berjalan.
+- Tahun ajaran dihitung otomatis.
+- Lokasi tersimpan.
+- Materi tersimpan.
+- Koreksi status berjalan.
+- Audit seluruh perubahan berjalan.
+- Penghapusan mengikuti prosedur.
+- Hak akses guru dan administrator benar.
+
+## TAHAP 9 — HALAMAN PUBLIK, LAPORAN, DAN WHATSAPP
+
+Status: BELUM DIMULAI
+
+### 9.1 Halaman Publik
+
+Pekerjaan:
+
+- Membuat halaman pencarian siswa.
+- Membuat pencarian berdasarkan nama.
+- Menampilkan hasil nama yang sama.
 - Menampilkan riwayat absensi.
-- Menerapkan hak akses guru dan administrator.
-- Menerapkan penghapusan permanen dengan konfirmasi dan alasan.
-- Menyimpan audit UPDATE dan DELETE.
+- Menampilkan rekap kehadiran.
+- Menampilkan filter periode.
+- Menampilkan filter tahun ajaran.
+- Mengatur informasi yang boleh diakses publik.
 
-**Hasil:**
+Ketentuan:
 
-- Proses absensi harian berfungsi.
+- Tidak memerlukan login.
+- Tidak menampilkan nomor WhatsApp.
+- Tidak menampilkan informasi sensitif.
+- Riwayat siswa graduated dan transferred tetap dapat diakses sesuai kebijakan publikasi.
 
-**Kriteria selesai:**
+### 9.2 Daftar Perhatian Kehadiran
 
-- Satu kelas hanya memiliki satu absensi per hari.
-- Guru hanya membuat absensi untuk kelas tanggung jawabnya.
-- Guru hanya mengedit atau menghapus sesi yang dibuatnya.
-- Administrator dapat mengelola seluruh sesi.
-- Audit tersimpan sebelum perubahan atau penghapusan.
-- Tidak terjadi penyimpanan sebagian yang tidak konsisten.
+Pekerjaan:
 
-### Tahap 9 — Modul Kenaikan Kelas
+- Membuat daftar siswa dengan Alpa berulang.
+- Menghitung minimal tiga Alpa dalam 30 hari.
+- Menghubungkan daftar dengan kelas guru.
+- Menyiapkan laporan siswa.
 
-**Pekerjaan:**
+### 9.3 WhatsApp
 
-- Memilih tahun ajaran sumber dan tujuan.
-- Memilih kelas sumber.
-- Menampilkan seluruh siswa.
-- Menandai seluruh siswa secara default.
-- Memungkinkan administrator mengubah pilihan siswa.
-- Memungkinkan perubahan kelas tujuan per siswa.
-- Memproses beberapa kelas dalam satu operasi.
-- Menutup keanggotaan lama.
-- Membuat keanggotaan baru.
-- Mempertahankan siswa yang tidak dicentang di tingkat kelas yang sama.
-- Menyimpan audit administratif.
+Pekerjaan:
 
-**Hasil:**
+- Membuat template pesan.
+- Menggunakan sapaan berdasarkan hubungan orang tua.
+- Menyertakan tautan publik siswa.
+- Membuka WhatsApp dengan pesan yang telah disiapkan.
+- Mencatat aktivitas pada Student_Contact_Logs.
 
-- Kenaikan kelas massal berfungsi.
+Pengiriman pesan dilakukan secara manual oleh guru.
 
-**Kriteria selesai:**
+### 9.4 Dashboard dan Statistik
 
-- Siswa yang dicentang naik kelas.
-- Siswa yang tidak dicentang tetap pada tingkat kelas yang sama.
-- Semua siswa menggunakan `student_id` yang sama.
-- Perubahan berlangsung konsisten tanpa hasil sebagian.
+Pekerjaan:
 
-### Tahap 10 — Dashboard dan Statistik
+- Dashboard administrator.
+- Dashboard guru.
+- Grafik komposisi kehadiran.
+- Grafik tren kehadiran.
+- Perbandingan kelas.
+- Filter periode.
+- Filter tahun ajaran.
 
-**Pekerjaan:**
+### 9.5 Kriteria Selesai
 
-- Membuat dashboard administrator.
-- Membuat dashboard guru.
-- Menghitung komposisi Hadir, Sakit, Izin, Alpa.
-- Menghitung tren kehadiran harian.
-- Membuat perbandingan antarkelas untuk administrator.
-- Membuat ringkasan per kelas.
-- Membatasi data guru berdasarkan penugasan aktif.
-- Menggunakan tahun ajaran aktif.
+- Halaman publik dapat digunakan.
+- Informasi sensitif tidak bocor.
+- Pencarian siswa berjalan.
+- Rekap kehadiran benar.
+- Daftar perhatian kehadiran benar.
+- Persiapan WhatsApp berjalan.
+- Dashboard administrator berjalan.
+- Dashboard guru berjalan.
+- Statistik dapat difilter berdasarkan tahun ajaran.
 
-**Hasil:**
+## TAHAP 10 — PENGUJIAN AKHIR, FINALISASI, DAN DEPLOYMENT
 
-- Dashboard dan statistik tersedia.
+Status: BELUM DIMULAI
 
-**Kriteria selesai:**
+### 10.1 Pemeriksaan Database
 
-- Dashboard guru hanya menampilkan kelas tanggung jawabnya.
-- Dashboard administrator menampilkan seluruh kelas aktif.
-- Statistik berasal dari record absensi tersimpan.
-- Hari tanpa sesi absensi tidak dihitung sebagai Alpa.
-- Grafik dapat menyesuaikan lebar layar.
+Pekerjaan:
 
-### Tahap 11 — Halaman Publik dan WhatsApp
+- Memeriksa 11 worksheet.
+- Memeriksa header.
+- Memeriksa primary key.
+- Memeriksa relasi.
+- Memeriksa data lama.
+- Menyusun migrasi spreadsheet secara aman.
 
-**Pekerjaan halaman publik:**
+Perubahan fisik Google Sheets hanya dilakukan setelah seluruh struktur kode dan rencana migrasi siap.
 
-- Pencarian siswa berdasarkan nama.
-- Menampilkan beberapa hasil jika nama sama.
-- Menampilkan kelas dan guru penanggung jawab.
-- Menampilkan riwayat absensi.
-- Memilih periode riwayat.
-- Menampilkan ringkasan status kehadiran.
-- Membatasi kolom data yang dapat diakses publik.
+### 10.2 Pengujian
 
-**Pekerjaan WhatsApp:**
+Pekerjaan:
 
-- Menghitung siswa dengan minimal tiga Alpa dalam 30 hari.
-- Menampilkan daftar perhatian kehadiran.
-- Membuat pesan dengan sapaan sesuai hubungan orang tua.
-- Menyertakan tautan publik.
-- Membuka WhatsApp untuk pengiriman manual.
-- Menyimpan log tindakan.
+- Unit testing.
+- Integration testing.
+- End-to-end testing.
+- Regression testing.
+- Pengujian hak akses.
+- Pengujian validasi.
+- Pengujian audit.
+- Pengujian integritas data.
+- Pengujian mobile.
 
-**Hasil:**
+### 10.3 Keamanan
 
-- Halaman publik dan fitur tindak lanjut WhatsApp tersedia.
+Pekerjaan:
 
-**Kriteria selesai:**
+- Memeriksa akses administrator.
+- Memeriksa akses guru.
+- Memeriksa akses publik.
+- Memeriksa perlindungan kredensial.
+- Memeriksa validasi backend.
+- Memeriksa audit log.
+- Memeriksa kemungkinan akses data lintas kelas.
 
-- Publik tidak perlu login.
-- Data pribadi orang tua tidak terekspos.
-- Riwayat siswa dapat dicari.
-- Pesan WhatsApp tersusun dengan benar.
-- Aplikasi tidak mengklaim pesan sudah terkirim tanpa bukti.
+### 10.4 Backup dan Pemulihan
 
-### Tahap 12 — Pengujian Akhir dan Deployment
+Pekerjaan:
 
-**Pekerjaan:**
+- Backup spreadsheet.
+- Menguji pemulihan data.
+- Memvalidasi hasil pemulihan.
+- Menyusun prosedur backup rutin.
 
-- Menguji seluruh alur administrator.
-- Menguji seluruh alur guru.
-- Menguji akses publik.
-- Menguji validasi data.
-- Menguji konsistensi relasi.
-- Menguji audit.
-- Menguji operasi multi-sheet.
-- Menguji tampilan mobile.
-- Memperbaiki bug.
+### 10.5 Finalisasi
+
+Pekerjaan:
+
+- Memeriksa konsistensi dokumentasi.
+- Memeriksa seluruh modul.
+- Memeriksa error build.
+- Memeriksa konfigurasi environment.
+- Menyusun catatan rilis.
+
+### 10.6 Deployment
+
+Pekerjaan:
+
 - Menghubungkan GitHub dengan Vercel.
-- Mengatur environment variables produksi.
+- Mengatur environment variables.
+- Melakukan production build.
 - Melakukan deployment.
+- Menguji aplikasi production.
+- Memeriksa log deployment.
 
-**Hasil:**
+### 10.7 Kriteria Selesai
 
-- Aplikasi siap digunakan.
+- Build berhasil.
+- Seluruh fitur utama berjalan.
+- Hak akses benar.
+- Database konsisten.
+- Audit berfungsi.
+- Backup dan pemulihan teruji.
+- Aplikasi production dapat digunakan.
 
-**Kriteria selesai:**
+# 6. KEBIJAKAN PENGEMBANGAN
 
-- Seluruh fungsi utama berjalan.
-- Tidak ada bug kritis.
-- Hak akses berjalan sesuai ketentuan.
-- Data tersimpan konsisten.
-- Aplikasi dapat diakses melalui domain Vercel.
+1. Kerjakan satu tahap sampai selesai sebelum berpindah.
+2. Jangan mengubah aturan bisnis tanpa persetujuan.
+3. Jangan menambah tabel tanpa persetujuan.
+4. Jangan menghapus riwayat data.
+5. Jangan melakukan perubahan database produksi tanpa backup.
+6. Jangan melakukan commit sebelum tahap terkait selesai.
+7. Berikan file lengkap ketika diperlukan penggantian kode.
+8. Hindari pemeriksaan file yang sama berulang kali tanpa alasan teknis.
+9. Utamakan fungsi sebelum styling.
+10. Pertahankan konsistensi PRD, DATABASE.md, dan implementasi kode.
+
+# 7. STATUS PROYEK
+
+| Tahap                               | Status          |
+| ----------------------------------- | --------------- |
+| 1. Persiapan Proyek                 | Selesai         |
+| 2. Persiapan Google Sheets          | Selesai         |
+| 3. Fondasi Backend dan Repository   | Selesai         |
+| 4. Authentication dan Authorization | Selesai         |
+| 5. Manajemen Pengguna               | Selesai         |
+| 6. Kelas dan Penugasan Guru         | Sedang berjalan |
+| 7. Siswa dan Keanggotaan Kelas      | Belum dimulai   |
+| 8. Absensi dan Audit                | Belum dimulai   |
+| 9. Publik, Laporan, WhatsApp        | Belum dimulai   |
+| 10. Pengujian dan Deployment        | Belum dimulai   |
+
+Status ini merupakan catatan progres pada tanggal dokumen dibuat dan harus diperbarui ketika tahap berubah.
+
+# 8. DOKUMEN ACUAN
+
+Dokumen implementasi harus konsisten dengan:
+
+- PRD.md
+- DATABASE.md
+- ARCHITECTURE.md
+
+Jika terdapat konflik, keputusan bisnis terbaru yang telah disetujui menjadi acuan. Perubahan harus diselaraskan pada seluruh dokumen terkait.
 
 ---
 
-## 3. Urutan Ketergantungan Modul
-
-Urutan pengerjaan wajib memperhatikan dependensi berikut:
-
-1. Persiapan proyek.
-2. Integrasi Google Sheets.
-3. Authentication dan Authorization.
-4. Pengelolaan pengguna dan guru.
-5. Tahun ajaran dan kelas.
-6. Siswa dan keanggotaan kelas.
-7. Penugasan guru.
-8. Absensi.
-9. Kenaikan kelas.
-10. Dashboard.
-11. Publik dan WhatsApp.
-12. Pengujian akhir dan deployment.
-
-Tahapan tertentu dapat memiliki pekerjaan internal paralel, tetapi fitur yang bergantung pada modul sebelumnya tidak boleh difinalisasi sebelum dependensinya tersedia.
-
-## 4. Strategi Pengujian
-
-Setiap tahap memiliki pengujian sesuai fungsi yang dibangun.
-
-Kategori pengujian:
-
-- Functional testing.
-- Validation testing.
-- Authorization testing.
-- Data integrity testing.
-- Integration testing.
-- Mobile usability testing.
-- Deployment testing.
-
-Pengujian harus menggunakan alur normal yang tersedia pada antarmuka pengguna. Pemeriksaan backend juga wajib memastikan request yang tidak sah ditolak.
-
-## 5. Aturan Pengembangan Kode
-
-1. Selesaikan satu modul sebelum berpindah ke modul berikutnya.
-2. Jangan menulis seluruh aplikasi sekaligus.
-3. Jangan membuat fungsi yang belum dibutuhkan tahap berjalan.
-4. Jangan menambahkan dependency tanpa alasan teknis.
-5. Jangan menambahkan tabel database tanpa persetujuan.
-6. Jangan mengubah nama kolom atau relasi tanpa persetujuan.
-7. Gunakan fungsi backend yang dapat digunakan kembali.
-8. Pastikan semua operasi penting memiliki validasi.
-9. Setiap perubahan kode harus dapat dijelaskan dan diuji.
-10. Catat status penyelesaian setiap tahap.
-
-## 6. Estimasi Waktu
-
-Estimasi awal pengerjaan:
-
-| Tahap                        |   Estimasi |
-| ---------------------------- | ---------: |
-| 1. Persiapan proyek          | 0,5–1 hari |
-| 2. Integrasi Google Sheets   |   2–3 hari |
-| 3. Authentication            |   1–2 hari |
-| 4. Pengguna dan guru         |   1–2 hari |
-| 5. Tahun ajaran dan kelas    |   1–2 hari |
-| 6. Siswa dan keanggotaan     |   1–2 hari |
-| 7. Penugasan guru            |   1–2 hari |
-| 8. Absensi                   |   3–4 hari |
-| 9. Kenaikan kelas            |   2–3 hari |
-| 10. Dashboard                |   2–3 hari |
-| 11. Publik dan WhatsApp      |   2–3 hari |
-| 12. Pengujian dan deployment |   2–3 hari |
-
-**Total estimasi: 19,5–30 hari kerja.**
-
-Estimasi ini merupakan perkiraan untuk implementasi dan pengujian, bukan jaminan tanggal selesai. Perbaikan bug atau kendala integrasi dapat memengaruhi durasi.
-
-## 7. Status Proyek
-
-| Dokumen                | Status        |
-| ---------------------- | ------------- |
-| PRD.md                 | Selesai       |
-| DATABASE.md            | Selesai       |
-| ARCHITECTURE.md        | Selesai       |
-| IMPLEMENTATION_PLAN.md | Selesai       |
-| Implementasi kode      | Belum dimulai |
-
-Dokumen ini menjadi panduan resmi urutan implementasi proyek.
+**Akhir Dokumen**

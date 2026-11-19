@@ -1,4 +1,10 @@
+// src/config/database-schema.js
+
+import { USER_HEADERS } from "@/config/user-config";
+
 export const DATABASE_SCHEMA = {
+  Users: USER_HEADERS,
+
   Students: ["student_id", "student_number", "full_name", "gender", "parent_name", "parent_relation", "parent_whatsapp", "student_status", "created_at", "updated_at"],
 
   Classes: ["class_id", "class_name", "class_status", "created_at", "updated_at"],

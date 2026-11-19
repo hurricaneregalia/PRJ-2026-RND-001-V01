@@ -1,3 +1,4 @@
+// src/config/user-config.js
 export const USER_ROLES = {
   ADMINISTRATOR: "Administrator",
   TEACHER: "Guru",

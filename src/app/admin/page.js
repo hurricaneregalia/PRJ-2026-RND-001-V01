@@ -1,9 +1,13 @@
 // src/app/admin/page.js
 
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
 import { requireRole } from "@/lib/authorization";
 
-export default async function AdminDashboardPage() {
+async function AdminDashboardContent() {
+  await connection();
+
   await requireRole(["Administrator"]);
 
   return (
@@ -28,5 +32,13 @@ export default async function AdminDashboardPage() {
         </ul>
       </nav>
     </main>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<p>Memuat dashboard administrator...</p>}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }

@@ -1,57 +1,65 @@
 import "server-only";
+
 import { randomUUID } from "node:crypto";
 import { getGoogleSheetsClient } from "@/lib/google-sheets";
+import { isUserBootstrapAvailable } from "@/repositories/user-repository";
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
-const SHEET_NAME = "Users";
 
-const HEADERS = ["user_id", "auth_user_id", "username", "email", "full_name", "gender", "role", "account_status", "created_at", "updated_at"];
+function validateAdminData(data) {
+  return (
+    data &&
+    typeof data === "object" &&
+    typeof data.auth_user_id === "string" &&
+    data.auth_user_id.trim() !== "" &&
+    typeof data.username === "string" &&
+    data.username.trim() !== "" &&
+    typeof data.email === "string" &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()) &&
+    typeof data.full_name === "string" &&
+    data.full_name.trim() !== "" &&
+    ["Laki-laki", "Perempuan"].includes(data.gender)
+  );
+}
 
 export async function createInitialAdministrator(data) {
-  if (
-    typeof data.auth_user_id !== "string" ||
-    !data.auth_user_id.trim() ||
-    typeof data.username !== "string" ||
-    !data.username.trim() ||
-    typeof data.email !== "string" ||
-    !data.email.trim() ||
-    typeof data.full_name !== "string" ||
-    !data.full_name.trim() ||
-    !["Laki-laki", "Perempuan"].includes(data.gender)
-  ) {
+  if (process.env.NODE_ENV !== "development") {
+    throw new Error("ADMIN_BOOTSTRAP_NOT_ALLOWED");
+  }
+
+  if (!validateAdminData(data)) {
     throw new Error("INVALID_ADMIN_DATA");
   }
 
-  const sheets = await getGoogleSheetsClient();
-
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:J`,
-  });
-
-  const rows = response.data.values || [];
-
-  if (!rows.length) {
-    throw new Error("USERS_HEADER_NOT_FOUND");
+  if (!SPREADSHEET_ID) {
+    throw new Error("GOOGLE_SHEETS_SPREADSHEET_ID_MISSING");
   }
 
-  const validHeaders = rows[0].length === HEADERS.length && HEADERS.every((header, index) => rows[0][index] === header);
+  const bootstrapAvailable = await isUserBootstrapAvailable();
 
-  if (!validHeaders) {
-    throw new Error("USERS_HEADER_INVALID");
-  }
-
-  if (rows.length > 1) {
+  if (!bootstrapAvailable) {
     throw new Error("ADMIN_BOOTSTRAP_ALREADY_USED");
   }
 
-  const now = new Date().toISOString();
+  const sheets = await getGoogleSheetsClient();
+  const timestamp = new Date().toISOString();
 
-  const adminData = [randomUUID(), data.auth_user_id.trim(), data.username.trim(), data.email.trim().toLowerCase(), data.full_name.trim(), data.gender, "Administrator", "active", now, now];
+  const adminData = [
+    randomUUID(),
+    data.auth_user_id.trim(),
+    data.username.trim(),
+    data.email.trim().toLowerCase(),
+    data.full_name.trim(),
+    data.gender,
+    "Administrator",
+    "active",
+    timestamp,
+    timestamp,
+  ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:J`,
+    range: "Users!A:J",
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: {

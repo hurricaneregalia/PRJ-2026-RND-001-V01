@@ -1,80 +1,120 @@
+// src/app/admin/classes/class-management.js
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 import { createClassAction, updateClassAction } from "./actions";
 
 export default function ClassManagement({ classes }) {
+  const router = useRouter();
+
   const [className, setClassName] = useState("");
   const [editingClassId, setEditingClassId] = useState("");
   const [editingClassName, setEditingClassName] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleCreate(event) {
     event.preventDefault();
+
     setLoading(true);
     setMessage("");
+    setMessageType("");
 
-    const result = await createClassAction({
-      class_name: className,
-      class_status: "active",
-    });
+    try {
+      const result = await createClassAction({
+        class_name: className,
+        class_status: "active",
+      });
 
-    setLoading(false);
+      if (!result.success) {
+        setMessage(result.error);
+        setMessageType("error");
+        return;
+      }
 
-    if (!result.success) {
-      setMessage(result.error);
-      return;
+      setMessage(result.message);
+      setMessageType("success");
+      setClassName("");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Create class failed:", error);
+      setMessage("Terjadi kesalahan saat membuat kelas.");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(result.message);
-    setClassName("");
-    window.location.reload();
   }
 
   async function handleUpdateName(classId) {
     if (!editingClassName.trim()) {
       setMessage("Nama kelas wajib diisi.");
+      setMessageType("error");
       return;
     }
 
     setLoading(true);
     setMessage("");
+    setMessageType("");
 
-    const result = await updateClassAction(classId, {
-      class_name: editingClassName.trim(),
-    });
+    try {
+      const result = await updateClassAction(classId, {
+        class_name: editingClassName.trim(),
+      });
 
-    setLoading(false);
+      if (!result.success) {
+        setMessage(result.error);
+        setMessageType("error");
+        return;
+      }
 
-    if (!result.success) {
-      setMessage(result.error);
-      return;
+      setMessage(result.message);
+      setMessageType("success");
+
+      setEditingClassId("");
+      setEditingClassName("");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Update class name failed:", error);
+      setMessage("Terjadi kesalahan saat mengubah nama kelas.");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(result.message);
-    setEditingClassId("");
-    setEditingClassName("");
-    window.location.reload();
   }
 
   async function handleStatusChange(classId, status) {
     setLoading(true);
     setMessage("");
+    setMessageType("");
 
-    const result = await updateClassAction(classId, {
-      class_status: status,
-    });
+    try {
+      const result = await updateClassAction(classId, {
+        class_status: status,
+      });
 
-    setLoading(false);
+      if (!result.success) {
+        setMessage(result.error);
+        setMessageType("error");
+        return;
+      }
 
-    if (!result.success) {
-      setMessage(result.error);
-      return;
+      setMessage(result.message);
+      setMessageType("success");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Update class status failed:", error);
+      setMessage("Terjadi kesalahan saat mengubah status kelas.");
+      setMessageType("error");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(result.message);
-    window.location.reload();
   }
 
   return (
@@ -97,7 +137,7 @@ export default function ClassManagement({ classes }) {
         </form>
       </section>
 
-      {message && <p role="status">{message}</p>}
+      {message && <p role={messageType === "error" ? "alert" : "status"}>{message}</p>}
 
       <section>
         <h2>Daftar Kelas</h2>
@@ -109,13 +149,17 @@ export default function ClassManagement({ classes }) {
             {classes.map((item) => (
               <li key={item.class_id}>
                 <section>
+                  <p>
+                    <Link href={`/admin/classes/${item.class_id}`}>Lihat Detail</Link>
+                  </p>
+
                   {editingClassId === item.class_id ? (
                     <>
                       <p>
-                        <label>Nama Kelas</label>
+                        <label htmlFor={`edit-${item.class_id}`}>Nama Kelas</label>
                       </p>
 
-                      <input type="text" value={editingClassName} onChange={(event) => setEditingClassName(event.target.value)} maxLength={100} required />
+                      <input id={`edit-${item.class_id}`} type="text" value={editingClassName} onChange={(event) => setEditingClassName(event.target.value)} maxLength={100} required />
 
                       <p>
                         <button type="button" disabled={loading} onClick={() => handleUpdateName(item.class_id)}>
@@ -147,6 +191,7 @@ export default function ClassManagement({ classes }) {
                           setEditingClassId(item.class_id);
                           setEditingClassName(item.class_name);
                           setMessage("");
+                          setMessageType("");
                         }}
                       >
                         Ubah Nama Kelas

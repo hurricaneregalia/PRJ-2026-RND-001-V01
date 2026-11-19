@@ -1,21 +1,13 @@
-ini maksud kamu?
-
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
 
 ## SISTEM ABSENSI SEKOLAH TERPUSAT
 
-**Identitas Dokumen**
-
-| Informasi           | Keterangan                      |
-| ------------------- | ------------------------------- |
-| Project ID          | PRJ-2026-RND-001-V01            |
-| Nama Produk         | Sistem Absensi Sekolah Terpusat |
-| Dokumen             | Product Requirements Document   |
-| Versi               | 1.0                             |
-| Tanggal             | 17 November 2026                |
-| Status              | Finalisasi spesifikasi produk   |
-| Status Implementasi | Belum dimulai                   |
-| Bahasa              | Indonesia                       |
+**Project ID:** PRJ-2026-RND-001-V01  
+**Versi:** 2.0  
+**Tanggal:** 19 November 2026  
+**Status:** Spesifikasi produk  
+**Status Implementasi:** Tahap 6 sedang berjalan  
+**Bahasa:** Indonesia
 
 ---
 
@@ -25,7 +17,7 @@ ini maksud kamu?
 
 Sekolah membutuhkan sistem absensi terpusat yang dapat digunakan administrator dan guru untuk mengelola kehadiran siswa secara digital.
 
-Sistem harus menyediakan akses bagi siswa, orang tua, dan masyarakat untuk melihat informasi kehadiran tanpa harus memiliki akun.
+Sistem menyediakan akses bagi siswa, orang tua, dan masyarakat untuk melihat informasi kehadiran yang diizinkan tanpa harus memiliki akun.
 
 Aplikasi dirancang agar mudah digunakan melalui smartphone, memiliki pembatasan akses berdasarkan peran, menyimpan riwayat perubahan, serta memungkinkan migrasi database pada masa mendatang.
 
@@ -38,7 +30,9 @@ Aplikasi dirancang agar mudah digunakan melalui smartphone, memiliki pembatasan 
 5. Membantu guru mengidentifikasi siswa dengan ketidakhadiran Alpa berulang.
 6. Menyediakan statistik kehadiran untuk administrator dan guru.
 7. Mempertahankan riwayat data siswa, kelas, penugasan, dan absensi.
-8. Menyiapkan arsitektur yang memungkinkan migrasi Google Spreadsheet ke PostgreSQL.
+8. Menyiapkan arsitektur yang memungkinkan migrasi Google Sheets ke PostgreSQL.
+
+---
 
 # 2. RUANG LINGKUP PRODUK
 
@@ -48,17 +42,19 @@ Aplikasi dirancang agar mudah digunakan melalui smartphone, memiliki pembatasan 
 - Manajemen pengguna.
 - Manajemen siswa.
 - Manajemen kelas.
-- Manajemen tahun ajaran.
+- Perhitungan tahun ajaran otomatis.
 - Manajemen keanggotaan siswa dalam kelas.
 - Manajemen penugasan guru.
 - Pembuatan dan pengelolaan absensi.
-- Audit perubahan dan penghapusan absensi.
+- Informasi lokasi pelaksanaan pembelajaran.
+- Informasi materi pelajaran.
+- Audit perubahan absensi.
 - Dashboard administrator.
 - Dashboard guru.
 - Halaman publik untuk pencarian absensi siswa.
 - Daftar perhatian kehadiran.
 - Persiapan pesan WhatsApp.
-- Statistik dan grafik kehadiran.
+- Statistik kehadiran.
 - Pengelolaan informasi sekolah.
 - Backup dan pemulihan data.
 
@@ -68,12 +64,15 @@ Hal-hal berikut tidak menjadi bagian dari ruang lingkup awal:
 
 - Pengiriman WhatsApp otomatis melalui WhatsApp Business API.
 - Sistem pendaftaran akun publik.
-- Penghapusan permanen data siswa, guru, kelas, dan tahun ajaran.
+- Penghapusan permanen data siswa, guru, kelas, dan pengguna.
 - Sistem pembayaran sekolah.
 - Sistem penilaian akademik.
-- Sistem pengelolaan jadwal pelajaran.
+- Sistem pengelolaan jadwal pelajaran otomatis.
 - Aplikasi native Android atau iOS.
 - Migrasi langsung ke PostgreSQL pada implementasi pertama.
+- Pengelolaan tahun ajaran secara manual.
+
+---
 
 # 3. PENGGUNA DAN HAK AKSES
 
@@ -84,18 +83,18 @@ Sistem memiliki tiga kategori pengguna.
 Administrator memiliki kewenangan untuk:
 
 - Mengelola informasi sekolah.
-- Mengelola tahun ajaran.
 - Mengelola pengguna.
 - Mengelola data guru.
 - Mengelola data siswa.
 - Mengelola kelas.
 - Mengelola keanggotaan siswa.
 - Mengelola penugasan guru.
-- Melakukan kenaikan kelas.
 - Melihat seluruh absensi.
-- Mengedit dan menghapus seluruh absensi.
+- Mengedit dan menghapus absensi.
 - Melihat audit log.
-- Melihat dashboard dan statistik seluruh kelas aktif.
+- Melihat dashboard dan statistik seluruh kelas.
+
+Tahun ajaran tidak dikelola secara manual oleh administrator.
 
 ## 3.2 Guru
 
@@ -105,12 +104,13 @@ Guru memiliki kewenangan untuk:
 - Membuat absensi kelas yang menjadi tanggung jawabnya.
 - Melihat absensi yang dibuatnya.
 - Mengedit absensi yang dibuatnya sendiri.
-- Menghapus absensi yang dibuatnya sendiri melalui prosedur konfirmasi.
+- Mengubah status kehadiran siswa.
+- Memperbarui lokasi dan materi pembelajaran.
 - Melihat daftar perhatian kehadiran.
 - Menyiapkan pesan WhatsApp untuk orang tua siswa.
 - Melihat statistik kelas yang menjadi tanggung jawabnya.
 
-Guru tidak memiliki menu untuk mengelola kelas lain atau absensi yang dibuat guru lain.
+Guru tidak memiliki akses untuk mengelola kelas lain atau absensi yang dibuat guru lain.
 
 Setiap permintaan backend tetap diperiksa berdasarkan penugasan dan kepemilikan sesi absensi.
 
@@ -126,6 +126,8 @@ Publik terdiri dari:
 Publik dapat mencari siswa berdasarkan nama dan melihat riwayat absensi yang diizinkan.
 
 Publik tidak membutuhkan login.
+
+---
 
 # 4. AUTENTIKASI DAN OTORISASI
 
@@ -158,7 +160,9 @@ Setelah administrator pertama berhasil dibuat, mekanisme bootstrap harus dinonak
 - Role dan status akun berasal dari database.
 - Service Account Google hanya digunakan di backend.
 - Kredensial tidak boleh dikirim ke frontend.
-- Akun inactive harus kehilangan akses pada pemeriksaan permintaan terlindungi berikutnya atau sesuai mekanisme pembaruan sesi yang ditetapkan.
+- Akun inactive tidak boleh mengakses halaman dan layanan yang dilindungi.
+
+---
 
 # 5. KEBUTUHAN FUNGSIONAL
 
@@ -172,37 +176,48 @@ Administrator dapat mengelola:
 - Email sekolah.
 - Logo sekolah.
 - Nama kepala sekolah.
-- Tahun ajaran aktif.
-
-Tabel School_Information hanya memiliki satu baris data.
-
-Hanya administrator yang dapat mengakses dan mengubah informasi sekolah.
-
-## 5.2 Manajemen Tahun Ajaran
-
-Administrator dapat:
-
-- Membuat tahun ajaran.
-- Menentukan tanggal mulai.
-- Menentukan tanggal berakhir.
-- Mengaktifkan tahun ajaran.
-- Menonaktifkan tahun ajaran melalui pergantian tahun ajaran aktif.
 
 Ketentuan:
 
-1. Hanya satu tahun ajaran aktif.
-2. Tahun ajaran berikutnya dapat dibuat sebelum tahun ajaran sekarang berakhir.
-3. Tahun ajaran yang dibuat tidak otomatis menjadi aktif.
-4. Periode tahun ajaran tidak boleh bertumpang tindih.
-5. Tanggal mulai tidak boleh melewati tanggal berakhir.
+- School_Information hanya memiliki satu baris data.
+- Hanya administrator yang dapat mengubah informasi sekolah.
+- Informasi tahun ajaran aktif tidak disimpan di School_Information.
 
-### Sumber Kebenaran Tahun Ajaran Aktif
+## 5.2 Perhitungan Tahun Ajaran Otomatis
 
-`School_Information.active_academic_year_id` merupakan satu-satunya sumber kebenaran untuk menentukan tahun ajaran aktif.
+Tahun ajaran ditentukan secara otomatis berdasarkan tanggal kalender dengan zona waktu Asia/Jakarta.
 
-`Academic_Years.academic_year_status` tetap dipertahankan dan harus disinkronkan dengan acuan tersebut.
+Ketentuan:
 
-Pergantian tahun ajaran harus dikelola backend sebagai satu operasi yang konsisten.
+1. Tahun ajaran dimulai pada 1 Juli.
+2. Tahun ajaran berakhir pada 30 Juni tahun berikutnya.
+3. Sistem menghitung tahun ajaran berdasarkan tanggal absensi.
+4. Tidak ada proses pembuatan tahun ajaran secara manual.
+5. Tidak ada proses aktivasi atau deaktivasi tahun ajaran.
+6. Tidak diperlukan tabel Academic_Years.
+7. Pergantian tanggal 30 Juni ke 1 Juli berlangsung otomatis berdasarkan perhitungan tanggal.
+
+Contoh:
+
+| Tanggal          | Tahun Ajaran |
+| ---------------- | ------------ |
+| 30 Juni 2026     | 2025/2026    |
+| 1 Juli 2026      | 2026/2027    |
+| 19 November 2026 | 2026/2027    |
+| 30 Juni 2027     | 2026/2027    |
+| 1 Juli 2027      | 2027/2028    |
+
+Format identifier tahun ajaran:
+
+`YYYY/YYYY`
+
+Contoh:
+
+`2026/2027`
+
+Identifier tersebut disimpan pada Attendance_Sessions melalui kolom `academic_year_id`.
+
+Nilai tahun ajaran harus dihitung berdasarkan `attendance_date`, bukan tanggal saat data dibaca atau laporan dibuka.
 
 ## 5.3 Manajemen Pengguna dan Guru
 
@@ -220,12 +235,14 @@ Pengguna tidak boleh dihapus permanen.
 
 Ketentuan:
 
-- Satu kelas hanya memiliki satu guru penanggung jawab pada waktu yang sama.
-- Satu guru maksimal bertanggung jawab atas dua kelas secara bersamaan.
-- Guru yang sudah menangani dua kelas tidak muncul dalam pilihan penugasan baru.
-- Guru inactive tidak dapat menerima penugasan baru.
-- Penugasan menggunakan effective dates.
-- Riwayat penugasan tidak boleh ditimpa.
+1. Satu kelas hanya memiliki satu guru penanggung jawab pada waktu yang sama.
+2. Satu guru maksimal bertanggung jawab atas dua kelas secara bersamaan.
+3. Guru yang sudah menangani dua kelas tidak dapat menerima penugasan baru yang menyebabkan jumlah penugasan aktif melebihi dua.
+4. Guru inactive tidak dapat menerima penugasan baru.
+5. Penugasan menggunakan effective dates.
+6. Riwayat penugasan tidak boleh ditimpa.
+7. Penugasan tidak dibatasi oleh periode tahun ajaran.
+8. Penugasan dapat berlangsung melewati pergantian tahun ajaran.
 
 `effective_to` merupakan tanggal akhir yang inklusif.
 
@@ -264,7 +281,7 @@ Status siswa:
 
 Data siswa tidak dapat dihapus permanen.
 
-Perubahan informasi kontak orang tua dicatat melalui Student_Contact_Logs dengan menyimpan snapshot data sebelumnya sesuai kebutuhan riwayat komunikasi.
+Perubahan informasi kontak orang tua dicatat melalui Student_Contact_Logs sesuai kebutuhan riwayat komunikasi.
 
 ## 5.6 Manajemen Kelas
 
@@ -275,13 +292,14 @@ Administrator dapat:
 - Mengaktifkan kelas.
 - Menonaktifkan kelas.
 
-Nama kelas boleh digunakan kembali pada tahun ajaran berbeda.
+Ketentuan:
 
-Setiap kelas memiliki class_id berbeda.
-
-Kombinasi academic_year_id dan class_name harus unik.
-
-Kelas tidak dapat dihapus permanen.
+1. Kelas tidak terikat pada tahun ajaran tertentu.
+2. class_id bersifat permanen dan stabil.
+3. Kelas yang sama dapat digunakan kembali pada tahun ajaran berikutnya.
+4. Nama kelas harus unik.
+5. Kelas tidak dapat dihapus permanen.
+6. Perubahan status kelas tidak menghapus riwayat kelas dan absensi.
 
 ## 5.7 Keanggotaan Siswa dalam Kelas
 
@@ -294,30 +312,35 @@ Ketentuan:
 - Satu siswa tidak boleh memiliki keanggotaan kelas yang bertumpang tindih.
 - Perpindahan kelas tidak mengubah student_id.
 - Keanggotaan lama ditutup dan keanggotaan baru dibuat.
+- Periode keanggotaan dapat melewati pergantian tahun ajaran.
+- Riwayat keanggotaan tidak boleh ditimpa.
 
-## 5.8 Kenaikan Kelas
+## 5.8 Kenaikan dan Perpindahan Kelas
 
-Administrator membuat tahun ajaran dan kelas baru terlebih dahulu.
+Kenaikan kelas dilakukan melalui perubahan keanggotaan siswa.
 
 Alur:
 
 1. Administrator memilih kelas asal.
-2. Administrator memilih kelas tujuan.
-3. Sistem menampilkan seluruh siswa.
-4. Semua siswa otomatis dicentang.
-5. Siswa yang dicentang naik ke kelas tujuan.
-6. Siswa yang tidak dicentang tetap pada tingkat kelas yang sama di tahun ajaran baru.
-7. Administrator dapat mengubah kelas tujuan masing-masing siswa.
-8. Sistem menampilkan preview.
-9. Administrator melakukan konfirmasi.
-10. Sistem memproses kenaikan kelas secara konsisten.
+2. Sistem menampilkan siswa yang masih menjadi anggota kelas tersebut.
+3. Administrator memilih kelas tujuan.
+4. Sistem menampilkan daftar siswa dan perubahan yang akan dilakukan.
+5. Administrator dapat mengubah tujuan masing-masing siswa.
+6. Sistem menampilkan preview.
+7. Administrator melakukan konfirmasi.
+8. Sistem menutup keanggotaan lama.
+9. Sistem membuat keanggotaan baru.
+10. Sistem mempertahankan seluruh riwayat sebelumnya.
 
 Ketentuan teknis:
 
 - student_id tetap sama.
-- Membership lama ditutup sehari sebelum tahun ajaran baru dimulai.
-- Membership baru dimulai pada tanggal mulai tahun ajaran baru.
+- Membership lama ditutup pada tanggal yang sesuai.
+- Membership baru dimulai pada tanggal efektif perpindahan.
+- Tidak boleh ada periode keanggotaan yang bertumpang tindih.
 - Kegagalan operasi tidak boleh meninggalkan perubahan sebagian.
+
+Proses kenaikan kelas tidak memerlukan pembuatan kelas baru apabila kelas tujuan sudah tersedia.
 
 ## 5.9 Pembuatan Absensi
 
@@ -330,69 +353,138 @@ Status absensi:
 
 Ketentuan:
 
-1. Satu hari dihitung sebagai satu pertemuan.
-2. Satu kelas hanya boleh memiliki satu sesi absensi per hari.
-3. Tanggal absensi dibuat otomatis oleh backend.
-4. Zona waktu menggunakan Asia/Jakarta.
-5. Guru tidak memilih tanggal absensi secara manual.
-6. Semua siswa otomatis berstatus Hadir.
-7. Guru mengubah status siswa yang tidak hadir.
-8. Data baru disimpan setelah proses dikonfirmasi.
-9. Formulir yang belum disimpan tidak menghasilkan record absensi.
-10. Jika sesi hari tersebut sudah tersedia, guru diarahkan ke sesi tersebut.
+1. Guru membuat absensi pada tanggal pertemuan yang benar-benar berlangsung.
+2. Tanggal absensi ditentukan otomatis oleh backend.
+3. Zona waktu menggunakan Asia/Jakarta.
+4. Guru tidak memilih tanggal absensi secara manual.
+5. Maksimal satu sesi absensi untuk kombinasi guru dan kelas dalam satu minggu kalender.
+6. Minggu kalender dihitung dari Senin sampai Minggu.
+7. Pergeseran jadwal pertemuan diperbolehkan berdasarkan kesepakatan guru dan sekolah.
+8. Jika pertemuan pada jadwal biasa tidak berlangsung, guru dapat membuat absensi pada tanggal pengganti.
+9. Tidak diperlukan pencatatan pembatalan apabila tidak ada sesi absensi yang dibuat.
+10. Sesi kedua untuk guru dan kelas yang sama dalam minggu kalender yang sama tidak diperbolehkan.
+11. Semua siswa yang termasuk dalam keanggotaan kelas pada tanggal pertemuan menjadi dasar pembuatan absensi.
+12. Semua siswa secara default berstatus Hadir.
+13. Guru mengubah status siswa yang tidak hadir.
+14. Data baru disimpan setelah proses dikonfirmasi.
+15. Formulir yang belum disimpan tidak menghasilkan record absensi.
 
-Kolom lokasi:
+Pemeriksaan batas minggu menggunakan zona waktu Asia/Jakarta:
 
-- location_name wajib diisi.
-- location_note opsional.
-- location_name memiliki nilai awal berupa ruang kelas reguler.
+- Awal minggu: Senin pukul 00.00.
+- Akhir minggu: Minggu pukul 23.59.59.
 
-## 5.10 Pengeditan Absensi
+Identitas sesi absensi harus mempertimbangkan:
+
+- teacher_user_id
+- class_id
+- Minggu kalender berdasarkan attendance_date
+
+## 5.10 Lokasi Pelaksanaan Pembelajaran
+
+Setiap Attendance_Sessions menyimpan informasi lokasi pembelajaran.
+
+Kolom:
+
+- location_name
+- location_note
+
+Ketentuan:
+
+1. Lokasi dapat berupa ruang kelas.
+2. Lokasi dapat berupa tempat lain di dalam area sekolah.
+3. Lokasi dapat berupa tempat di luar area sekolah.
+4. location_name menyimpan nama lokasi.
+5. location_note menyimpan keterangan tambahan apabila diperlukan.
+6. Lokasi dapat diubah setelah sesi absensi dibuat.
+7. Perubahan lokasi harus dicatat dalam Attendance_Audit_Logs.
+
+Contoh:
+
+- Ruang Kelas 1.
+- Laboratorium Komputer.
+- Perpustakaan.
+- Lapangan Sekolah.
+- Rumah Siswa.
+- Lokasi kegiatan di luar sekolah.
+
+## 5.11 Materi Pelajaran
+
+Setiap Attendance_Sessions menyimpan informasi materi pembelajaran melalui kolom `lesson_material`.
+
+Ketentuan:
+
+1. Guru mengisi materi yang diajarkan pada pertemuan tersebut.
+2. Materi dapat berbeda pada setiap pertemuan.
+3. Materi dapat diperbarui setelah absensi dibuat.
+4. Perubahan materi harus dicatat dalam Attendance_Audit_Logs.
+5. Materi pelajaran merupakan bagian dari riwayat kegiatan pembelajaran.
+
+Contoh:
+
+| Pertemuan | Materi                              |
+| --------- | ----------------------------------- |
+| Minggu 1  | Belajar komputer Microsoft Word     |
+| Minggu 2  | Belajar mencetak dokumen ke printer |
+| Minggu 3  | Membuat dan menyimpan dokumen       |
+| Minggu 4  | Latihan pengolahan dokumen          |
+
+## 5.12 Pengeditan Absensi
 
 - Guru dapat mengedit absensi yang dibuatnya sendiri.
 - Administrator dapat mengedit seluruh absensi.
 - Pengeditan menggunakan session_id yang sama.
 - Tidak ada batas waktu pengeditan yang disepakati.
-- Perubahan harus dicatat dalam Attendance_Audit_Logs.
-- Jika audit gagal disimpan, perubahan dibatalkan.
+- Status kehadiran siswa dapat dikoreksi berkali-kali.
+- Lokasi pembelajaran dapat diubah.
+- Materi pelajaran dapat diubah.
+- Setiap perubahan harus dicatat dalam Attendance_Audit_Logs.
+- Audit menyimpan data sebelum dan sesudah perubahan.
+- Jika audit gagal disimpan, perubahan tidak boleh dinyatakan berhasil.
 
-## 5.11 Penghapusan Absensi
+## 5.13 Penghapusan Absensi
 
-Hanya absensi yang boleh dihapus permanen.
+Hanya data absensi yang boleh dihapus permanen sesuai prosedur.
 
 Prosedur:
 
-1. Pengguna menekan tombol hapus.
-2. Sistem menampilkan dialog penghapusan permanen.
+1. Pengguna memilih penghapusan absensi.
+2. Sistem menampilkan konfirmasi penghapusan permanen.
 3. Pengguna memasukkan alasan.
-4. Sistem menampilkan frasa konfirmasi yang diwajibkan.
-5. Pengguna mengetik frasa tersebut.
-6. Tombol konfirmasi hanya aktif jika frasa cocok.
-7. Sistem menyimpan audit.
-8. Setelah audit berhasil, sesi dan seluruh record siswa dihapus.
+4. Sistem meminta konfirmasi sesuai prosedur.
+5. Sistem menyimpan audit.
+6. Setelah audit berhasil, sesi dan seluruh record siswa dihapus.
 
 Penghapusan harus konsisten.
 
 Jika audit gagal, penghapusan tidak dilanjutkan.
 
-## 5.12 Audit Absensi
+Penghapusan permanen tidak berlaku untuk data siswa, pengguna, kelas, dan riwayat administratif.
+
+## 5.14 Audit Absensi
 
 Attendance_Audit_Logs mencatat:
 
-- UPDATE.
-- DELETE.
+- Perubahan status kehadiran siswa.
+- Perubahan lokasi pembelajaran.
+- Perubahan keterangan lokasi.
+- Perubahan materi pelajaran.
+- Penghapusan sesi absensi.
+- Penghapusan record kehadiran siswa.
 
-CREATE tidak dicatat.
+Ketentuan:
 
-Ketika sesi dihapus:
+1. Setiap koreksi status harus menghasilkan catatan audit.
+2. Koreksi dapat dilakukan berkali-kali.
+3. Setiap perubahan menyimpan snapshot data sebelum dan sesudah perubahan.
+4. Audit menyimpan actor_user_id.
+5. Audit menyimpan alasan perubahan apabila diwajibkan.
+6. Audit tidak boleh diubah atau dihapus melalui aplikasi.
+7. Audit penghapusan harus tersimpan sebelum data absensi dihapus.
 
-- Satu audit untuk sesi absensi.
-- Satu audit terpisah untuk setiap Attendance_Record yang dihapus.
-- Snapshot seluruh data disimpan sebelum penghapusan.
+ID sesi dan record dalam audit bersifat historis agar audit tetap tersedia setelah data absensi dihapus.
 
-ID sesi dan record dalam audit bersifat historis, bukan foreign key.
-
-## 5.13 Halaman Publik
+## 5.15 Halaman Publik
 
 URL publik direncanakan menggunakan:
 
@@ -403,14 +495,16 @@ Fitur:
 - Pencarian berdasarkan nama siswa.
 - Mendukung pencarian sebagian nama.
 - Menampilkan seluruh hasil jika terdapat nama yang sama.
-- Menampilkan kelas dan guru penanggung jawab.
+- Menampilkan kelas dan guru penanggung jawab sesuai informasi yang diizinkan.
 - Menampilkan riwayat absensi.
 - Menampilkan rekap Hadir, Sakit, Izin, dan Alpa.
+- Menampilkan lokasi dan materi pembelajaran apabila ditetapkan sebagai informasi publik.
 
 Periode:
 
 - Default 30 hari terakhir.
-- Pengguna dapat memilih bulan Januari sampai Desember.
+- Pengguna dapat memilih periode yang tersedia.
+- Riwayat dapat difilter berdasarkan tahun ajaran.
 
 Informasi publik tidak boleh mencakup:
 
@@ -419,13 +513,13 @@ Informasi publik tidak boleh mencakup:
 - Informasi sensitif orang tua.
 - Informasi administratif internal.
 
-Siswa yang graduated atau transferred tetap dapat dicari untuk melihat riwayat kehadiran.
+Siswa dengan status graduated atau transferred tetap dapat dicari untuk melihat riwayat kehadiran.
 
 Tidak adanya sesi absensi bukan berarti siswa Alpa.
 
 URL publik dapat dibagikan dan menggunakan query parameters untuk mempertahankan pencarian serta periode.
 
-## 5.14 Daftar Perhatian Kehadiran
+## 5.16 Daftar Perhatian Kehadiran
 
 Dashboard guru memiliki halaman Daftar Perhatian Kehadiran.
 
@@ -443,7 +537,7 @@ Informasi:
 - Jumlah Alpa.
 - Aksi menyiapkan laporan.
 
-## 5.15 Integrasi WhatsApp
+## 5.17 Integrasi WhatsApp
 
 Guru dapat menyiapkan pesan WhatsApp untuk orang tua siswa.
 
@@ -465,18 +559,20 @@ Aktivitas disimpan di Student_Contact_Logs dengan status:
 - prepared
 - whatsapp_open_requested
 
-## 5.16 Dashboard Administrator
+## 5.18 Dashboard Administrator
 
-Menampilkan statistik seluruh kelas aktif pada tahun ajaran aktif.
+Menampilkan statistik seluruh kelas aktif.
+
+Statistik dapat difilter berdasarkan periode dan tahun ajaran.
 
 Grafik:
 
-- Komposisi Hadir, Sakit, Izin, Alpa.
-- Tren kehadiran harian.
+- Komposisi Hadir, Sakit, Izin, dan Alpa.
+- Tren kehadiran.
 - Perbandingan antar kelas.
 - Ringkasan masing-masing kelas.
 
-## 5.17 Dashboard Guru
+## 5.19 Dashboard Guru
 
 Menampilkan statistik kelas yang menjadi tanggung jawab guru.
 
@@ -484,46 +580,50 @@ Guru maksimal memiliki dua kelas yang ditugaskan secara bersamaan.
 
 Grafik:
 
-- Komposisi Hadir, Sakit, Izin, Alpa.
-- Tren kehadiran harian.
+- Komposisi Hadir, Sakit, Izin, dan Alpa.
+- Tren kehadiran.
 - Ringkasan per kelas.
 
-## 5.18 Aturan Perhitungan Statistik
+## 5.20 Aturan Perhitungan Statistik
 
 - Data dihitung dari sesi dan record absensi yang tersimpan.
 - Hari tanpa sesi tidak dihitung sebagai Alpa.
 - Denominator menggunakan jumlah Attendance_Records yang valid.
-- Statistik mengikuti tahun ajaran aktif.
+- Statistik dapat difilter berdasarkan tahun ajaran.
+- Tahun ajaran setiap sesi mengikuti academic_year_id yang tersimpan pada saat sesi dibuat.
+- Riwayat tahun ajaran tidak berubah ketika tahun ajaran berjalan berganti.
 
 Endpoint yang direncanakan:
 
 - GET /api/dashboard/admin
 - GET /api/dashboard/teacher
 
+---
+
 # 6. STRUKTUR DATABASE
 
-Sistem menggunakan 12 tabel.
+Sistem menggunakan 11 tabel.
 
 | No. | Tabel                     | Fungsi               |
 | --- | ------------------------- | -------------------- |
 | 1   | Users                     | Pengguna sistem      |
 | 2   | Students                  | Data siswa           |
-| 3   | Academic_Years            | Tahun ajaran         |
-| 4   | Classes                   | Data kelas           |
-| 5   | Class_Members             | Keanggotaan siswa    |
-| 6   | Teacher_Assignments       | Penugasan guru       |
-| 7   | Attendance_Sessions       | Sesi absensi         |
-| 8   | Attendance_Records        | Data kehadiran siswa |
-| 9   | Attendance_Audit_Logs     | Audit absensi        |
-| 10  | Student_Contact_Logs      | Riwayat komunikasi   |
-| 11  | School_Information        | Informasi sekolah    |
-| 12  | Administrative_Audit_Logs | Audit administrasi   |
+| 3   | Classes                   | Data kelas           |
+| 4   | Class_Members             | Keanggotaan siswa    |
+| 5   | Teacher_Assignments       | Penugasan guru       |
+| 6   | Attendance_Sessions       | Sesi absensi         |
+| 7   | Attendance_Records        | Data kehadiran siswa |
+| 8   | Attendance_Audit_Logs     | Audit absensi        |
+| 9   | Student_Contact_Logs      | Riwayat komunikasi   |
+| 10  | School_Information        | Informasi sekolah    |
+| 11  | Administrative_Audit_Logs | Audit administrasi   |
 
-## 6.1 Primary Key dan Relasi Utama
+Tidak terdapat tabel Academic_Years.
+
+## 6.1 Primary Key
 
 - Users.user_id
 - Students.student_id
-- Academic_Years.academic_year_id
 - Classes.class_id
 - Class_Members.membership_id
 - Teacher_Assignments.assignment_id
@@ -534,7 +634,7 @@ Sistem menggunakan 12 tabel.
 - School_Information.school_id
 - Administrative_Audit_Logs.admin_audit_id
 
-## 6.2 Relasi
+## 6.2 Relasi Utama
 
 - Users 1:N Teacher_Assignments.
 - Users 1:N Attendance_Sessions.
@@ -544,30 +644,32 @@ Sistem menggunakan 12 tabel.
 - Students 1:N Class_Members.
 - Students 1:N Attendance_Records.
 - Students 1:N Student_Contact_Logs.
-- Academic_Years 1:N Classes.
 - Classes 1:N Class_Members.
 - Classes 1:N Teacher_Assignments.
 - Classes 1:N Attendance_Sessions.
 - Attendance_Sessions 1:N Attendance_Records.
 - Class_Members 1:N Attendance_Records.
 
-School_Information memiliki referensi ke tahun ajaran aktif.
+academic_year_id pada Attendance_Sessions merupakan identifier hasil perhitungan otomatis, bukan foreign key ke tabel Academic_Years.
 
-Attendance_Audit_Logs menyimpan ID sesi dan record secara historis tanpa foreign key agar audit tetap tersedia setelah data absensi dihapus.
+Attendance_Audit_Logs menyimpan ID sesi dan record secara historis agar audit tetap tersedia setelah data absensi dihapus.
 
 ## 6.3 Constraint Penting
 
 - UNIQUE Users.auth_user_id.
 - UNIQUE Users.username.
-- UNIQUE Classes(academic_year_id, class_name).
-- UNIQUE Attendance_Sessions(class_id, attendance_date).
+- UNIQUE Classes.class_name.
 - UNIQUE Attendance_Records(session_id, student_id).
+- Maksimal satu sesi untuk kombinasi teacher_user_id dan class_id dalam satu minggu kalender.
 - Effective date membership tidak boleh tumpang tindih.
-- Effective date penugasan harus memenuhi aturan satu guru per kelas dan maksimal dua kelas per guru.
+- Effective date penugasan harus memenuhi aturan satu guru per kelas.
+- Satu guru maksimal memiliki dua penugasan kelas yang aktif secara bersamaan.
 
 Validasi konsistensi relasi dilakukan backend pada Google Sheets.
 
 PostgreSQL nantinya dapat memperkuat integritas melalui foreign key, unique constraint, dan constraint tambahan.
+
+---
 
 # 7. PERSYARATAN ANTARMUKA
 
@@ -581,13 +683,15 @@ Ketentuan:
 - Menghindari tabel HTML tradisional sebagai tampilan utama.
 - Tidak mengandalkan horizontal scrolling.
 - Navigasi mudah digunakan.
-- Formulir absensi menampilkan siswa satu per satu.
+- Formulir absensi mudah digunakan pada smartphone.
 - Grafik responsif.
 - Tampilan tablet dan desktop menyesuaikan setelah pengalaman mobile terpenuhi.
 
 ## 7.2 Komponen Reusable
 
-Komponen yang direncanakan:
+Komponen dibuat sesuai kebutuhan implementasi, bukan seluruhnya sekaligus.
+
+Contoh komponen:
 
 - DataList.
 - SelectableList.
@@ -597,26 +701,15 @@ Komponen yang direncanakan:
 - Form.
 - Dialog.
 - Navigation.
-- StatCard.
 - AttendanceSummary.
 - AttendanceChart.
-- ClassComparisonChart.
 - AttendanceTrendChart.
-
-Komponen dibuat sesuai kebutuhan implementasi, bukan seluruhnya sekaligus.
 
 ## 7.3 Kebijakan Styling
 
-Tahap awal tidak menggunakan:
+Tahap awal tidak menggunakan styling tambahan sebelum fungsi utama selesai dan mendapatkan persetujuan pemilik proyek.
 
-- CSS custom.
-- Tailwind CSS.
-- daisyUI.
-- React Icons.
-- Lenis.
-- Animasi tambahan.
-
-Styling baru dilakukan setelah seluruh fungsi berjalan dengan baik dan mendapatkan persetujuan pemilik proyek.
+---
 
 # 8. PERSYARATAN NONFUNGSIONAL
 
@@ -642,6 +735,7 @@ Backend wajib menangani:
 - Idempotency.
 - Pemeriksaan hasil penyimpanan.
 - Pemulihan kegagalan operasi multi-sheet.
+- Konsistensi penyimpanan data dan audit.
 
 ## 8.3 Performa
 
@@ -667,6 +761,8 @@ Log internal tidak boleh memuat kredensial atau informasi rahasia.
 - Validasi data setelah pemulihan.
 - Pemulihan dilakukan terlebih dahulu pada salinan.
 
+---
+
 # 9. TEKNOLOGI DAN ARSITEKTUR
 
 | Komponen            | Teknologi             |
@@ -676,35 +772,34 @@ Log internal tidak boleh memuat kredensial atau informasi rahasia.
 | Bahasa              | JavaScript            |
 | Authentication      | Auth.js               |
 | OAuth               | Google OAuth          |
-| Database awal       | Google Spreadsheet    |
+| Database awal       | Google Sheets         |
 | Integrasi database  | Google Sheets API     |
-| Validasi            | Zod                   |
 | Hosting             | Vercel                |
 | Repository          | GitHub                |
 | Database berikutnya | PostgreSQL            |
 
 ## 9.1 Arsitektur
 
-Frontend berkomunikasi dengan backend melalui API.
+Arsitektur menggunakan pemisahan tanggung jawab:
 
-Backend terdiri dari:
-
-- API Route Handlers.
-- Authentication dan Authorization.
-- Validation.
-- Business Logic / Services.
-- Repository.
-- Database Adapter.
+1. Next.js App Router.
+2. Authentication dan Authorization.
+3. Validation.
+4. Business Logic / Services.
+5. Repository.
+6. Database Adapter.
 
 Frontend tidak boleh mengakses Google Sheets API secara langsung.
 
 ## 9.2 Repository Pattern
 
-Setiap tabel memiliki repository tersendiri.
+Setiap tabel memiliki repository tersendiri sesuai kebutuhan.
 
-Repository Google Sheets dan PostgreSQL harus mengikuti kontrak fungsi yang sama.
+Repository Google Sheets dan PostgreSQL harus dapat mengikuti kontrak fungsi yang sama.
 
 Business logic tidak boleh bergantung langsung pada implementasi database tertentu.
+
+---
 
 # 10. MIGRASI DATABASE
 
@@ -716,8 +811,10 @@ Migrasi ke PostgreSQL harus mempertahankan:
 - Riwayat kelas.
 - Riwayat penugasan guru.
 - Riwayat absensi.
+- Informasi lokasi dan materi pembelajaran.
 - Audit log.
 - Relasi antartabel.
+- Identifier tahun ajaran pada sesi absensi.
 - Aturan bisnis.
 
 Urutan migrasi mengikuti ketergantungan relasi.
@@ -728,11 +825,14 @@ Setelah migrasi:
 2. Validasi ID.
 3. Validasi foreign key.
 4. Validasi effective dates.
-5. Bandingkan statistik.
-6. Uji seluruh fungsi.
-7. Alihkan database melalui konfigurasi.
+5. Validasi aturan satu pertemuan per minggu.
+6. Bandingkan statistik.
+7. Uji seluruh fungsi.
+8. Alihkan database melalui konfigurasi.
 
 Hindari dual-write selama proses perpindahan.
+
+---
 
 # 11. DEPLOYMENT
 
@@ -744,9 +844,7 @@ Repository GitHub menjadi tempat penyimpanan source code.
 
 Repository dihubungkan ke Vercel.
 
-Setiap push ke branch production memicu build dan deployment otomatis.
-
-Website menggunakan domain bawaan Vercel.
+Setiap push ke branch production memicu build dan deployment otomatis sesuai konfigurasi.
 
 ## 11.3 Environment Variables
 
@@ -763,6 +861,8 @@ Konfigurasi penting:
 - APP_BASE_URL.
 
 Nilai rahasia disimpan di konfigurasi Vercel, bukan di GitHub.
+
+---
 
 # 12. PENGUJIAN DAN KRITERIA PENERIMAAN
 
@@ -783,53 +883,67 @@ Aplikasi dinyatakan siap digunakan apabila:
 1. Administrator dan guru dapat login dengan benar.
 2. Dashboard guru hanya menampilkan kelas tanggung jawabnya.
 3. Administrator dapat mengelola data sekolah.
-4. Pengelolaan tahun ajaran mengikuti aturan yang ditetapkan.
-5. Kenaikan kelas berjalan konsisten.
-6. Guru dapat membuat absensi kelasnya.
-7. Satu kelas tidak dapat memiliki dua sesi absensi pada hari yang sama.
-8. Pengeditan dan penghapusan absensi mengikuti hak akses.
-9. Audit tersimpan dengan benar.
-10. Halaman publik berfungsi tanpa membocorkan data sensitif.
-11. Daftar perhatian kehadiran menghitung Alpa dengan benar.
-12. Persiapan pesan WhatsApp berjalan.
-13. Dashboard menampilkan statistik yang benar.
-14. Tampilan dapat digunakan dengan baik pada smartphone.
-15. Backup dan pemulihan dapat diuji.
-16. Deployment production berhasil.
+4. Tahun ajaran dihitung otomatis berdasarkan tanggal.
+5. Kelas dapat digunakan lintas tahun ajaran.
+6. Riwayat keanggotaan siswa dipertahankan.
+7. Satu guru tidak dapat memiliki lebih dari dua penugasan kelas aktif secara bersamaan.
+8. Guru dapat membuat absensi kelas yang menjadi tanggung jawabnya.
+9. Satu guru dan kelas tidak dapat memiliki dua sesi dalam satu minggu kalender.
+10. Pertemuan dapat dilaksanakan pada hari pengganti berdasarkan kesepakatan.
+11. Lokasi pembelajaran tersimpan dengan benar.
+12. Materi pembelajaran tersimpan dengan benar.
+13. Status kehadiran dapat dikoreksi berkali-kali.
+14. Perubahan status, lokasi, dan materi tercatat dalam audit.
+15. Penghapusan absensi mengikuti prosedur dan hak akses.
+16. Halaman publik berfungsi tanpa membocorkan data sensitif.
+17. Daftar perhatian kehadiran menghitung Alpa dengan benar.
+18. Persiapan pesan WhatsApp berjalan.
+19. Dashboard menampilkan statistik yang benar.
+20. Tampilan dapat digunakan dengan baik pada smartphone.
+21. Backup dan pemulihan dapat diuji.
+22. Deployment production berhasil.
+
+---
 
 # 13. TAHAPAN IMPLEMENTASI
 
-Target implementasi dibagi menjadi 12 tahap.
+Tahapan implementasi proyek:
 
-| Tahap | Pekerjaan                                        |
-| ----- | ------------------------------------------------ |
-| 1     | Persiapan Next.js, GitHub, Vercel                |
-| 2     | Persiapan Google Spreadsheet dan Service Account |
-| 3     | Google Sheets Repository dan fondasi backend     |
-| 4     | Auth.js, Google OAuth, dan otorisasi             |
-| 5     | Modul data master                                |
-| 6     | Modul absensi                                    |
-| 7     | Audit log                                        |
-| 8     | Dashboard administrator dan guru                 |
-| 9     | Halaman publik                                   |
-| 10    | Daftar perhatian dan WhatsApp                    |
-| 11    | Pengujian dan perbaikan                          |
-| 12    | Finalisasi, styling, dan deployment production   |
+| Tahap | Pekerjaan                                    |
+| ----- | -------------------------------------------- |
+| 1     | Persiapan proyek dan lingkungan pengembangan |
+| 2     | Persiapan Google Sheets dan Service Account  |
+| 3     | Fondasi backend dan repository               |
+| 4     | Authentication dan Authorization             |
+| 5     | Manajemen pengguna                           |
+| 6     | Manajemen kelas dan penugasan guru           |
+| 7     | Manajemen siswa dan keanggotaan kelas        |
+| 8     | Modul absensi dan audit                      |
+| 9     | Halaman publik, laporan, dan WhatsApp        |
+| 10    | Pengujian akhir, finalisasi, dan deployment  |
 
-Estimasi awal: 22–34 hari kerja.
+Status implementasi pada tanggal dokumen ini:
 
-Estimasi tersebut merupakan target perencanaan, bukan jaminan penyelesaian.
+- Tahap 1–5: Selesai.
+- Tahap 6: Sedang berjalan.
+- Tahap 7–10: Belum dimulai.
+
+Status tersebut merupakan catatan progres proyek, bukan pernyataan bahwa seluruh fitur sudah selesai atau telah diuji.
+
+---
 
 # 14. HAL YANG MASIH PERLU DITENTUKAN
 
-Hal-hal berikut belum menjadi keputusan final:
+Hal teknis yang masih dapat ditetapkan selama implementasi:
 
-1. Mekanisme pemilihan tahun pada halaman publik jika tersedia riwayat dari beberapa tahun ajaran.
-2. Detail implementasi teknis penguncian dan pemulihan operasi multi-sheet pada Google Sheets.
-3. Kebijakan retensi backup dan jumlah salinan yang disimpan.
-4. Detail desain visual setelah tahap styling dimulai.
+1. Mekanisme penguncian dan pemulihan operasi multi-sheet pada Google Sheets.
+2. Kebijakan retensi backup dan jumlah salinan yang disimpan.
+3. Detail desain visual setelah tahap styling dimulai.
+4. Detail penyajian informasi lokasi dan materi pada halaman publik.
 
 Hal-hal tersebut tidak mengubah keputusan bisnis yang telah disepakati.
+
+---
 
 # 15. PRINSIP PENGEMBANGAN
 
@@ -843,34 +957,23 @@ Selama implementasi:
 - Kerjakan satu modul sampai berfungsi dan diuji.
 - Jelaskan kendala relasi data sebelum mengambil keputusan.
 - Jangan membuat fitur tambahan di luar ruang lingkup tanpa persetujuan.
+- Pertahankan konsistensi antara PRD, DATABASE.md, dan implementasi kode.
+- Jangan melakukan migrasi atau perubahan data produksi tanpa rencana dan backup.
 
 ---
 
 # 16. STATUS DOKUMEN
 
-**PRD versi 1.0**
+**PRD versi 2.0**
 
-Dokumen ini menjadi acuan utama pengembangan Sistem Absensi Sekolah Terpusat.
+Dokumen ini menjadi acuan kebutuhan produk Sistem Absensi Sekolah Terpusat.
 
 Perubahan terhadap kebutuhan produk harus dicatat sebagai revisi spesifikasi agar tidak terjadi perbedaan antara kesepakatan dan implementasi.
 
-**Status proyek:**
+Status proyek:
 
-- Finalisasi spesifikasi produk: Selesai.
-- Penyusunan PRD versi 1.0: Selesai.
-- Implementasi kode: Belum dimulai.
-- Target implementasi: 12 tahap.
+- PRD versi 2.0: Disiapkan.
+- DATABASE.md versi 2.0: Disiapkan.
+- Tahap implementasi: Tahap 6 sedang berjalan.
 
-daftar file yang pernah kamu minta:
-
-1. src/repositories/class-repository.js
-2. src/app/admin/classes/class-management.js
-3. src/services/teacher-assignment-service.js
-4. src/services/school-initialization-service.js
-5. src/app/admin/setup/actions.js
-6. src/app/admin/setup/page.js
-7. src/repositories/school-information-repository.js
-8. src/config/school-defaults.js
-9. src/services/database-setup-service.js
-10. src/docs/DATABASE.md
-11. src/docs/PRD.md
+Dokumen ini harus diselaraskan dengan DATABASE.md dan dokumen arsitektur sebelum implementasi akhir.

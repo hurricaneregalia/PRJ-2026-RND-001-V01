@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { createTeacherAssignmentAction, endTeacherAssignmentAction } from "./actions";
 
@@ -14,18 +15,20 @@ function getTodayWIB() {
 }
 
 function getAssignmentStatus(assignment, today) {
-  if (assignment.effective_to) {
-    return "Berakhir";
-  }
-
   if (assignment.effective_from > today) {
     return "Belum dimulai";
+  }
+
+  if (assignment.effective_to && assignment.effective_to < today) {
+    return "Berakhir";
   }
 
   return "Masih aktif";
 }
 
 export default function AssignmentManagement({ teachers, classes, assignments }) {
+  const router = useRouter();
+
   const [userId, setUserId] = useState("");
   const [classId, setClassId] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -45,32 +48,42 @@ export default function AssignmentManagement({ teachers, classes, assignments })
     setLoading(true);
     setMessages({});
 
-    const result = await createTeacherAssignmentAction({
-      user_id: userId,
-      class_id: classId,
-      effective_from: effectiveFrom,
-      reason,
-    });
+    try {
+      const result = await createTeacherAssignmentAction({
+        user_id: userId,
+        class_id: classId,
+        effective_from: effectiveFrom,
+        reason,
+      });
 
-    setLoading(false);
+      if (!result.success) {
+        setMessages({ error: result.error });
+        return;
+      }
 
-    if (!result.success) {
-      setMessages({ error: result.error });
-      return;
+      setMessages({ success: result.message });
+
+      setUserId("");
+      setClassId("");
+      setEffectiveFrom("");
+      setReason("");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Create teacher assignment failed:", error);
+
+      setMessages({
+        error: "Terjadi kesalahan saat menyimpan penugasan.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setMessages({ success: result.message });
-
-    setUserId("");
-    setClassId("");
-    setEffectiveFrom("");
-    setReason("");
-
-    window.location.reload();
   }
 
   async function handleEnd(assignmentId) {
     const effectiveTo = endDates[assignmentId];
+
+    const assignment = assignments.find((item) => item.assignment_id === assignmentId);
 
     if (!effectiveTo) {
       setMessages({
@@ -79,21 +92,36 @@ export default function AssignmentManagement({ teachers, classes, assignments })
       return;
     }
 
-    setLoading(true);
-    setMessages({});
-
-    const result = await endTeacherAssignmentAction(assignmentId, effectiveTo, "Penugasan diakhiri oleh administrator.");
-
-    setLoading(false);
-
-    if (!result.success) {
-      setMessages({ error: result.error });
+    if (!assignment || effectiveTo < assignment.effective_from) {
+      setMessages({
+        error: "Tanggal akhir tidak boleh sebelum tanggal mulai.",
+      });
       return;
     }
 
-    setMessages({ success: result.message });
+    setLoading(true);
+    setMessages({});
 
-    window.location.reload();
+    try {
+      const result = await endTeacherAssignmentAction(assignmentId, effectiveTo, "Penugasan diakhiri oleh administrator.");
+
+      if (!result.success) {
+        setMessages({ error: result.error });
+        return;
+      }
+
+      setMessages({ success: result.message });
+
+      router.refresh();
+    } catch (error) {
+      console.error("End teacher assignment failed:", error);
+
+      setMessages({
+        error: "Terjadi kesalahan saat mengakhiri penugasan.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

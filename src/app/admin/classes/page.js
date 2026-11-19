@@ -1,28 +1,32 @@
+// src/app/admin/classes/page.js
+
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
-import { requireRole } from "@/lib/authorization";
 
-export default async function AdminPage() {
-  await requireRole(["Administrator"]);
+import { getAllClassesService } from "@/services/class-service";
+import ClassManagement from "./class-management";
 
+async function ClassesData() {
+  await connection();
+
+  const classes = await getAllClassesService();
+
+  return <ClassManagement classes={classes} />;
+}
+
+export default function ClassesPage() {
   return (
     <main>
-      <h1>Dashboard Administrator</h1>
-
       <nav>
-        <ul>
-          <li>
-            <Link href="/admin/users">Manajemen Pengguna</Link>
-          </li>
-
-          <li>
-            <Link href="/admin/classes">Manajemen Kelas</Link>
-          </li>
-
-          <li>
-            <Link href="/admin/assignments">Penugasan Guru</Link>
-          </li>
-        </ul>
+        <Link href="/admin">Kembali ke Dashboard</Link>
       </nav>
+
+      <h1>Manajemen Kelas</h1>
+
+      <Suspense fallback={<p>Memuat data kelas...</p>}>
+        <ClassesData />
+      </Suspense>
     </main>
   );
 }

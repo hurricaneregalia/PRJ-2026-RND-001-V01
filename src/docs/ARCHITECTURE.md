@@ -2,75 +2,104 @@
 
 # Sistem Absensi Sekolah Terpusat
 
-**Versi:** 1.0  
-**Tanggal:** 17 November 2026  
-**Status:** Rancangan arsitektur aplikasi
+**Versi:** 2.0  
+**Tanggal:** 19 November 2026  
+**Status:** Pedoman arsitektur aplikasi
 
 ---
 
 ## 1. Teknologi Utama
 
-| Komponen            | Teknologi           |
-| ------------------- | ------------------- |
-| Framework           | Next.js 16          |
-| Routing             | App Router          |
-| Bahasa              | JavaScript          |
-| Backend             | Next.js Server-side |
-| Authentication      | Auth.js             |
-| OAuth               | Google OAuth        |
-| Database awal       | Google Spreadsheet  |
-| Database API        | Google Sheets API   |
-| Validasi            | Zod                 |
-| Hosting             | Vercel              |
-| Repository          | GitHub              |
-| Database masa depan | PostgreSQL          |
+| Komponen            | Teknologi                           |
+| ------------------- | ----------------------------------- |
+| Framework           | Next.js 16                          |
+| Routing             | App Router                          |
+| Bahasa              | JavaScript                          |
+| Backend             | Next.js Server-side                 |
+| Authentication      | Auth.js v5                          |
+| OAuth               | Google OAuth                        |
+| Database awal       | Google Spreadsheet                  |
+| Database API        | Google Sheets API                   |
+| Validasi            | Validasi backend pada Service Layer |
+| Hosting             | Vercel                              |
+| Repository          | GitHub                              |
+| Database masa depan | PostgreSQL                          |
 
 ### Aturan implementasi
 
-- Menggunakan JavaScript, bukan TypeScript.
-- Tidak menggunakan custom CSS, Tailwind CSS, daisyUI, React Icons, atau Lenis sebelum mendapat persetujuan.
-- Tidak menambahkan animasi atau dekorasi pada tahap awal.
-- Fokus pada fungsi, validasi, keamanan, dan konsistensi data.
-- Menggunakan komponen sederhana dan reusable.
+1. Menggunakan JavaScript, bukan TypeScript.
+2. Menggunakan Next.js App Router.
+3. Menggunakan Server Components secara default.
+4. Client Components hanya digunakan jika membutuhkan interaksi browser.
+5. Akses database hanya dilakukan melalui backend.
+6. Kredensial database tidak boleh dikirim ke browser.
+7. Tidak menambahkan dependency tanpa kebutuhan.
+8. Tidak menambahkan tabel database tanpa persetujuan.
+9. Mengutamakan fungsi, validasi, keamanan, dan konsistensi data.
+10. Styling dilakukan setelah fungsi aplikasi selesai dan disetujui.
+
+---
 
 ## 2. Arsitektur Aplikasi
 
-Aplikasi menggunakan pendekatan modular monolith.
+Aplikasi menggunakan pendekatan Modular Monolith.
 
-Artinya, frontend dan backend berada dalam satu proyek Next.js, tetapi tanggung jawab setiap bagian dipisahkan berdasarkan fungsi.
+Frontend dan backend berada dalam satu proyek Next.js, tetapi tanggung jawab setiap bagian dipisahkan berdasarkan fungsi.
 
-Alur komunikasi:
-
-Browser → Next.js → Authentication/Authorization → Service Layer → Repository Layer → Google Sheets API
-
-Frontend tidak boleh mengakses Google Sheets secara langsung.
-
-Seluruh akses database dilakukan melalui backend.
-
-## 3. Struktur Folder
+### Alur komunikasi
 
 ```text
-school-attendance/
-│
+Browser
+  |
+  v
+Next.js App Router
+  |
+  v
+Authentication / Authorization
+  |
+  v
+Server Actions / Server Components
+  |
+  v
+Service Layer
+  |
+  v
+Repository Layer
+  |
+  v
+Google Sheets API
+
+
+Prinsip utama
+1. Browser tidak boleh mengakses Google Sheets secara langsung.
+2. Client Component tidak boleh mengakses Repository Layer.
+3. Aturan bisnis ditempatkan di Service Layer.
+4. Operasi penyimpanan dan pengambilan data ditempatkan di Repository Layer.
+5. Pemeriksaan hak akses dilakukan di backend.
+6. Repository tidak boleh digunakan sebagai pengganti Service Layer.
+7. Komunikasi antarlapisan harus mempertahankan validasi dan konsistensi data.
+
+3. Struktur Folder
+Struktur proyek menggunakan direktori src.
+
+Struktur utama:
+src/
 ├── app/
 │   ├── layout.js
 │   ├── page.js
 │   ├── not-found.js
 │   │
 │   ├── login/
-│   │   └── page.js
 │   │
 │   ├── admin/
 │   │   ├── layout.js
 │   │   ├── page.js
 │   │   ├── users/
-│   │   ├── students/
-│   │   ├── teachers/
 │   │   ├── classes/
-│   │   ├── academic-years/
-│   │   ├── promotions/
-│   │   ├── school-information/
+│   │   ├── assignments/
+│   │   ├── students/
 │   │   ├── attendance/
+│   │   ├── setup/
 │   │   └── audit-logs/
 │   │
 │   ├── teacher/
@@ -80,353 +109,454 @@ school-attendance/
 │   │   ├── history/
 │   │   └── attention-list/
 │   │
-│   ├── kehadiran/
-│   │   └── page.js
-│   │
-│   └── api/
-│       ├── auth/
-│       │   └── [...nextauth]/
-│       ├── students/
-│       ├── teachers/
-│       ├── classes/
-│       ├── academic-years/
-│       ├── attendance/
-│       ├── dashboard/
-│       ├── promotions/
-│       ├── school-information/
-│       └── public/
+│   └── kehadiran/
+│       └── page.js
 │
 ├── components/
-│   ├── DataList.js
-│   ├── SelectableList.js
-│   ├── AttendanceList.js
-│   ├── AttendanceForm.js
-│   ├── AttendanceSummary.js
-│   └── ...
+│
+├── config/
+│   ├── database-schema.js
+│   ├── user-config.js
+│   ├── class-config.js
+│   ├── teacher-assignment-config.js
+│   └── school-defaults.js
 │
 ├── lib/
 │   ├── auth.js
-│   ├── google-sheets.js
-│   ├── validation.js
-│   ├── permissions.js
-│   ├── constants.js
-│   └── utils.js
+│   ├── authorization.js
+│   └── google-sheets.js
 │
 ├── repositories/
-│   ├── users.repository.js
-│   ├── students.repository.js
-│   ├── classes.repository.js
-│   ├── academic-years.repository.js
-│   ├── attendance.repository.js
-│   └── ...
+│   ├── user-repository.js
+│   ├── class-repository.js
+│   ├── teacher-assignment-repository.js
+│   ├── school-information-repository.js
+│   └── administrative-audit-repository.js
 │
 ├── services/
-│   ├── auth.service.js
-│   ├── student.service.js
-│   ├── teacher.service.js
-│   ├── class.service.js
-│   ├── academic-year.service.js
-│   ├── attendance.service.js
-│   ├── promotion.service.js
-│   ├── dashboard.service.js
-│   ├── contact.service.js
-│   └── audit.service.js
+│   ├── user-service.js
+│   ├── class-service.js
+│   ├── teacher-assignment-service.js
+│   ├── school-initialization-service.js
+│   └── database-setup-service.js
 │
-├── schemas/
-│   ├── user.schema.js
-│   ├── student.schema.js
-│   ├── class.schema.js
-│   ├── attendance.schema.js
-│   └── ...
-│
-├── config/
-│   └── site.js
-│
-├── public/
-│
-├── .env.example
-├── .gitignore
-├── jsconfig.json
-├── next.config.js
-└── package.json
-```
+└── docs/
+    ├── PRD.md
+    ├── DATABASE.md
+    ├── ARCHITECTURE.md
+    └── IMPLEMENTATION_PLAN.md
 
-Struktur dapat disesuaikan selama proses pengembangan, tetapi pemisahan tanggung jawab harus dipertahankan.
 
-## 4. Pembagian Tanggung Jawab
+Daftar di atas merupakan gambaran struktur modul utama, bukan daftar seluruh file yang wajib dibuat sekaligus.
 
-### 4.1 app/
+Folder dan file tambahan dapat dibuat sesuai kebutuhan tahap implementasi.
 
-Mengelola:
+Struktur harus tetap mempertahankan pemisahan tanggung jawab.
 
+4. Pembagian Tanggung Jawab
+4.1 App Layer
+Lokasi:
+
+src/app/
+
+Bertanggung jawab atas:
 - Halaman aplikasi.
 - Routing.
 - Layout.
-- API Routes.
 - Server Components.
-- Client Components jika diperlukan.
+- Client Components.
+- Server Actions.
+- Pengambilan data melalui Service Layer.
+- Penyajian hasil operasi kepada pengguna.
+Ketentuan:
+1. Halaman tidak boleh menjalankan query Google Sheets secara langsung.
+2. Halaman tidak boleh mengakses Repository Layer secara langsung.
+3. Server Actions harus memeriksa autentikasi dan otorisasi melalui Service Layer atau mekanisme backend yang sesuai.
+4. Client Components hanya menangani tampilan dan interaksi pengguna.
+5. Client Components tidak boleh menerima kredensial atau data rahasia server.
+4.2 Components
+Lokasi:
 
-Tidak boleh memuat query Google Sheets yang tersebar di dalam halaman.
+src/components/
 
-### 4.2 components/
+Bertanggung jawab atas komponen antarmuka yang digunakan berulang.
 
-Menyimpan komponen antarmuka yang digunakan berulang.
+Ketentuan:
+- Fokus pada tampilan dan interaksi.
+- Tidak memuat query database.
+- Tidak menentukan hak akses sebagai satu-satunya lapisan keamanan.
+- Tidak menjalankan aturan bisnis yang seharusnya berada di Service Layer.
+4.3 Config
+Lokasi:
 
-Komponen utama:
+src/config/
 
-- DataList
-- SelectableList
-- AttendanceList
-- AttendanceForm
-- AttendanceSummary
-- AttendanceChart
-- ClassComparisonChart
-- AttendanceTrendChart
+Bertanggung jawab atas konfigurasi dan konstanta aplikasi.
 
-Komponen harus berfokus pada tampilan dan interaksi, bukan aturan bisnis database.
+Contoh:
+- Struktur header database.
+- Status pengguna.
+- Status kelas.
+- Konfigurasi penugasan guru.
+- Informasi default sekolah.
+Konfigurasi database harus konsisten dengan DATABASE.md.
+4.4 Lib
+Lokasi:
 
-### 4.3 repositories/
+src/lib/
+
+Berisi fungsi infrastruktur dan utilitas umum.
+
+Contoh:
+- Konfigurasi Auth.js.
+- Koneksi Google Sheets.
+- Pemeriksaan authorization.
+- Fungsi umum yang digunakan oleh beberapa modul.
+File yang mengakses kredensial atau koneksi database harus berjalan di server.
+4.5 Repositories
+Lokasi:
+
+src/repositories/
 
 Bertanggung jawab atas operasi penyimpanan dan pengambilan data.
 
 Contoh:
+- Mengambil data pengguna.
+- Membuat dan memperbarui kelas.
+- Mengambil penugasan guru.
+- Menyimpan informasi sekolah.
+- Menyimpan audit administratif.
+- Mengambil data absensi.
+Ketentuan:
+1. Repository menjadi satu-satunya lapisan yang berkomunikasi langsung dengan penyimpanan data.
+2. Repository tidak menentukan hak akses pengguna.
+3. Repository tidak menggantikan validasi aturan bisnis.
+4. Repository bertanggung jawab menjaga kesesuaian struktur data dengan database.
+5. Operasi perubahan data yang diwajibkan audit harus terintegrasi dengan mekanisme audit.
+4.6 Services
+Lokasi:
 
-- Mengambil daftar siswa.
-- Mencari siswa.
-- Menyimpan siswa.
-- Mengambil sesi absensi.
-- Menyimpan record absensi.
-- Mengambil riwayat audit.
+src/services/
 
-Repository menjadi satu-satunya lapisan yang berkomunikasi langsung dengan penyimpanan data.
-
-### 4.4 services/
-
-Bertanggung jawab atas aturan bisnis.
+Bertanggung jawab atas aturan bisnis aplikasi.
 
 Contoh:
-
-- Memeriksa hak akses guru.
-- Memastikan guru hanya bertanggung jawab maksimal dua kelas.
-- Memastikan satu kelas hanya memiliki satu guru aktif.
+- Memeriksa role dan status pengguna.
+- Memastikan guru hanya memiliki maksimal dua kelas aktif secara bersamaan.
+- Mencegah penugasan guru yang bertabrakan pada kelas yang sama.
 - Memvalidasi periode keanggotaan siswa.
-- Membuat absensi harian.
-- Memproses kenaikan kelas.
-- Menghitung statistik dashboard.
-- Menyiapkan pesan WhatsApp.
-- Menyimpan audit.
+- Menghitung tahun ajaran berdasarkan tanggal absensi.
+- Mencegah absensi ganda dalam satu minggu.
+- Memvalidasi perubahan data absensi.
+- Mengelola audit perubahan.
+- Menghitung statistik kehadiran.
+- Menyiapkan informasi untuk laporan dan komunikasi WhatsApp.
+Ketentuan:
+1. Service menjadi pusat penerapan aturan bisnis.
+2. Service tidak boleh bergantung langsung pada format penyimpanan Google Sheets.
+3. Service wajib melakukan pemeriksaan hak akses sebelum menjalankan operasi yang dilindungi.
+4. Validasi backend tetap wajib meskipun frontend telah melakukan validasi.
+5. Perubahan data harus mengikuti aturan audit yang berlaku.
 
-Service tidak boleh bergantung langsung pada format penyimpanan Google Sheets.
+5. Authentication dan Authorization
+5.1 Authentication
+Menggunakan Auth.js v5 dengan Google OAuth.
 
-### 4.5 schemas/
-
-Berisi validasi data menggunakan Zod.
-
-Contoh:
-
-- Validasi siswa.
-- Validasi guru.
-- Validasi kelas.
-- Validasi tahun ajaran.
-- Validasi absensi.
-- Validasi perubahan data.
-
-Validasi frontend hanya untuk kenyamanan pengguna. Validasi backend tetap wajib.
-
-### 4.6 lib/
-
-Berisi fungsi dan konfigurasi umum.
-
-Contoh:
-
-- Konfigurasi Auth.js.
-- Koneksi Google Sheets.
-- Pemeriksaan permission.
-- Konstanta status.
-- Utility tanggal.
-- Utility ID.
-
-## 5. Pola Komunikasi Antarmodul
-
-Setiap operasi bisnis mengikuti pola:
-
-1. Pengguna melakukan tindakan.
-2. Frontend mengirim request ke API.
-3. API memeriksa autentikasi.
-4. API memeriksa otorisasi.
-5. Input divalidasi dengan Zod.
-6. Service menjalankan aturan bisnis.
-7. Repository membaca atau menulis data.
-8. API mengembalikan hasil.
-
-Repository tidak boleh dipanggil langsung oleh komponen frontend.
-
-## 6. Authentication dan Authorization
-
-### Authentication
-
-Menggunakan Auth.js dengan Google OAuth.
-
-Proses:
-
-1. Pengguna memilih login dengan Google.
+Proses autentikasi:
+1. Pengguna memilih login menggunakan Google.
 2. Google mengembalikan identitas pengguna.
-3. Backend membaca Google `sub`.
-4. Backend mencari akun berdasarkan `auth_user_id`.
+3. Backend memperoleh Google sub.
+4. Backend mencari akun berdasarkan auth_user_id.
 5. Backend memeriksa status akun.
-6. Backend membuat session jika akun valid.
-7. Role dan identitas internal pengguna dimuat dari database.
+6. Backend menentukan role berdasarkan database.
+7. Session dibuat jika akun memenuhi persyaratan.
+Identitas Google sub digunakan sebagai identitas eksternal yang stabil.
 
-### Authorization
+Role dan status pengguna tidak boleh dipercaya dari data yang dikirim browser.
+5.2 Authorization
+Hak akses ditentukan berdasarkan role, status akun, dan data penugasan.
 
-Hak akses ditentukan berdasarkan role dan data penugasan.
+Administrator
 
-Administrator:
+Berwenang untuk:
+- Mengelola pengguna.
+- Mengelola siswa.
+- Mengelola kelas.
+- Mengelola penugasan guru.
+- Mengelola informasi sekolah.
+- Mengakses data absensi sesuai kewenangan.
+- Melihat audit administratif.
+- Mengakses dashboard administrator.
+Guru
 
-- Mengelola seluruh data sekolah.
-- Mengelola seluruh absensi.
-- Mengelola pengguna dan penugasan.
-- Mengelola tahun ajaran.
-- Melihat dashboard administrator.
-
-Guru:
-
+Berwenang untuk:
 - Melihat kelas yang menjadi tanggung jawabnya.
-- Membuat absensi kelas.
-- Mengubah dan menghapus absensi yang dibuatnya sendiri.
+- Membuat absensi kelas yang ditugaskan.
+- Memperbarui data absensi sesuai ketentuan.
 - Melihat riwayat absensinya.
-- Mengakses daftar perhatian kehadiran.
-
-Publik:
-
+- Mengakses daftar perhatian kehadiran sesuai kewenangan.
+Publik
 - Tidak perlu login.
-- Hanya mengakses endpoint publik.
-- Tidak dapat mengakses data pribadi orang tua atau informasi internal.
+- Hanya dapat mengakses informasi yang memang disediakan untuk publik.
+- Tidak dapat mengakses data pribadi orang tua.
+- Tidak dapat mengakses informasi internal sekolah.
+- Tidak dapat membaca worksheet secara langsung.
+5.3 Ketentuan keamanan
+1. Pemeriksaan authorization wajib dilakukan di backend.
+2. Akun inactive tidak boleh melakukan operasi internal.
+3. Pengguna tidak boleh mengubah role sendiri melalui browser.
+4. Guru tidak boleh mengakses kelas yang tidak menjadi tanggung jawabnya.
+5. Administrator tidak boleh menghapus permanen akun pengguna.
+6. Akun yang tidak lagi digunakan dinonaktifkan.
 
-Pemeriksaan authorization wajib dilakukan di backend.
+6. Database Abstraction
+Aplikasi menggunakan Repository Layer sebagai lapisan abstraksi database.
+Tahap awal
+Google Sheets API digunakan sebagai penyimpanan data.
+Tahap migrasi
+PostgreSQL direncanakan sebagai database berikutnya.
 
-## 7. Database Abstraction
-
-Aplikasi menggunakan repository sebagai lapisan abstraksi database.
-
-Tahap awal:
-
-- Google Sheets Repository.
-
-Tahap migrasi:
-
-- PostgreSQL Repository.
-
-Service harus tetap menggunakan kontrak operasi yang sama sehingga pergantian database tidak memerlukan perubahan besar pada aturan bisnis.
-
-Contoh:
-
-```text
-attendance.service.js
-        |
-        v
-attendance.repository.js
-        |
-        v
+Alur:
+Service Layer
+     |
+     v
+Repository Layer
+     |
+     v
 Google Sheets API
-```
+
 
 Setelah migrasi:
-
-```text
-attendance.service.js
-        |
-        v
-attendance.repository.js
-        |
-        v
+Service Layer
+     |
+     v
+Repository Layer
+     |
+     v
 PostgreSQL
-```
 
-Format penyimpanan tidak boleh bocor ke frontend atau service.
 
-## 8. Integrasi Google Sheets
+Prinsip:
+1. Service Layer tidak boleh bergantung pada struktur teknis Google Sheets.
+2. Perubahan database diupayakan tidak mengharuskan perubahan besar pada aturan bisnis.
+3. Struktur tabel harus mengacu pada DATABASE.md.
+4. Relasi dan integritas data harus dijaga oleh backend.
+5. Primary key dibuat oleh backend.
+6. Perubahan database harus mempertahankan riwayat dan audit yang diwajibkan.
 
-Koneksi dilakukan menggunakan Google Sheets API dan Service Account.
+7. Struktur Database
+Database awal menggunakan 11 worksheet.
+1. Users
+2. Students
+3. Classes
+4. Class_Members
+5. Teacher_Assignments
+6. Attendance_Sessions
+7. Attendance_Records
+8. Attendance_Audit_Logs
+9. Student_Contact_Logs
+10. School_Information
+11. Administrative_Audit_Logs
+Tidak terdapat worksheet Academic_Years.
 
-Aturan:
+Struktur lengkap setiap worksheet, kolom, primary key, foreign key, dan indeks mengacu pada:
 
-- Kredensial hanya berada di server.
-- Spreadsheet dibagikan kepada Service Account.
-- Browser tidak pernah menerima kredensial.
-- Semua operasi dilakukan melalui backend.
-- Setiap worksheet mengikuti struktur DATABASE.md.
-- ID record dibuat oleh backend.
-- Backend melakukan validasi foreign key dan UNIQUE.
-- Operasi multi-sheet harus memiliki mekanisme penguncian dan pemulihan.
+src/docs/DATABASE.md
+7.1 Relasi kelas
+Kelas tidak terikat pada satu tahun ajaran.
 
-Google Sheets tidak menyediakan transaksi database relasional. Karena itu, backend perlu menangani kemungkinan kegagalan sebagian dan perubahan bersamaan.
+class_id tetap digunakan meskipun tahun ajaran berubah.
 
-## 9. Penanganan Tanggal
+Keanggotaan siswa dan penugasan guru memiliki periode berlaku masing-masing.
+7.2 Relasi penugasan guru
+Penugasan guru disimpan dalam Teacher_Assignments.
 
+Periode penugasan menggunakan:
+- effective_from
+- effective_to
+Penugasan dapat berlangsung lintas tahun ajaran.
+7.3 Relasi absensi
+Attendance_Sessions menyimpan informasi pertemuan.
+
+Attendance_Records menyimpan status kehadiran setiap siswa.
+
+Attendance_Audit_Logs menyimpan riwayat perubahan data absensi.
+
+academic_year_id pada Attendance_Sessions merupakan identitas tahun ajaran yang dihitung berdasarkan tanggal pertemuan.
+
+8. Aturan Tahun Ajaran
+Tahun ajaran dihitung otomatis berdasarkan tanggal kalender operasional WIB.
+
+Periode tahun ajaran:
+- Dimulai pada 1 Juli.
+- Berakhir pada 30 Juni tahun berikutnya.
+Contoh:
+Tanggal	Tahun Ajaran
+30 Juni 2026	2025/2026
+1 Juli 2026	2026/2027
+19 November 2026	2026/2027
+30 Juni 2027	2026/2027
+1 Juli 2027	2027/2028
+
+Ketentuan:
+1. Tahun ajaran tidak dibuat secara manual oleh administrator.
+2. Tahun ajaran tidak memerlukan proses aktivasi.
+3. Tidak ada tabel Academic_Years.
+4. Tahun ajaran dihitung berdasarkan attendance_date.
+5. Nilai academic_year_id disimpan pada Attendance_Sessions.
+6. Perubahan tanggal sekarang tidak boleh mengubah tahun ajaran pada absensi lama.
+7. Riwayat absensi tetap terikat pada tahun ajaran ketika pertemuan berlangsung.
+Format identitas:
+
+YYYY/YYYY+1
+
+Contoh:
+
+2026/2027
+
+9. Aturan Penugasan Guru
+Penugasan guru memiliki periode berlaku.
+
+Ketentuan:
+1. Satu guru maksimal memiliki dua kelas aktif secara bersamaan.
+2. Satu kelas tidak boleh memiliki lebih dari satu guru aktif pada periode yang sama.
+3. Penugasan menggunakan tanggal mulai dan tanggal selesai.
+4. Tanggal selesai boleh kosong untuk penugasan yang masih berlangsung.
+5. Penugasan dapat melintasi pergantian tahun ajaran.
+6. Riwayat penugasan tidak dihapus ketika penugasan berakhir.
+7. Guru hanya dapat membuat absensi untuk kelas yang menjadi tanggung jawabnya pada tanggal pertemuan.
+Validasi penugasan dilakukan di Service Layer.
+
+10. Aturan Tanggal dan Waktu
 Zona waktu operasional:
 
-`Asia/Jakarta`
+Asia/Jakarta
 
-Backend menjadi sumber kebenaran waktu.
+Backend menjadi sumber kebenaran untuk pencatatan waktu.
 
-Aturan:
+Ketentuan:
+1. created_at dan updated_at dibuat oleh backend.
+2. Periode keanggotaan siswa menggunakan tanggal.
+3. Periode penugasan guru menggunakan tanggal.
+4. Tahun ajaran dihitung menggunakan tanggal absensi.
+5. Perhitungan minggu absensi menggunakan WIB.
+6. Tanggal yang dikirim dari browser harus divalidasi.
+7. Tanggal kalender tidak boleh berubah akibat konversi zona waktu yang keliru.
+Untuk tanggal absensi berformat YYYY-MM-DD, tanggal tersebut diperlakukan sebagai tanggal kalender WIB.
 
-- Tanggal absensi diperoleh otomatis dari backend.
-- `created_at` dan `updated_at` dibuat backend.
-- Periode keanggotaan menggunakan DATE.
-- Periode penugasan menggunakan DATE.
-- Tahun ajaran menggunakan DATE.
-- Jangan mengandalkan jam perangkat pengguna untuk menentukan tanggal absensi.
+11. Aturan Absensi
+11.1 Jadwal pertemuan
+Jadwal pembelajaran dapat berubah berdasarkan kesepakatan guru dan sekolah.
 
-## 10. API Structure
+Pertemuan tidak harus berlangsung pada hari jadwal rutin.
 
-Endpoint awal yang direncanakan:
+Guru membuat absensi berdasarkan tanggal pertemuan yang benar-benar berlangsung.
+11.2 Batas pertemuan
+Maksimal satu sesi absensi untuk kombinasi guru dan kelas dalam satu minggu kalender.
 
-| Method | Endpoint               | Fungsi                  |
-| ------ | ---------------------- | ----------------------- |
-| GET    | /api/students          | Daftar siswa            |
-| POST   | /api/students          | Tambah siswa            |
-| GET    | /api/teachers          | Daftar guru             |
-| POST   | /api/teachers          | Tambah guru             |
-| GET    | /api/classes           | Daftar kelas            |
-| POST   | /api/classes           | Tambah kelas            |
-| GET    | /api/academic-years    | Daftar tahun ajaran     |
-| POST   | /api/academic-years    | Tambah tahun ajaran     |
-| POST   | /api/attendance        | Membuat absensi         |
-| GET    | /api/attendance        | Mengambil data absensi  |
-| PATCH  | /api/attendance/[id]   | Mengubah absensi        |
-| DELETE | /api/attendance/[id]   | Menghapus absensi       |
-| GET    | /api/dashboard/admin   | Dashboard administrator |
-| GET    | /api/dashboard/teacher | Dashboard guru          |
-| POST   | /api/promotions        | Proses kenaikan kelas   |
-| GET    | /api/public/students   | Pencarian siswa publik  |
-| GET    | /api/public/attendance | Riwayat absensi publik  |
+Minggu kalender dihitung:
+- Senin pukul 00.00 WIB.
+- Sampai Minggu pukul 23.59 WIB.
+Ketentuan:
+1. Satu guru tidak boleh membuat dua sesi absensi untuk kelas yang sama dalam satu minggu.
+2. Jika jadwal pertemuan berubah, absensi dibuat pada tanggal pengganti.
+3. Jika pertemuan dibatalkan dan tidak ada absensi, tidak diperlukan pencatatan pembatalan khusus.
+4. Tidak boleh membuat sesi kedua untuk kombinasi guru dan kelas yang sama dalam minggu tersebut.
+11.3 Informasi pertemuan
+Attendance_Sessions menyimpan:
+- Kelas.
+- Guru.
+- Tahun ajaran.
+- Tanggal pertemuan.
+- Nama tempat kegiatan.
+- Catatan tempat kegiatan.
+- Materi pelajaran.
+- Waktu pembuatan dan pembaruan.
+Tempat kegiatan dapat berupa ruang kelas, area sekolah, atau lokasi di luar sekolah.
 
-Endpoint tambahan dapat dibuat sesuai kebutuhan implementasi, tanpa mengubah aturan bisnis.
+Materi pelajaran menjelaskan kegiatan pembelajaran pada pertemuan tersebut.
 
-## 11. Keamanan
+Contoh:
+- Belajar komputer Microsoft Word.
+- Praktik mencetak dokumen menggunakan printer.
+- Pembelajaran di luar kelas.
+Informasi tempat dan materi dapat diperbarui setelah sesi dibuat.
+11.4 Status kehadiran
+Status kehadiran setiap siswa disimpan dalam Attendance_Records.
 
-1. Session dikelola Auth.js.
-2. Semua endpoint internal memerlukan autentikasi.
-3. Semua endpoint memeriksa role dan hak akses.
-4. Data publik hanya mengembalikan kolom yang disetujui.
-5. Kredensial Google disimpan sebagai environment variables.
-6. Tidak menyimpan secret di repository.
-7. Input divalidasi di backend.
-8. Operasi administratif dicatat dalam audit.
-9. Operasi UPDATE dan DELETE absensi dicatat dalam audit.
-10. Akun inactive tidak boleh mengakses endpoint internal.
-11. Hindari mempercayai role atau identitas yang dikirim dari browser.
-12. Batasi akses publik agar tidak dapat membaca worksheet secara langsung.
+Perubahan status dapat dilakukan lebih dari satu kali sesuai kewenangan.
 
-## 12. Environment Variables
+Setiap perubahan status harus dicatat dalam Attendance_Audit_Logs.
+11.5 Audit perubahan
+Perubahan data absensi yang wajib dicatat meliputi:
+- Perubahan status kehadiran.
+- Perubahan nama tempat.
+- Perubahan catatan tempat.
+- Perubahan materi pelajaran.
+- Penghapusan data absensi sesuai kewenangan.
+Audit menyimpan informasi perubahan, pengguna yang melakukan perubahan, dan waktu perubahan.
 
-File `.env.example` menjadi contoh konfigurasi.
+Riwayat audit tidak boleh diubah atau dihapus melalui aplikasi.
 
-Variabel yang direncanakan:
+12. Integrasi Google Sheets
+Koneksi menggunakan Google Sheets API dan Service Account.
 
-```env
+Ketentuan:
+1. Kredensial hanya berada di server.
+2. Spreadsheet dibagikan kepada Service Account.
+3. Browser tidak pernah menerima kredensial.
+4. Semua operasi database dilakukan melalui Repository Layer.
+5. Setiap worksheet mengikuti DATABASE.md.
+6. Header worksheet harus sesuai dengan DATABASE_SCHEMA.
+7. Backend melakukan validasi foreign key dan aturan UNIQUE.
+8. Operasi lintas worksheet harus memiliki mekanisme penanganan kegagalan sebagian.
+9. Operasi bersamaan harus memperhatikan kemungkinan konflik perubahan data.
+Google Sheets tidak menyediakan transaksi relasional seperti PostgreSQL.
+
+Karena itu, Service dan Repository harus menangani kemungkinan kegagalan sebagian serta menjaga konsistensi data.
+
+Perubahan struktur worksheet fisik harus dilakukan melalui prosedur migrasi yang aman.
+
+Jangan menjalankan inisialisasi database pada spreadsheet yang masih memiliki struktur lama tanpa pemeriksaan dan migrasi terlebih dahulu.
+
+13. API dan Server Actions
+Aplikasi menggunakan Next.js App Router.
+
+Operasi internal dapat menggunakan Server Actions atau Route Handlers sesuai kebutuhan modul.
+
+Server Actions digunakan untuk operasi formulir dan mutasi data yang berasal dari antarmuka aplikasi.
+
+Route Handlers digunakan apabila dibutuhkan endpoint HTTP, integrasi eksternal, atau akses publik.
+
+Ketentuan:
+1. Tidak semua operasi bisnis harus dibuat sebagai REST API.
+2. Server Actions tidak boleh melewati validasi Service Layer.
+3. Route Handlers wajib melakukan pemeriksaan autentikasi dan authorization.
+4. Endpoint publik hanya mengembalikan data yang telah disetujui.
+5. Repository tidak boleh dipanggil langsung oleh browser.
+6. Kontrak respons dan penanganan error harus konsisten.
+Struktur endpoint tambahan ditentukan berdasarkan kebutuhan implementasi, bukan dibuat tanpa kebutuhan.
+
+14. Keamanan
+1. Session dikelola oleh Auth.js.
+2. Semua operasi internal memerlukan autentikasi.
+3. Semua operasi memeriksa role dan hak akses.
+4. Akun inactive tidak boleh melakukan operasi internal.
+5. Data publik hanya mengembalikan kolom yang disetujui.
+6. Kredensial Google disimpan sebagai environment variables.
+7. Secret tidak boleh disimpan di repository.
+8. Input wajib divalidasi di backend.
+9. Operasi administratif dicatat dalam audit.
+10. Perubahan data absensi dicatat dalam audit.
+11. Role dan identitas pengguna tidak boleh dipercaya dari browser.
+12. Akses database tidak boleh diberikan kepada Client Components.
+13. Data pribadi siswa dan orang tua harus dilindungi.
+14. Informasi rahasia tidak boleh ditampilkan pada pesan error.
+
+15. Environment Variables
+Konfigurasi menggunakan .env.local.
+
+Contoh variabel:
 AUTH_SECRET=
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
@@ -436,78 +566,87 @@ GOOGLE_PRIVATE_KEY=
 GOOGLE_SHEETS_SPREADSHEET_ID=
 
 NEXT_PUBLIC_APP_URL=
-```
+
 
 Ketentuan:
+1. Jangan memasukkan kredensial asli ke .env.example.
+2. File .env.local tidak boleh di-commit.
+3. Secret hanya boleh digunakan di server.
+4. Variabel dengan prefix NEXT_PUBLIC_ hanya boleh berisi informasi yang aman dipublikasikan.
+5. Environment variables produksi dikonfigurasi melalui Vercel.
 
-- Semua secret hanya digunakan server.
-- `NEXT_PUBLIC_` hanya digunakan untuk informasi yang memang aman dipublikasikan.
-- Jangan memasukkan kredensial asli ke `.env.example`.
-- Environment variables produksi diatur melalui Vercel.
+16. Error Handling
+Setiap operasi harus menghasilkan informasi keberhasilan atau kegagalan yang dapat dipahami.
 
-## 13. Error Handling
+Ketentuan:
+1. Kesalahan validasi harus memberikan pesan yang jelas.
+2. Kesalahan authorization tidak boleh membocorkan informasi internal.
+3. Kesalahan database harus ditangani di backend.
+4. Pesan error kepada pengguna tidak boleh menampilkan kredensial, token, atau konfigurasi server.
+5. Detail teknis dapat dicatat pada log server untuk keperluan pemeriksaan.
 
-API menggunakan format respons konsisten.
-
-Contoh berhasil:
-
-```json
-{
-  "success": true,
-  "data": {},
-  "message": "Data berhasil disimpan"
-}
-```
-
-Contoh gagal:
-
-```json
-{
-  "success": false,
-  "data": null,
-  "message": "Terjadi kesalahan saat menyimpan data",
-  "code": "OPERATION_FAILED"
-}
-```
-
-Error internal tidak boleh membocorkan:
-
-- Kredensial.
-- Token.
-- Informasi rahasia.
-- Detail konfigurasi server.
-
-Pesan kepada pengguna harus mudah dipahami.
-
-## 14. Deployment
-
+17. Deployment
 Deployment menggunakan GitHub dan Vercel.
 
 Alur:
+1. Kode dikembangkan dan diperiksa secara lokal.
+2. Perubahan disimpan dalam Git.
+3. Perubahan di-commit setelah tahap terkait selesai.
+4. Repository disinkronkan dengan GitHub.
+5. Vercel menjalankan deployment berdasarkan konfigurasi repository.
+6. Environment variables produksi dikonfigurasi di Vercel.
+7. Aplikasi diperiksa setelah deployment.
+Sebelum deployment produksi, pastikan struktur Google Sheets sudah sesuai dengan versi aplikasi.
 
-1. Kode disimpan di repository GitHub.
-2. Repository dihubungkan ke Vercel.
-3. Environment variables dikonfigurasi.
-4. Push ke branch produksi memicu deployment otomatis.
-5. Vercel menyediakan domain aplikasi.
+18. Prinsip Pengembangan
+1. Utamakan fungsi sebelum styling.
+2. Gunakan JavaScript.
+3. Gunakan struktur modular.
+4. Pisahkan App, Service, Repository, Config, dan Lib.
+5. Hindari duplikasi kode.
+6. Gunakan komponen reusable jika memang diperlukan.
+7. Jangan menambahkan dependency tanpa kebutuhan.
+8. Jangan menambahkan tabel tanpa persetujuan.
+9. Jangan mengubah aturan bisnis yang telah disepakati tanpa persetujuan.
+10. Setiap modul harus divalidasi sebelum melanjutkan modul berikutnya.
+11. Perubahan struktur database harus diselaraskan dengan seluruh modul terkait.
+12. Jangan menjalankan pengujian runtime terhadap spreadsheet sebelum migrasi struktur database selesai.
+13. Dokumentasi harus mengikuti implementasi dan keputusan terbaru.
 
-Tidak diperlukan pengelolaan server secara manual.
+19. Tahapan Pengembangan
+Pengembangan aplikasi dibagi menjadi sepuluh tahap.
+1. Fondasi proyek dan konfigurasi.
+2. Authentication dan authorization.
+3. Database dan inisialisasi.
+4. Manajemen pengguna.
+5. Audit administratif dan fondasi administrasi.
+6. Manajemen kelas dan penugasan guru.
+7. Manajemen siswa dan keanggotaan kelas.
+8. Modul absensi dan audit absensi.
+9. Halaman publik, laporan, dan komunikasi WhatsApp.
+10. Pengujian akhir, penyempurnaan, dan deployment.
+Status dan rincian pekerjaan setiap tahap mengacu pada:
 
-## 15. Prinsip Pengembangan
+src/docs/IMPLEMENTATION_PLAN.md
 
-- Utamakan fungsi sebelum styling.
-- Gunakan JavaScript.
-- Gunakan struktur modular.
-- Hindari duplikasi kode.
-- Gunakan komponen reusable.
-- Jangan menambahkan dependency tanpa kebutuhan.
-- Jangan menambahkan tabel tanpa persetujuan.
-- Jangan mengubah aturan bisnis yang telah disepakati.
-- Lakukan pengujian setiap modul sebelum melanjutkan modul berikutnya.
-- Pastikan aplikasi dapat berjalan sebelum menerapkan styling.
+20. Dokumen Acuan
+Dokumen berikut merupakan acuan utama proyek:
+Dokumen	Tanggung Jawab
+PRD.md	Kebutuhan dan aturan produk
+DATABASE.md	Struktur dan relasi database
+ARCHITECTURE.md	Arsitektur dan pemisahan tanggung jawab
+IMPLEMENTATION_PLAN.md	Tahapan dan urutan implementasi
 
-## 16. Status Dokumen
+Jika terdapat perbedaan antar dokumen:
+1. Aturan bisnis yang telah disepakati menjadi acuan.
+2. Struktur database harus mengikuti keputusan desain database terbaru.
+3. Arsitektur harus diselaraskan dengan PRD dan DATABASE.
+4. Implementasi tidak boleh diam-diam mengubah keputusan yang telah disetujui.
 
-`ARCHITECTURE.md` versi 1.0 menjadi pedoman arsitektur awal aplikasi.
+21. Status Dokumen
+ARCHITECTURE.md versi 2.0 menggantikan versi 1.0.
 
-Perubahan arsitektur diperbolehkan selama tidak melanggar keputusan teknologi, struktur database, dan aturan bisnis yang telah disetujui.
+Dokumen ini menjadi pedoman arsitektur aplikasi Sistem Absensi Sekolah Terpusat.
+
+Perubahan berikutnya harus mempertahankan konsistensi dengan kebutuhan produk, struktur database, dan aturan bisnis yang telah disepakati.
+```

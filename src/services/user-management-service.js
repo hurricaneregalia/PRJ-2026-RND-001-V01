@@ -187,5 +187,13 @@ export async function updateUserProfile(userId, data, actorUserId) {
 }
 
 export async function connectGoogleAccount(email, authUserId) {
-  return bindGoogleIdentity(email, authUserId);
+  if (!validateEmail(email)) {
+    throw new Error("INVALID_GOOGLE_EMAIL");
+  }
+
+  if (typeof authUserId !== "string" || !authUserId.trim()) {
+    throw new Error("INVALID_GOOGLE_AUTH_ID");
+  }
+
+  return bindGoogleIdentity(email.trim().toLowerCase(), authUserId.trim());
 }

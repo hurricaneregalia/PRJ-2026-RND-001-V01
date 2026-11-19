@@ -1,8 +1,15 @@
+// src/app/admin/assignments/page.js
+
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
+
 import { getTeacherAssignmentPageDataService } from "@/services/teacher-assignment-service";
 import AssignmentManagement from "./assignment-management";
 
-export default async function AssignmentsPage() {
+async function AssignmentsContent() {
+  await connection();
+
   const { teachers, classes, assignments } = await getTeacherAssignmentPageDataService();
 
   let prerequisiteMessage = "";
@@ -27,5 +34,13 @@ export default async function AssignmentsPage() {
 
       <AssignmentManagement teachers={teachers} classes={classes} assignments={assignments} />
     </main>
+  );
+}
+
+export default function AssignmentsPage() {
+  return (
+    <Suspense fallback={<p>Memuat data penugasan guru...</p>}>
+      <AssignmentsContent />
+    </Suspense>
   );
 }
