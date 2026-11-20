@@ -82,6 +82,10 @@ export async function updateClassService(classId, data) {
     updatedData.class_status = validateClassStatus(data.class_status);
   }
 
+  if (Object.keys(updatedData).length === 0) {
+    throw new Error("NO_CLASS_CHANGES");
+  }
+
   return updateClass(classId, updatedData, {
     actor_user_id: administrator.userId,
     reason: data?.reason || "",

@@ -7,8 +7,23 @@ import Link from "next/link";
 import { getTeacherAssignmentPageDataService } from "@/services/teacher-assignment-service";
 import AssignmentManagement from "./assignment-management";
 
+function getTodayWIB() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 async function AssignmentsContent() {
   await connection();
+
+  const todayWIB = getTodayWIB();
 
   const { teachers, classes, assignments } = await getTeacherAssignmentPageDataService();
 
@@ -32,7 +47,7 @@ async function AssignmentsContent() {
 
       {prerequisiteMessage && <p>{prerequisiteMessage}</p>}
 
-      <AssignmentManagement teachers={teachers} classes={classes} assignments={assignments} />
+      <AssignmentManagement teachers={teachers} classes={classes} assignments={assignments} todayWIB={todayWIB} />
     </main>
   );
 }

@@ -1,3 +1,5 @@
+// src/app/admin/assignments/assignment-management.js
+
 "use client";
 
 import { useState } from "react";
@@ -5,28 +7,19 @@ import { useRouter } from "next/navigation";
 
 import { createTeacherAssignmentAction, endTeacherAssignmentAction } from "./actions";
 
-function getTodayWIB() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
 function getAssignmentStatus(assignment, today) {
   if (assignment.effective_from > today) {
-    return "Belum dimulai";
+    return "Belum aktif";
   }
 
   if (assignment.effective_to && assignment.effective_to < today) {
-    return "Berakhir";
+    return "Sudah berakhir";
   }
 
   return "Masih aktif";
 }
 
-export default function AssignmentManagement({ teachers, classes, assignments }) {
+export default function AssignmentManagement({ teachers, classes, assignments, todayWIB }) {
   const router = useRouter();
 
   const [userId, setUserId] = useState("");
@@ -37,8 +30,6 @@ export default function AssignmentManagement({ teachers, classes, assignments })
   const [endDates, setEndDates] = useState({});
   const [messages, setMessages] = useState({});
   const [loading, setLoading] = useState(false);
-
-  const today = getTodayWIB();
 
   const canCreateAssignment = teachers.length > 0 && classes.length > 0;
 
@@ -204,7 +195,7 @@ export default function AssignmentManagement({ teachers, classes, assignments })
 
                   <p>Berakhir: {assignment.effective_to || "-"}</p>
 
-                  <p>Status: {getAssignmentStatus(assignment, today)}</p>
+                  <p>Status: {getAssignmentStatus(assignment, todayWIB)}</p>
 
                   {!assignment.effective_to && (
                     <>
