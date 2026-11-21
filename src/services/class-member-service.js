@@ -1,5 +1,3 @@
-// src/services/class-member-service.js
-
 import "server-only";
 
 import { requireRole } from "@/lib/authorization";
@@ -7,7 +5,17 @@ import { requireRole } from "@/lib/authorization";
 import { CLASS_STATUS } from "@/config/class-config";
 import { STUDENT_STATUS } from "@/config/student-config";
 
-import { getAllClassMembers, getClassMemberById, getClassMembersByStudentId, createClassMembership, endClassMembership, moveClassMembership } from "@/repositories/class-member-repository";
+import {
+  getAllClassMembers,
+  getClassMemberById,
+  getClassMembersByStudentId,
+  createClassMembership,
+  endClassMembership,
+  moveClassMembership,
+  createClassMembershipsBulk,
+  moveClassMembershipsBulk,
+  endClassMembershipsBulk,
+} from "@/repositories/class-member-repository";
 
 import { getStudentById } from "@/repositories/student-repository";
 import { getClassById } from "@/repositories/class-repository";
@@ -42,6 +50,37 @@ function validateReason(value) {
   return value.trim();
 }
 
+function getTodayWIB() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function validateBulkStudentIds(studentIds) {
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    throw new Error("STUDENT_IDS_REQUIRED");
+  }
+
+  const normalizedIds = studentIds.map((id) => (typeof id === "string" ? id.trim() : ""));
+
+  if (normalizedIds.some((id) => !id)) {
+    throw new Error("INVALID_STUDENT_IDS");
+  }
+
+  if (new Set(normalizedIds).size !== normalizedIds.length) {
+    throw new Error("DUPLICATE_STUDENT_IDS");
+  }
+
+  return normalizedIds;
+}
+
 async function validateStudentAndClass(studentId, classId) {
   const [student, classData] = await Promise.all([getStudentById(studentId), getClassById(classId)]);
 
@@ -62,6 +101,81 @@ async function validateStudentAndClass(studentId, classId) {
   }
 
   return { student, classData };
+}
+
+async function validateBulkStudents(studentIds) {
+  const validStudents = [];
+  const skipped = [];
+
+  const results = await Promise.all(
+    studentIds.map(async (studentId) => {
+      try {
+        const student = await getStudentById(studentId);
+
+        if (!student) {
+          return {
+            valid: false,
+            student_id: studentId,
+            student_name: studentId,
+            reason: "STUDENT_NOT_FOUND",
+          };
+        }
+
+        if (student.student_status !== STUDENT_STATUS.ACTIVE) {
+          return {
+            valid: false,
+            student_id: studentId,
+            student_name: student.full_name || studentId,
+            reason: "STUDENT_NOT_ACTIVE",
+          };
+        }
+
+        return {
+          valid: true,
+          student,
+        };
+      } catch (error) {
+        throw error;
+      }
+    }),
+  );
+
+  for (const result of results) {
+    if (result.valid) {
+      validStudents.push(result.student);
+    } else {
+      skipped.push({
+        student_id: result.student_id,
+        student_name: result.student_name,
+        reason: result.reason,
+      });
+    }
+  }
+
+  return { validStudents, skipped };
+}
+
+function enrichBulkResult(result, students, initialSkipped) {
+  const studentMap = new Map(students.map((student) => [student.student_id, student.full_name || student.student_id]));
+
+  const processed = (result?.processed || []).map((item) => ({
+    ...item,
+    student_name: studentMap.get(item.student_id) || item.student_id,
+  }));
+
+  const repositorySkipped = (result?.skipped || []).map((item) => ({
+    ...item,
+    student_name: studentMap.get(item.student_id) || item.student_id,
+  }));
+
+  const skipped = [...initialSkipped, ...repositorySkipped];
+
+  return {
+    processed,
+    skipped,
+    processed_count: processed.length,
+    skipped_count: skipped.length,
+  };
 }
 
 export async function getAllClassMembersService() {
@@ -171,4 +285,125 @@ export async function endClassMembershipService(membershipId, effectiveTo, reaso
     actor_user_id: administrator.userId,
     reason: validateReason(reason),
   });
+}
+
+/**
+ * Menempatkan banyak siswa ke satu kelas.
+ * Tanggal efektif menggunakan tanggal hari ini berdasarkan WIB.
+ */
+export async function createClassMembershipsService(data) {
+  const administrator = await requireAdministrator();
+
+  const studentIds = validateBulkStudentIds(data?.student_ids);
+  const classId = String(data?.class_id || "").trim();
+
+  if (!classId) {
+    throw new Error("CLASS_ID_REQUIRED");
+  }
+
+  const reason = validateReason(data?.reason);
+  const effectiveDate = getTodayWIB();
+
+  const classData = await getClassById(classId);
+
+  if (!classData) {
+    throw new Error("CLASS_NOT_FOUND");
+  }
+
+  if (classData.class_status !== CLASS_STATUS.ACTIVE) {
+    throw new Error("CLASS_NOT_ACTIVE");
+  }
+
+  const { validStudents, skipped } = await validateBulkStudents(studentIds);
+
+  if (validStudents.length === 0) {
+    return enrichBulkResult({ processed: [], skipped: [] }, [], skipped);
+  }
+
+  const result = await createClassMembershipsBulk(
+    validStudents.map((student) => student.student_id),
+    classId,
+    effectiveDate,
+    {
+      actor_user_id: administrator.userId,
+      reason,
+    },
+  );
+
+  return enrichBulkResult(result, validStudents, skipped);
+}
+
+/**
+ * Memindahkan banyak siswa ke satu kelas.
+ * Tanggal efektif menggunakan tanggal hari ini berdasarkan WIB.
+ */
+export async function moveClassMembershipsService(data) {
+  const administrator = await requireAdministrator();
+
+  const studentIds = validateBulkStudentIds(data?.student_ids);
+  const newClassId = String(data?.new_class_id || "").trim();
+
+  if (!newClassId) {
+    throw new Error("CLASS_ID_REQUIRED");
+  }
+
+  const reason = validateReason(data?.reason);
+  const effectiveDate = getTodayWIB();
+
+  const classData = await getClassById(newClassId);
+
+  if (!classData) {
+    throw new Error("CLASS_NOT_FOUND");
+  }
+
+  if (classData.class_status !== CLASS_STATUS.ACTIVE) {
+    throw new Error("CLASS_NOT_ACTIVE");
+  }
+
+  const { validStudents, skipped } = await validateBulkStudents(studentIds);
+
+  if (validStudents.length === 0) {
+    return enrichBulkResult({ processed: [], skipped: [] }, [], skipped);
+  }
+
+  const result = await moveClassMembershipsBulk(
+    validStudents.map((student) => student.student_id),
+    newClassId,
+    effectiveDate,
+    {
+      actor_user_id: administrator.userId,
+      reason,
+    },
+  );
+
+  return enrichBulkResult(result, validStudents, skipped);
+}
+
+/**
+ * Mengakhiri keanggotaan kelas banyak siswa.
+ * Tanggal efektif menggunakan tanggal hari ini berdasarkan WIB.
+ */
+export async function endClassMembershipsService(data) {
+  const administrator = await requireAdministrator();
+
+  const studentIds = validateBulkStudentIds(data?.student_ids);
+  const reason = validateReason(data?.reason);
+  const effectiveDate = getTodayWIB();
+
+  const { validStudents, skipped } = await validateBulkStudents(studentIds);
+
+  if (validStudents.length === 0) {
+    return enrichBulkResult({ processed: [], skipped: [] }, [], skipped);
+  }
+
+  const result = await endClassMembershipsBulk(
+    validStudents.map((student) => student.student_id),
+    effectiveDate,
+    {
+      actor_user_id: administrator.userId,
+      reason,
+    },
+  );
+
+  return enrichBulkResult(result, validStudents, skipped);
 }

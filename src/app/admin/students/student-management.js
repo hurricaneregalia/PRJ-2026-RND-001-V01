@@ -1,5 +1,3 @@
-// src/app/admin/students/student-management.js
-
 "use client";
 
 import { useState } from "react";
@@ -18,7 +16,6 @@ export default function StudentManagement({ students }) {
     parent_name: "",
     parent_relation: "Ibu",
     parent_whatsapp: "",
-    student_status: "active",
   });
 
   const [message, setMessage] = useState("");
@@ -66,7 +63,6 @@ export default function StudentManagement({ students }) {
         parent_name: "",
         parent_relation: "Ibu",
         parent_whatsapp: "",
-        student_status: "active",
       });
 
       router.refresh();
@@ -88,16 +84,19 @@ export default function StudentManagement({ students }) {
           <p>
             <label htmlFor="student_number">Nomor Induk Siswa (Opsional)</label>
           </p>
+
           <input id="student_number" name="student_number" type="text" value={formData.student_number} onChange={handleChange} maxLength={50} />
 
           <p>
             <label htmlFor="full_name">Nama Lengkap</label>
           </p>
+
           <input id="full_name" name="full_name" type="text" value={formData.full_name} onChange={handleChange} maxLength={150} required />
 
           <p>
             <label htmlFor="gender">Jenis Kelamin</label>
           </p>
+
           <select id="gender" name="gender" value={formData.gender} onChange={handleChange} required>
             <option value="Laki-laki">Laki-laki</option>
             <option value="Perempuan">Perempuan</option>
@@ -106,11 +105,13 @@ export default function StudentManagement({ students }) {
           <p>
             <label htmlFor="parent_name">Nama Orang Tua</label>
           </p>
+
           <input id="parent_name" name="parent_name" type="text" value={formData.parent_name} onChange={handleChange} maxLength={150} required />
 
           <p>
             <label htmlFor="parent_relation">Hubungan Orang Tua</label>
           </p>
+
           <select id="parent_relation" name="parent_relation" value={formData.parent_relation} onChange={handleChange} required>
             <option value="Ibu">Ibu</option>
             <option value="Ayah">Ayah</option>
@@ -119,17 +120,8 @@ export default function StudentManagement({ students }) {
           <p>
             <label htmlFor="parent_whatsapp">Nomor WhatsApp Orang Tua</label>
           </p>
-          <input id="parent_whatsapp" name="parent_whatsapp" type="tel" value={formData.parent_whatsapp} onChange={handleChange} maxLength={30} required />
 
-          <p>
-            <label htmlFor="student_status">Status Siswa</label>
-          </p>
-          <select id="student_status" name="student_status" value={formData.student_status} onChange={handleChange} required>
-            <option value="active">Aktif</option>
-            <option value="inactive">Tidak Aktif</option>
-            <option value="graduated">Lulus</option>
-            <option value="transferred">Pindah</option>
-          </select>
+          <input id="parent_whatsapp" name="parent_whatsapp" type="tel" value={formData.parent_whatsapp} onChange={handleChange} maxLength={30} required />
 
           <p>
             <button type="submit" disabled={loading}>

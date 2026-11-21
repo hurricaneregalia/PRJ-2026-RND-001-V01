@@ -1,49 +1,50 @@
-// src/app/admin/classes/[classId]/page.js
-
 import { Suspense } from "react";
 import { connection } from "next/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 
-import { getClassDetailsService } from "@/services/class-service";
+import { getClassDetailsService, getAllClassesService } from "@/services/class-service";
+
+import { getAllClassMembersService } from "@/services/class-member-service";
+import { getAllStudentsService } from "@/services/student-service";
+
+import ClassMembershipManagement from "./class-membership-management";
 
 async function ClassDetailData({ params }) {
+  const { classId } = await params;
+
   await connection();
 
-  const { classId } = await params;
-  const classItem = await getClassDetailsService(classId);
+  const [classDetails, memberships, students, classes] = await Promise.all([getClassDetailsService(classId), getAllClassMembersService(), getAllStudentsService(), getAllClassesService()]);
 
-  if (!classItem) {
+  if (!classDetails) {
     notFound();
   }
 
   return (
-    <section>
-      <h2>{classItem.class_name}</h2>
+    <main>
+      <nav>
+        <Link href="/admin/classes">Kembali ke Daftar Kelas</Link>
+      </nav>
 
-      <p>Status: {classItem.class_status}</p>
+      <section>
+        <h1>{classDetails.class_name}</h1>
 
-      <p>ID Kelas: {classItem.class_id}</p>
+        <p>Status: {classDetails.class_status}</p>
+        <p>ID Kelas: {classDetails.class_id}</p>
+        <p>Dibuat: {classDetails.created_at}</p>
+        <p>Terakhir diperbarui: {classDetails.updated_at}</p>
+      </section>
 
-      <p>Dibuat: {classItem.created_at}</p>
-
-      <p>Terakhir diperbarui: {classItem.updated_at}</p>
-    </section>
+      <ClassMembershipManagement classId={classDetails.class_id} students={students} memberships={memberships} classes={classes} />
+    </main>
   );
 }
 
 export default function ClassDetailPage({ params }) {
   return (
-    <main>
-      <h1>Detail Kelas</h1>
-
-      <p>
-        <Link href="/admin/classes">Kembali ke Daftar Kelas</Link>
-      </p>
-
-      <Suspense fallback={<p>Memuat detail kelas...</p>}>
-        <ClassDetailData params={params} />
-      </Suspense>
-    </main>
+    <Suspense fallback={<p>Memuat detail kelas...</p>}>
+      <ClassDetailData params={params} />
+    </Suspense>
   );
 }

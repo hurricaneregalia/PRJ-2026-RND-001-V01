@@ -29,6 +29,9 @@ async function AdminDashboardContent() {
           <li>
             <Link href="/admin/assignments">Penugasan Guru</Link>
           </li>
+          <li>
+            <Link href="/admin/students">Manajemen Siswa</Link>
+          </li>
         </ul>
       </nav>
     </main>

@@ -1,5 +1,3 @@
-// src/services/student-service.js
-
 import "server-only";
 
 import { requireRole } from "@/lib/authorization";
@@ -87,7 +85,7 @@ function validateStudentData(data) {
     parent_name: validateText(data?.parent_name, "INVALID_PARENT_NAME", 150),
     parent_relation: validateParentRelation(data?.parent_relation),
     parent_whatsapp: validateText(data?.parent_whatsapp, "INVALID_PARENT_WHATSAPP", 30),
-    student_status: validateStudentStatus(data?.student_status),
+    student_status: STUDENT_STATUS.ACTIVE,
   };
 }
 

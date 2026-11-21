@@ -6,7 +6,14 @@ import { revalidatePath } from "next/cache";
 
 import { createStudentService, updateStudentService } from "@/services/student-service";
 
-import { createClassMembershipService, moveStudentToClassService, endClassMembershipService } from "@/services/class-member-service";
+import {
+  createClassMembershipService,
+  moveStudentToClassService,
+  endClassMembershipService,
+  createClassMembershipsService,
+  moveClassMembershipsService,
+  endClassMembershipsService,
+} from "@/services/class-member-service";
 
 export async function createStudentAction(input) {
   const student = await createStudentService(input);
@@ -50,6 +57,33 @@ export async function moveStudentToClassAction(input) {
 
 export async function endClassMembershipAction(membershipId, effectiveTo, reason) {
   const result = await endClassMembershipService(membershipId, effectiveTo, reason);
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/classes");
+
+  return result;
+}
+
+export async function createClassMembershipsBulkAction(input) {
+  const result = await createClassMembershipsService(input);
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/classes");
+
+  return result;
+}
+
+export async function moveClassMembershipsBulkAction(input) {
+  const result = await moveClassMembershipsService(input);
+
+  revalidatePath("/admin/students");
+  revalidatePath("/admin/classes");
+
+  return result;
+}
+
+export async function endClassMembershipsBulkAction(input) {
+  const result = await endClassMembershipsService(input);
 
   revalidatePath("/admin/students");
   revalidatePath("/admin/classes");
