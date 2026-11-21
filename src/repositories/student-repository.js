@@ -1,5 +1,3 @@
-// src/repositories/student-repository.js
-
 import "server-only";
 
 import { randomUUID } from "node:crypto";
@@ -66,9 +64,7 @@ async function getRequiredSheetIds(sheets) {
   });
 
   const properties = response.data.sheets || [];
-
   const studentsSheet = properties.find((sheet) => sheet.properties.title === SHEET_NAME);
-
   const auditSheet = properties.find((sheet) => sheet.properties.title === AUDIT_SHEET_NAME);
 
   if (!studentsSheet || !auditSheet) {
@@ -204,7 +200,6 @@ export async function createStudent(data, auditData) {
   }
 
   const sheets = await getGoogleSheetsClient();
-
   const { studentsSheetId, auditSheetId } = await getRequiredSheetIds(sheets);
 
   const now = new Date().toISOString();
@@ -266,13 +261,122 @@ export async function createStudent(data, auditData) {
   };
 }
 
+/**
+ * Membuat beberapa siswa sekaligus.
+ * Seluruh data divalidasi sebelum satu batchUpdate dijalankan.
+ */
+export async function createStudentsBulk(dataList, auditData) {
+  if (!Array.isArray(dataList) || dataList.length === 0) {
+    throw new Error("STUDENT_BULK_DATA_REQUIRED");
+  }
+
+  if (!SPREADSHEET_ID) {
+    throw new Error("GOOGLE_SHEETS_SPREADSHEET_ID_MISSING");
+  }
+
+  const studentsData = dataList.map((data, index) => {
+    try {
+      return assertValidStudentData(data);
+    } catch (error) {
+      throw new Error(`STUDENT_BULK_INVALID_DATA:${index + 1}:${error.message}`);
+    }
+  });
+
+  const existingStudents = await getStudentsData();
+  const existingNumbers = new Set(existingStudents.map((student) => student.student_number.trim().toLowerCase()).filter(Boolean));
+  const batchNumbers = new Set();
+
+  studentsData.forEach((student, index) => {
+    const normalizedNumber = student.student_number.toLowerCase();
+
+    if (!normalizedNumber) {
+      return;
+    }
+
+    if (existingNumbers.has(normalizedNumber)) {
+      throw new Error(`STUDENT_BULK_DUPLICATE_EXISTING:${index + 1}`);
+    }
+
+    if (batchNumbers.has(normalizedNumber)) {
+      throw new Error(`STUDENT_BULK_DUPLICATE_INPUT:${index + 1}`);
+    }
+
+    batchNumbers.add(normalizedNumber);
+  });
+
+  const sheets = await getGoogleSheetsClient();
+  const { studentsSheetId, auditSheetId } = await getRequiredSheetIds(sheets);
+
+  const now = new Date().toISOString();
+
+  const createdStudents = studentsData.map((studentData) => ({
+    student_id: randomUUID(),
+    ...studentData,
+    student_status: STUDENT_STATUS.ACTIVE,
+    created_at: now,
+    updated_at: now,
+  }));
+
+  const studentRows = createdStudents.map((student) =>
+    toRowData([
+      student.student_id,
+      student.student_number,
+      student.full_name,
+      student.gender,
+      student.parent_name,
+      student.parent_relation,
+      student.parent_whatsapp,
+      student.student_status,
+      student.created_at,
+      student.updated_at,
+    ]),
+  );
+
+  const auditRows = await Promise.all(
+    createdStudents.map(async (student) => {
+      const auditRow = await prepareAdministrativeAudit({
+        ...auditData,
+        action_type: "CREATE",
+        table_name: SHEET_NAME,
+        record_id: student.student_id,
+        new_data: student,
+      });
+
+      return toRowData(auditRow);
+    }),
+  );
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          appendCells: {
+            sheetId: studentsSheetId,
+            rows: studentRows,
+            fields: "userEnteredValue",
+          },
+        },
+        {
+          appendCells: {
+            sheetId: auditSheetId,
+            rows: auditRows,
+            fields: "userEnteredValue",
+          },
+        },
+      ],
+    },
+  });
+
+  return createdStudents;
+}
+
 export async function updateStudent(studentId, data, auditData) {
   if (!studentId) {
     throw new Error("STUDENT_ID_REQUIRED");
   }
 
   const students = await getStudentsData();
-
   const existing = students.find((student) => student.student_id === studentId);
 
   if (!existing) {
@@ -291,7 +395,6 @@ export async function updateStudent(studentId, data, auditData) {
   }
 
   const sheets = await getGoogleSheetsClient();
-
   const { studentsSheetId, auditSheetId } = await getRequiredSheetIds(sheets);
 
   const now = new Date().toISOString();
@@ -354,8 +457,6 @@ export async function updateStudent(studentId, data, auditData) {
     },
   ];
 
-  // Tutup keanggotaan jika status berubah menjadi
-  // graduated atau transferred.
   if (shouldEndClassMembership(existing.student_status, studentData.student_status)) {
     const effectiveDate = getTodayWIB();
 
@@ -367,7 +468,6 @@ export async function updateStudent(studentId, data, auditData) {
     requests.push(...membershipChanges.requests);
   }
 
-  // Audit perubahan data siswa.
   requests.push({
     appendCells: {
       sheetId: auditSheetId,
@@ -376,8 +476,6 @@ export async function updateStudent(studentId, data, auditData) {
     },
   });
 
-  // Seluruh perubahan siswa, keanggotaan, dan audit
-  // dijalankan dalam satu batchUpdate.
   await sheets.spreadsheets.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {

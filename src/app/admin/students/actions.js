@@ -4,7 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createStudentService, updateStudentService } from "@/services/student-service";
+import { createStudentService, createStudentsBulkService, updateStudentService } from "@/services/student-service";
 
 import {
   createClassMembershipService,
@@ -14,6 +14,45 @@ import {
   moveClassMembershipsService,
   endClassMembershipsService,
 } from "@/services/class-member-service";
+
+function parseBulkStudentError(error) {
+  const message = error?.message || "";
+
+  const duplicateExisting = message.match(/^STUDENT_BULK_DUPLICATE_EXISTING:(\d+)$/);
+
+  if (duplicateExisting) {
+    return {
+      success: false,
+      code: "DUPLICATE_EXISTING",
+      row_index: Number(duplicateExisting[1]) - 1,
+      message: "Nomor induk sudah digunakan siswa lain.",
+    };
+  }
+
+  const duplicateInput = message.match(/^STUDENT_BULK_DUPLICATE_INPUT:(\d+)$/);
+
+  if (duplicateInput) {
+    return {
+      success: false,
+      code: "DUPLICATE_INPUT",
+      row_index: Number(duplicateInput[1]) - 1,
+      message: "Nomor induk duplikat dalam formulir.",
+    };
+  }
+
+  const invalidData = message.match(/^STUDENT_BULK_INVALID_DATA:(\d+):(.+)$/);
+
+  if (invalidData) {
+    return {
+      success: false,
+      code: "INVALID_DATA",
+      row_index: Number(invalidData[1]) - 1,
+      message: invalidData[2],
+    };
+  }
+
+  return null;
+}
 
 export async function createStudentAction(input) {
   const student = await createStudentService(input);
@@ -25,6 +64,30 @@ export async function createStudentAction(input) {
     message: "Siswa berhasil ditambahkan.",
     student,
   };
+}
+
+export async function createStudentsBulkAction(dataList, reason = "") {
+  try {
+    const result = await createStudentsBulkService(dataList, reason);
+
+    revalidatePath("/admin/students");
+    revalidatePath("/admin/classes");
+
+    return {
+      success: true,
+      message: `${result.length} siswa berhasil ditambahkan.`,
+      processed_count: result.length,
+      students: result,
+    };
+  } catch (error) {
+    const validationError = parseBulkStudentError(error);
+
+    if (validationError) {
+      return validationError;
+    }
+
+    throw error;
+  }
 }
 
 export async function updateStudentAction(studentId, input) {

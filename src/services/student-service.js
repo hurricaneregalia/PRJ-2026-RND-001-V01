@@ -7,7 +7,7 @@ import { CLASS_STATUS } from "@/config/class-config";
 
 import { STUDENT_STATUS, STUDENT_GENDER, STUDENT_PARENT_RELATIONS, STUDENT_EDITABLE_FIELDS_BY_TEACHER } from "@/config/student-config";
 
-import { getAllStudents, getStudentById, createStudent, updateStudent } from "@/repositories/student-repository";
+import { getAllStudents, getStudentById, createStudent, updateStudent, createStudentsBulk } from "@/repositories/student-repository";
 
 import { getAllClassMembers } from "@/repositories/class-member-repository";
 
@@ -179,7 +179,26 @@ export async function createStudentService(data) {
     reason: validateOptionalText(data?.reason, 500),
   });
 }
+export async function createStudentsBulkService(dataList, reason) {
+  const administrator = await requireAdministrator();
 
+  if (!Array.isArray(dataList) || dataList.length === 0) {
+    throw new Error("STUDENT_BULK_DATA_REQUIRED");
+  }
+
+  const studentsData = dataList.map((data, index) => {
+    try {
+      return validateStudentData(data);
+    } catch (error) {
+      throw new Error(`STUDENT_BULK_INVALID_DATA:${index + 1}:${error.message}`);
+    }
+  });
+
+  return createStudentsBulk(studentsData, {
+    actor_user_id: administrator.userId,
+    reason: validateOptionalText(reason, 500),
+  });
+}
 export async function updateStudentService(studentId, data) {
   const user = await requireRole([USER_ROLES.ADMINISTRATOR, USER_ROLES.TEACHER]);
 
