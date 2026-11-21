@@ -7,7 +7,7 @@ import { getStudentDetailsService } from "@/services/student-service";
 import { getStudentClassMembershipsService } from "@/services/class-member-service";
 import { getAllClassesService } from "@/services/class-service";
 
-import { updateStudentAction } from "../actions";
+import StudentEditForm from "../student-edit-form";
 
 function formatDate(date) {
   if (!date) return "-";
@@ -37,72 +37,7 @@ async function StudentDetailData({ params }) {
     <>
       <section>
         <h2>Informasi Siswa</h2>
-
-        <form
-          action={async (formData) => {
-            "use server";
-
-            await updateStudentAction(studentId, {
-              student_number: formData.get("student_number") || "",
-              full_name: formData.get("full_name"),
-              gender: formData.get("gender"),
-              parent_name: formData.get("parent_name"),
-              parent_relation: formData.get("parent_relation"),
-              parent_whatsapp: formData.get("parent_whatsapp"),
-              student_status: formData.get("student_status"),
-            });
-          }}
-        >
-          <div>
-            <label htmlFor="student_number">Nomor Induk Siswa</label>
-            <input id="student_number" name="student_number" type="text" defaultValue={student.student_number || ""} />
-          </div>
-
-          <div>
-            <label htmlFor="full_name">Nama Lengkap</label>
-            <input id="full_name" name="full_name" type="text" defaultValue={student.full_name || ""} required />
-          </div>
-
-          <div>
-            <label htmlFor="gender">Jenis Kelamin</label>
-            <select id="gender" name="gender" defaultValue={student.gender || ""} required>
-              <option value="">Pilih jenis kelamin</option>
-              <option value="Laki-laki">Laki-laki</option>
-              <option value="Perempuan">Perempuan</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="parent_name">Nama Orang Tua</label>
-            <input id="parent_name" name="parent_name" type="text" defaultValue={student.parent_name || ""} required />
-          </div>
-
-          <div>
-            <label htmlFor="parent_relation">Hubungan Orang Tua</label>
-            <select id="parent_relation" name="parent_relation" defaultValue={student.parent_relation || ""} required>
-              <option value="">Pilih hubungan</option>
-              <option value="Ibu">Ibu</option>
-              <option value="Ayah">Ayah</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="parent_whatsapp">WhatsApp Orang Tua</label>
-            <input id="parent_whatsapp" name="parent_whatsapp" type="text" defaultValue={student.parent_whatsapp || ""} required />
-          </div>
-
-          <div>
-            <label htmlFor="student_status">Status Siswa</label>
-            <select id="student_status" name="student_status" defaultValue={student.student_status || ""} required>
-              <option value="active">Aktif</option>
-              <option value="inactive">Tidak Aktif</option>
-              <option value="graduated">Lulus</option>
-              <option value="transferred">Pindah</option>
-            </select>
-          </div>
-
-          <button type="submit">Simpan Perubahan</button>
-        </form>
+        <StudentEditForm student={student} />
       </section>
 
       <section>

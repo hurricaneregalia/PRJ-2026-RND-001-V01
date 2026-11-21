@@ -49,8 +49,7 @@ function validateOptionalText(value, maxLength = 150) {
 }
 
 function validateStudentNumber(studentNumber) {
-  const value = validateOptionalText(studentNumber, 50);
-  return value;
+  return validateOptionalText(studentNumber, 50);
 }
 
 function validateStudentGender(gender) {
@@ -179,6 +178,7 @@ export async function createStudentService(data) {
     reason: validateOptionalText(data?.reason, 500),
   });
 }
+
 export async function createStudentsBulkService(dataList, reason) {
   const administrator = await requireAdministrator();
 
@@ -199,6 +199,7 @@ export async function createStudentsBulkService(dataList, reason) {
     reason: validateOptionalText(reason, 500),
   });
 }
+
 export async function updateStudentService(studentId, data) {
   const user = await requireRole([USER_ROLES.ADMINISTRATOR, USER_ROLES.TEACHER]);
 
@@ -260,6 +261,10 @@ export async function updateStudentService(studentId, data) {
 
   if (data.student_status !== undefined) {
     updatedData.student_status = validateStudentStatus(data.student_status);
+  }
+
+  if (data.student_status !== undefined && data.student_status === STUDENT_STATUS.INACTIVE && existing.student_status !== STUDENT_STATUS.INACTIVE && !validateOptionalText(data.reason, 500)) {
+    throw new Error("STUDENT_STATUS_REASON_REQUIRED");
   }
 
   if (Object.keys(updatedData).length === 0) {

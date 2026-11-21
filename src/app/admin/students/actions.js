@@ -91,12 +91,27 @@ export async function createStudentsBulkAction(dataList, reason = "") {
 }
 
 export async function updateStudentAction(studentId, input) {
-  const result = await updateStudentService(studentId, input);
+  try {
+    const result = await updateStudentService(studentId, input);
 
-  revalidatePath("/admin/students");
-  revalidatePath(`/admin/students/${studentId}`);
+    revalidatePath("/admin/students");
+    revalidatePath(`/admin/students/${studentId}`);
 
-  return result;
+    return {
+      success: true,
+      result,
+    };
+  } catch (error) {
+    if (error?.message === "STUDENT_STATUS_REASON_REQUIRED") {
+      return {
+        success: false,
+        code: "STUDENT_STATUS_REASON_REQUIRED",
+        message: "Alasan wajib diisi ketika status siswa diubah menjadi Tidak Aktif.",
+      };
+    }
+
+    throw error;
+  }
 }
 
 export async function createClassMembershipAction(input) {
