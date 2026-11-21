@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/authorization";
 import { listUsers } from "@/services/user-management-service";
 import { registerUserAction } from "./actions";
+import UserList from "./user-list";
 
 export const instant = false;
 
@@ -33,22 +34,22 @@ export default async function UsersPage({ searchParams }) {
         <form action={registerUserAction}>
           <div>
             <label htmlFor="username">Username</label>
-            <input id="username" name="username" type="text" required />
+            <input id="username" name="username" type="text" autoComplete="username" required />
           </div>
 
           <div>
             <label htmlFor="full_name">Nama Lengkap</label>
-            <input id="full_name" name="full_name" type="text" required />
+            <input id="full_name" name="full_name" type="text" autoComplete="name" required />
           </div>
 
           <div>
             <label htmlFor="email">Email Google</label>
-            <input id="email" name="email" type="email" required />
+            <input id="email" name="email" type="email" autoComplete="email" required />
           </div>
 
           <div>
             <label htmlFor="gender">Jenis Kelamin</label>
-            <select id="gender" name="gender" defaultValue="" required>
+            <select id="gender" name="gender" autoComplete="off" defaultValue="" required>
               <option value="" disabled>
                 Pilih jenis kelamin
               </option>
@@ -59,7 +60,7 @@ export default async function UsersPage({ searchParams }) {
 
           <div>
             <label htmlFor="role">Role</label>
-            <select id="role" name="role" defaultValue="Guru" required>
+            <select id="role" name="role" autoComplete="off" defaultValue="Guru" required>
               <option value="Guru">Guru</option>
               <option value="Administrator">Administrator</option>
             </select>
@@ -69,28 +70,7 @@ export default async function UsersPage({ searchParams }) {
         </form>
       </section>
 
-      <section>
-        <h2>Daftar Pengguna ({users.length})</h2>
-
-        {users.length === 0 ? (
-          <p>Belum ada pengguna terdaftar.</p>
-        ) : (
-          <ul>
-            {users.map((user) => (
-              <li key={user.user_id}>
-                <h3>{user.full_name}</h3>
-
-                <p>Username: {user.username}</p>
-                <p>Email: {user.email}</p>
-                <p>Role: {user.role}</p>
-                <p>Status: {user.account_status}</p>
-
-                <a href={`/admin/users/${encodeURIComponent(user.user_id)}`}>Lihat Detail</a>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <UserList initialUsers={users} />
     </main>
   );
 }

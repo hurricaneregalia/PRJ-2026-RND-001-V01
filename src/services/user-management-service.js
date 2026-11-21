@@ -22,7 +22,106 @@ export async function listUsers() {
 
   return users.map(({ row_number, ...user }) => user);
 }
+const USER_LIST_PAGE_SIZE = 20;
 
+const USER_LIST_SORT_FIELDS = ["full_name", "role", "account_status", "updated_at"];
+
+function compareUserListRecords(a, b, sortBy, sortDirection) {
+  const aValue = String(a[sortBy] ?? "");
+  const bValue = String(b[sortBy] ?? "");
+
+  const comparison = aValue.localeCompare(bValue, "id", {
+    sensitivity: "base",
+    numeric: true,
+  });
+
+  if (comparison !== 0) {
+    return sortDirection === "desc" ? -comparison : comparison;
+  }
+
+  return String(a.user_id).localeCompare(String(b.user_id));
+}
+
+export async function listUsersPage({ filters = {}, sortBy = "updated_at", sortDirection = "desc", cursor = null } = {}) {
+  const role = filters.role || "";
+  const accountStatus = filters.accountStatus || "";
+
+  if (!["", ...Object.values(USER_ROLES)].includes(role) || !["", ...Object.values(USER_STATUS)].includes(accountStatus)) {
+    throw new Error("INVALID_USER_LIST_FILTER");
+  }
+
+  if (!USER_LIST_SORT_FIELDS.includes(sortBy)) {
+    throw new Error("INVALID_USER_LIST_SORT");
+  }
+
+  if (!["asc", "desc"].includes(sortDirection)) {
+    throw new Error("INVALID_USER_LIST_SORT_DIRECTION");
+  }
+
+  if (
+    cursor !== null &&
+    (typeof cursor !== "object" ||
+      typeof cursor.userId !== "string" ||
+      !cursor.userId ||
+      typeof cursor.sortValue !== "string" ||
+      cursor.sortBy !== sortBy ||
+      cursor.sortDirection !== sortDirection ||
+      cursor.role !== role ||
+      cursor.accountStatus !== accountStatus)
+  ) {
+    throw new Error("INVALID_USER_LIST_CURSOR");
+  }
+
+  const allUsers = await getAllUsers();
+
+  let users = allUsers.filter((user) => {
+    if (role && user.role !== role) {
+      return false;
+    }
+
+    if (accountStatus && user.account_status !== accountStatus) {
+      return false;
+    }
+
+    return true;
+  });
+
+  users.sort((a, b) => compareUserListRecords(a, b, sortBy, sortDirection));
+
+  const totalCount = users.length;
+
+  if (cursor) {
+    const cursorRecord = {
+      user_id: cursor.userId,
+      [sortBy]: cursor.sortValue,
+    };
+
+    users = users.filter((user) => compareUserListRecords(user, cursorRecord, sortBy, sortDirection) > 0);
+  }
+
+  const pageUsers = users.slice(0, USER_LIST_PAGE_SIZE);
+  const hasMore = users.length > USER_LIST_PAGE_SIZE;
+
+  const lastUser = pageUsers[pageUsers.length - 1];
+
+  const nextCursor =
+    hasMore && lastUser
+      ? {
+          userId: lastUser.user_id,
+          sortValue: String(lastUser[sortBy] ?? ""),
+          sortBy,
+          sortDirection,
+          role,
+          accountStatus,
+        }
+      : null;
+
+  return {
+    users: pageUsers.map(({ row_number, ...user }) => user),
+    totalCount,
+    nextCursor,
+  };
+}
 export async function getUserDetails(userId) {
   const user = await getUserById(userId);
 

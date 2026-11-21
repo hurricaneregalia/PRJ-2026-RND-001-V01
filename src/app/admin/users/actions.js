@@ -3,11 +3,16 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/authorization";
 
-import { registerUser, updateUserProfile } from "@/services/user-management-service";
+import { registerUser, updateUserProfile, listUsersPage } from "@/services/user-management-service";
+
+export async function listUsersPageAction(input = {}) {
+  await requireRole(["Administrator"]);
+
+  return listUsersPage(input);
+}
 
 export async function registerUserAction(formData) {
   const actor = await requireRole(["Administrator"]);
-
   const data = {
     username: formData.get("username"),
     email: formData.get("email"),
