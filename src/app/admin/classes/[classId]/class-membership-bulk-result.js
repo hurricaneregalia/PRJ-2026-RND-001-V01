@@ -1,3 +1,4 @@
+// src/app/admin/classes/[classId]/class-membership-bulk-result.js
 "use client";
 
 import { getStudentName, getSkippedReason } from "./class-membership-helpers";

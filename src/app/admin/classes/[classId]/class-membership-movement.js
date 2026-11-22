@@ -80,11 +80,14 @@ export default function ClassMembershipMovement({
               <select value={targetClassId} onChange={(event) => setTargetClassId(event.target.value)} required disabled={isPending || targetClasses.length === 0}>
                 <option value="">Pilih kelas tujuan</option>
 
-                {targetClasses.map((item) => (
-                  <option key={item.class_id} value={item.class_id}>
-                    {item.class_name}
-                  </option>
-                ))}
+                {targetClasses
+                  .slice()
+                  .sort((a, b) => a.class_name.localeCompare(b.class_name, "id"))
+                  .map((item) => (
+                    <option key={item.class_id} value={item.class_id}>
+                      {item.class_name}
+                    </option>
+                  ))}
               </select>
             </label>
 

@@ -107,41 +107,35 @@ export default function UserList({ initialUsers = [] }) {
   }, [displayedUsers.length, sortedUsers.length]);
 
   return (
-    <section className="space-y-4">
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Daftar Pengguna ({sortedUsers.length})</h2>
+    <section>
+      <div>
+        <h2>Daftar Pengguna ({sortedUsers.length})</h2>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">Filter Role</span>
+        <div>
+          <label>
+            <span>Filter Role</span>
 
-            <select id="role-filter" name="role-filter" value={roleFilter} onChange={(event) => handleRoleChange(event.target.value)} className="w-full rounded-md border px-3 py-2">
+            <select id="role-filter" name="role-filter" value={roleFilter} onChange={(event) => handleRoleChange(event.target.value)}>
               <option value="">Semua Role</option>
               <option value="Administrator">Administrator</option>
               <option value="Guru">Guru</option>
             </select>
           </label>
 
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">Filter Status</span>
+          <label>
+            <span>Filter Status</span>
 
-            <select
-              id="account-status-filter"
-              name="account-status-filter"
-              value={accountStatusFilter}
-              onChange={(event) => handleStatusChange(event.target.value)}
-              className="w-full rounded-md border px-3 py-2"
-            >
+            <select id="account-status-filter" name="account-status-filter" value={accountStatusFilter} onChange={(event) => handleStatusChange(event.target.value)}>
               <option value="">Semua Status</option>
               <option value="active">Aktif</option>
               <option value="inactive">Nonaktif</option>
             </select>
           </label>
 
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">Urutkan Berdasarkan</span>
+          <label>
+            <span>Urutkan Berdasarkan</span>
 
-            <select id="sort-by" name="sort-by" value={sortBy} onChange={(event) => handleSortByChange(event.target.value)} className="w-full rounded-md border px-3 py-2">
+            <select id="sort-by" name="sort-by" value={sortBy} onChange={(event) => handleSortByChange(event.target.value)}>
               <option value="updated_at">Terakhir Diperbarui</option>
               <option value="full_name">Nama Lengkap</option>
               <option value="role">Role</option>
@@ -149,10 +143,10 @@ export default function UserList({ initialUsers = [] }) {
             </select>
           </label>
 
-          <label className="block space-y-1">
-            <span className="text-sm font-medium">Arah Pengurutan</span>
+          <label>
+            <span>Arah Pengurutan</span>
 
-            <select id="sort-direction" name="sort-direction" value={sortDirection} onChange={(event) => handleSortDirectionChange(event.target.value)} className="w-full rounded-md border px-3 py-2">
+            <select id="sort-direction" name="sort-direction" value={sortDirection} onChange={(event) => handleSortDirectionChange(event.target.value)}>
               <option value="desc">Menurun (DESC)</option>
               <option value="asc">Menaik (ASC)</option>
             </select>
@@ -160,33 +154,32 @@ export default function UserList({ initialUsers = [] }) {
         </div>
       </div>
 
-      {sortedUsers.length === 0 && <p className="text-sm text-gray-500">Tidak ada pengguna yang ditemukan.</p>}
+      {sortedUsers.length === 0 && <p>Tidak ada pengguna yang ditemukan.</p>}
 
-      <ul className="space-y-3">
-        {displayedUsers.map((user) => (
-          <li key={user.user_id} className="space-y-2 rounded-lg border p-4">
-            <div className="space-y-1">
-              <p className="font-semibold">{user.full_name}</p>
+      <ul>
+        {displayedUsers.map((user, index) => (
+          <li key={user.user_id}>
+            <div>
+              <p>{index + 1}</p>
+              <p>{user.full_name}</p>
 
-              <p className="text-sm text-gray-600">Username: {user.username}</p>
+              <p>Username: {user.username}</p>
 
-              <p className="text-sm text-gray-600">Email: {user.email}</p>
+              <p>Email: {user.email}</p>
 
-              <p className="text-sm text-gray-600">Role: {user.role}</p>
+              <p>Role: {user.role}</p>
 
-              <p className="text-sm text-gray-600">Status: {user.account_status}</p>
+              <p>Status: {user.account_status}</p>
             </div>
 
-            <Link href={`/admin/users/${encodeURIComponent(user.user_id)}`} className="inline-block rounded-md border px-3 py-2 text-sm">
-              Detail
-            </Link>
+            <Link href={`/admin/users/${encodeURIComponent(user.user_id)}`}>Detail</Link>
           </li>
         ))}
       </ul>
 
-      {displayedUsers.length < sortedUsers.length && <div ref={sentinelRef} className="h-4" aria-hidden="true" />}
+      {displayedUsers.length < sortedUsers.length && <div ref={sentinelRef} aria-hidden="true" />}
 
-      {sortedUsers.length > 0 && displayedUsers.length === sortedUsers.length && <p className="py-3 text-center text-sm text-gray-500">Semua pengguna telah ditampilkan.</p>}
+      {sortedUsers.length > 0 && displayedUsers.length === sortedUsers.length && <p>Semua pengguna telah ditampilkan.</p>}
     </section>
   );
 }

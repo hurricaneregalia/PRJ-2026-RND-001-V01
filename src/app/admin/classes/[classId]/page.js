@@ -1,3 +1,4 @@
+// src/app/admin/classes/[classId]/page.js
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";

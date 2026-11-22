@@ -1,3 +1,4 @@
+// src/app/admin/classes/[classId]/class-membership-placement.js
 "use client";
 
 import ClassMembershipBulkResult from "./class-membership-bulk-result";

@@ -12,7 +12,8 @@ export async function listUsersPageAction(input = {}) {
 }
 
 export async function registerUserAction(formData) {
-  const actor = await requireRole(["Administrator"]);
+  await requireRole(["Administrator"]);
+
   const data = {
     username: formData.get("username"),
     email: formData.get("email"),
@@ -22,7 +23,7 @@ export async function registerUserAction(formData) {
   };
 
   try {
-    await registerUser(data, actor.userId);
+    await registerUser(data);
   } catch (error) {
     const allowedErrors = [
       "INVALID_USER_DATA",
@@ -46,7 +47,7 @@ export async function updateUserAction(formData) {
   const userId = formData.get("user_id");
 
   try {
-    const actor = await requireRole(["Administrator"]);
+    await requireRole(["Administrator"]);
 
     const data = {
       username: formData.get("username"),
@@ -57,7 +58,7 @@ export async function updateUserAction(formData) {
       account_status: formData.get("account_status"),
     };
 
-    await updateUserProfile(userId, data, actor.userId);
+    await updateUserProfile(userId, data);
   } catch (error) {
     const allowedErrors = [
       "USER_NOT_FOUND",

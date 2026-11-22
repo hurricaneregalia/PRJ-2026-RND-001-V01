@@ -3,7 +3,18 @@ import "server-only";
 
 import { USER_ROLES, USER_STATUS, USER_GENDER } from "@/config/user-config";
 
+import { requireRole } from "@/lib/authorization";
+
 import { getAllUsers, getUserById, findUserByEmail, createUser, updateUser, bindGoogleIdentity } from "@/repositories/user-repository";
+
+import { getTeacherAssignmentsByTeacherId } from "@/repositories/teacher-assignment-repository";
+import { bulkEndTeacherAssignments } from "@/repositories/teacher-assignment-repository-bulk";
+import { getTodayWIB } from "@/services/class-member-service-utils";
+import { getPreviousDate } from "@/repositories/class-member-repository-validation";
+
+async function requireAdministrator() {
+  return requireRole(["Administrator"]);
+}
 
 function validateEmail(email) {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -18,10 +29,13 @@ function validateRole(role) {
 }
 
 export async function listUsers() {
+  await requireAdministrator();
+
   const users = await getAllUsers();
 
-  return users.map(({ row_number, ...user }) => user);
+  return users.map(({ row_number, auth_user_id, ...user }) => user);
 }
+
 const USER_LIST_PAGE_SIZE = 20;
 
 const USER_LIST_SORT_FIELDS = ["full_name", "role", "account_status", "updated_at"];
@@ -43,6 +57,8 @@ function compareUserListRecords(a, b, sortBy, sortDirection) {
 }
 
 export async function listUsersPage({ filters = {}, sortBy = "updated_at", sortDirection = "desc", cursor = null } = {}) {
+  await requireAdministrator();
+
   const role = filters.role || "";
   const accountStatus = filters.accountStatus || "";
 
@@ -117,24 +133,29 @@ export async function listUsersPage({ filters = {}, sortBy = "updated_at", sortD
       : null;
 
   return {
-    users: pageUsers.map(({ row_number, ...user }) => user),
+    users: pageUsers.map(({ row_number, auth_user_id, ...user }) => user),
     totalCount,
     nextCursor,
   };
 }
+
 export async function getUserDetails(userId) {
+  await requireAdministrator();
+
   const user = await getUserById(userId);
 
   if (!user) {
     throw new Error("USER_NOT_FOUND");
   }
 
-  const { row_number, ...userData } = user;
+  const { row_number, auth_user_id, ...userData } = user;
 
   return userData;
 }
 
-export async function registerUser(data, actorUserId) {
+export async function registerUser(data) {
+  const administrator = await requireAdministrator();
+
   if (
     !data ||
     typeof data.username !== "string" ||
@@ -148,11 +169,10 @@ export async function registerUser(data, actorUserId) {
     throw new Error("INVALID_USER_DATA");
   }
 
-  if (typeof actorUserId !== "string" || !actorUserId.trim()) {
-    throw new Error("INVALID_AUDIT_ACTOR");
-  }
+  const actorUserId = administrator.userId;
 
-  const existingUser = await findUserByEmail(data.email);
+  const normalizedEmail = data.email.trim().toLowerCase();
+  const existingUser = await findUserByEmail(normalizedEmail);
 
   if (existingUser) {
     throw new Error("USER_EMAIL_ALREADY_EXISTS");
@@ -161,7 +181,7 @@ export async function registerUser(data, actorUserId) {
   return createUser(
     {
       username: data.username.trim(),
-      email: data.email.trim().toLowerCase(),
+      email: normalizedEmail,
       full_name: data.full_name.trim(),
       gender: data.gender,
       role: data.role,
@@ -175,14 +195,14 @@ export async function registerUser(data, actorUserId) {
   );
 }
 
-export async function updateUserProfile(userId, data, actorUserId) {
+export async function updateUserProfile(userId, data) {
+  const administrator = await requireAdministrator();
+
   if (!userId || !data || typeof data !== "object" || Array.isArray(data)) {
     throw new Error("INVALID_USER_UPDATE");
   }
 
-  if (typeof actorUserId !== "string" || !actorUserId.trim()) {
-    throw new Error("INVALID_AUDIT_ACTOR");
-  }
+  const actorUserId = administrator.userId;
 
   const existingUser = await getUserById(userId);
 
@@ -245,16 +265,49 @@ export async function updateUserProfile(userId, data, actorUserId) {
     }
   }
 
+  const isTeacherDeactivation =
+    existingUser.role === USER_ROLES.TEACHER &&
+    existingUser.account_status === USER_STATUS.ACTIVE &&
+    data.account_status === USER_STATUS.INACTIVE;
+
+  if (isTeacherDeactivation) {
+    const assignments = await getTeacherAssignmentsByTeacherId(userId);
+    const activeAssignments = assignments.filter((assignment) => !assignment.effective_to);
+
+    if (activeAssignments.length > 0) {
+      const today = getTodayWIB();
+
+      const items = activeAssignments.map((assignment) => ({
+        assignment_id: assignment.assignment_id,
+        effective_to:
+          assignment.effective_from > today
+            ? getPreviousDate(assignment.effective_from)
+            : today,
+        reason: "Penugasan diakhiri otomatis karena deaktivasi guru.",
+      }));
+
+      await bulkEndTeacherAssignments(items, {
+        actor_user_id: actorUserId,
+        reason: "Penugasan diakhiri otomatis karena deaktivasi guru.",
+      });
+    }
+  }
+
   const updates = {};
 
   for (const field of fields) {
     const value = data[field];
-
     updates[field] = typeof value === "string" ? value.trim() : value;
   }
 
-  if (updates.email) {
+  if (updates.email !== undefined) {
     updates.email = updates.email.toLowerCase();
+
+    const emailOwner = await findUserByEmail(updates.email);
+
+    if (emailOwner && emailOwner.user_id !== userId) {
+      throw new Error("USER_EMAIL_ALREADY_EXISTS");
+    }
   }
 
   const roleChanged = updates.role !== undefined && updates.role !== existingUser.role;

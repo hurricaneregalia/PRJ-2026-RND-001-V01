@@ -63,14 +63,37 @@ export function useClassMembershipActions(classId, today) {
       try {
         const result = await createClassMembershipsBulkAction(input);
 
+        if (!result || result.error) {
+          setMessage({
+            type: "error",
+            text: result?.error || "Bulk penempatan gagal.",
+          });
+          return;
+        }
+
+        const processedCount = result?.processed_count ?? result?.processed?.length ?? 0;
+        const skippedCount = result?.skipped_count ?? result?.skipped?.length ?? 0;
+
         setPlacementResult(result);
         setSelectedPlacementIds([]);
         setPlacementReason("");
 
-        setMessage({
-          type: "success",
-          text: "Proses penempatan siswa selesai.",
-        });
+        if (processedCount === 0) {
+          setMessage({
+            type: "error",
+            text: `Proses penempatan siswa selesai: 0 diproses, ${skippedCount} dilewati.`,
+          });
+        } else if (skippedCount === 0) {
+          setMessage({
+            type: "success",
+            text: `Proses penempatan siswa selesai: ${processedCount} diproses, 0 dilewati.`,
+          });
+        } else {
+          setMessage({
+            type: "success",
+            text: `Proses penempatan siswa sebagian: ${processedCount} diproses, ${skippedCount} dilewati.`,
+          });
+        }
 
         router.refresh();
       } catch (error) {
@@ -114,15 +137,38 @@ export function useClassMembershipActions(classId, today) {
       try {
         const result = await moveClassMembershipsBulkAction(input);
 
+        if (!result || result.error) {
+          setMessage({
+            type: "error",
+            text: result?.error || "Bulk pemindahan gagal.",
+          });
+          return;
+        }
+
+        const processedCount = result?.processed_count ?? result?.processed?.length ?? 0;
+        const skippedCount = result?.skipped_count ?? result?.skipped?.length ?? 0;
+
         setMoveResult(result);
         setSelectedMoveIds([]);
         setMoveReason("");
         setTargetClassId("");
 
-        setMessage({
-          type: "success",
-          text: "Proses pemindahan siswa selesai.",
-        });
+        if (processedCount === 0) {
+          setMessage({
+            type: "error",
+            text: `Proses pemindahan siswa selesai: 0 diproses, ${skippedCount} dilewati.`,
+          });
+        } else if (skippedCount === 0) {
+          setMessage({
+            type: "success",
+            text: `Proses pemindahan siswa selesai: ${processedCount} diproses, 0 dilewati.`,
+          });
+        } else {
+          setMessage({
+            type: "success",
+            text: `Proses pemindahan siswa sebagian: ${processedCount} diproses, ${skippedCount} dilewati.`,
+          });
+        }
 
         router.refresh();
       } catch (error) {

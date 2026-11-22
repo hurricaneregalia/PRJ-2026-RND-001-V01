@@ -1,3 +1,4 @@
+// src/services/student-service.js
 import "server-only";
 
 import { requireRole } from "@/lib/authorization";
@@ -127,9 +128,15 @@ async function requireTeacher() {
 export async function getAllStudentsService() {
   await requireAdministrator();
 
-  return getAllStudents();
-}
+  const students = await getAllStudents();
 
+  return students.map((student) => ({
+    student_id: student.student_id,
+    student_number: student.student_number,
+    full_name: student.full_name,
+    student_status: student.student_status,
+  }));
+}
 export async function getStudentDetailsService(studentId) {
   const user = await requireRole([USER_ROLES.ADMINISTRATOR, USER_ROLES.TEACHER]);
 
@@ -151,7 +158,9 @@ export async function getStudentDetailsService(studentId) {
     }
   }
 
-  return student;
+  const { row_number, ...studentData } = student;
+
+  return studentData;
 }
 
 export async function getTeacherStudentsService() {
@@ -165,7 +174,9 @@ export async function getTeacherStudentsService() {
 
   const students = await getAllStudents();
 
-  return students.filter((student) => accessibleStudentIds.has(student.student_id));
+  return students
+    .filter((student) => accessibleStudentIds.has(student.student_id))
+    .map(({ row_number, ...student }) => student);
 }
 
 export async function createStudentService(data) {

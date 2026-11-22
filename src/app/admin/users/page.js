@@ -2,6 +2,7 @@ import { requireRole } from "@/lib/authorization";
 import { listUsers } from "@/services/user-management-service";
 import { registerUserAction } from "./actions";
 import UserList from "./user-list";
+import Link from "next/link";
 
 export const instant = false;
 
@@ -20,14 +21,14 @@ export default async function UsersPage({ searchParams }) {
 
   return (
     <main>
+      {" "}
+      <nav>
+        <Link href="/admin">Kembali ke Dashboard</Link>
+      </nav>
       <h1>Manajemen Pengguna</h1>
-
       <p>Kelola akun Administrator dan Guru yang memiliki akses ke sistem.</p>
-
       {params?.success === "created" && <p>Pengguna berhasil didaftarkan.</p>}
-
       {params?.error && <p>{errorMessages[params.error] || "Terjadi kesalahan."}</p>}
-
       <section>
         <h2>Tambah Pengguna</h2>
 
@@ -69,7 +70,6 @@ export default async function UsersPage({ searchParams }) {
           <button type="submit">Daftarkan Pengguna</button>
         </form>
       </section>
-
       <UserList initialUsers={users} />
     </main>
   );

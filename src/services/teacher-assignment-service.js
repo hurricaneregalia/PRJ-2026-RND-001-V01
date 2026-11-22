@@ -1,3 +1,4 @@
+// src/services/teacher-assignment-service.js
 import "server-only";
 
 import { requireRole } from "@/lib/authorization";
@@ -16,6 +17,7 @@ import {
 import { getUserById, getAllUsers } from "@/repositories/user-repository";
 
 import { getClassById, getAllClasses } from "@/repositories/class-repository";
+import { bulkEndTeacherAssignments } from "@/repositories/teacher-assignment-repository-bulk";
 
 function validateDate(value, errorCode) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -80,17 +82,30 @@ export async function getTeacherAssignmentPageDataService() {
 
   const [users, classes, assignments] = await Promise.all([getAllUsers(), getAllClasses(), getAllTeacherAssignments()]);
 
-  const teachers = users.filter((user) => user.role === USER_ROLES.TEACHER && user.account_status === USER_STATUS.ACTIVE);
+  const teachers = users
+    .filter((user) => user.role === USER_ROLES.TEACHER && user.account_status === USER_STATUS.ACTIVE)
+    .map((user) => ({
+      user_id: user.user_id,
+      username: user.username,
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      account_status: user.account_status,
+    }));
 
-  const activeClasses = classes.filter((item) => item.class_status === CLASS_STATUS.ACTIVE);
+  const activeClasses = classes
+    .filter((item) => item.class_status === CLASS_STATUS.ACTIVE)
+    .map(({ row_number, ...classData }) => classData);
 
   const enrichedAssignments = assignments.map((assignment) => {
+    const { row_number, ...assignmentData } = assignment;
+
     const teacher = users.find((user) => user.user_id === assignment.user_id);
 
     const classData = classes.find((item) => item.class_id === assignment.class_id);
 
     return {
-      ...assignment,
+      ...assignmentData,
       teacher_name: teacher?.full_name || "",
       class_name: classData?.class_name || "",
     };
@@ -109,12 +124,14 @@ export async function getAllTeacherAssignmentsService() {
   const [assignments, users, classes] = await Promise.all([getAllTeacherAssignments(), getAllUsers(), getAllClasses()]);
 
   return assignments.map((assignment) => {
+    const { row_number, ...assignmentData } = assignment;
+
     const teacher = users.find((user) => user.user_id === assignment.user_id);
 
     const classData = classes.find((item) => item.class_id === assignment.class_id);
 
     return {
-      ...assignment,
+      ...assignmentData,
       teacher_name: teacher?.full_name || "",
       class_name: classData?.class_name || "",
     };
@@ -225,5 +242,24 @@ export async function endTeacherAssignmentService(assignmentId, effectiveTo, rea
   return endTeacherAssignment(assignmentId, endDate, {
     actor_user_id: administrator.userId,
     reason,
+  });
+}
+
+export async function bulkEndTeacherAssignmentsService(items) {
+  const administrator = await requireAdministrator();
+
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("ASSIGNMENTS_REQUIRED");
+  }
+
+  const uniqueItems = [...new Map(items.filter((item) => item && typeof item.assignment_id === "string").map((item) => [item.assignment_id, item])).values()];
+
+  if (uniqueItems.length === 0) {
+    throw new Error("ASSIGNMENTS_REQUIRED");
+  }
+
+  return bulkEndTeacherAssignments(uniqueItems, {
+    actor_user_id: administrator.userId,
+    reason: "Bulk mengakhiri penugasan oleh administrator.",
   });
 }

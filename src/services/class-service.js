@@ -1,8 +1,10 @@
+// src/services/class-service.js
 import "server-only";
 
 import { requireRole } from "@/lib/authorization";
 import { CLASS_STATUS } from "@/config/class-config";
 import { getAllClasses, getClassById, createClass, updateClass } from "@/repositories/class-repository";
+import { bulkUpdateClassStatus } from "@/repositories/class-repository-bulk";
 
 async function requireAdministrator() {
   return requireRole(["Administrator"]);
@@ -28,7 +30,9 @@ function validateClassStatus(status) {
 
 export async function getAllClassesService() {
   await requireAdministrator();
-  return getAllClasses();
+  const classes = await getAllClasses();
+
+  return classes.map(({ row_number, ...classData }) => classData);
 }
 
 export async function getClassDetailsService(classId) {
@@ -89,5 +93,19 @@ export async function updateClassService(classId, data) {
   return updateClass(classId, updatedData, {
     actor_user_id: administrator.userId,
     reason: data?.reason || "",
+  });
+}
+export async function bulkUpdateClassStatusService(classIds, status) {
+  const administrator = await requireAdministrator();
+
+  validateClassStatus(status);
+
+  if (!Array.isArray(classIds) || classIds.length === 0) {
+    throw new Error("CLASS_IDS_REQUIRED");
+  }
+
+  return bulkUpdateClassStatus(classIds, status, {
+    actor_user_id: administrator.userId,
+    reason: "Bulk update status kelas",
   });
 }

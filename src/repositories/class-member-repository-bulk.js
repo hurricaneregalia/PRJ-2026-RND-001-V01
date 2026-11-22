@@ -5,7 +5,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { getGoogleSheetsClient } from "@/lib/google-sheets";
 import { CLASS_MEMBER_HEADERS } from "@/config/class-member-config";
-import { prepareAdministrativeAudit } from "@/repositories/administrative-audit-repository";
+import { prepareAdministrativeAudits } from "@/repositories/administrative-audit-repository";
 
 import { SPREADSHEET_ID } from "./class-member-repository-constants";
 import { getClassMembersData } from "./class-member-repository-data";
@@ -44,7 +44,7 @@ export async function createClassMembershipsBulk(studentIds, classId, effectiveD
   const processed = [];
   const skipped = [];
   const newMemberships = [];
-  const auditRows = [];
+  const auditDataList = [];
 
   const now = new Date().toISOString();
 
@@ -100,10 +100,9 @@ export async function createClassMembershipsBulk(studentIds, classId, effectiveD
       updated_at: now,
     };
 
-    const auditRow = await prepareAdministrativeAudit(createMembershipAuditData(auditData, "CREATE", membershipId, null, membership, "Penambahan siswa ke kelas secara massal"));
+    auditDataList.push(createMembershipAuditData(auditData, "CREATE", membershipId, null, membership, "Penambahan siswa ke kelas secara massal"));
 
     newMemberships.push(membership);
-    auditRows.push(auditRow);
 
     processed.push({
       student_id: studentId,
@@ -111,6 +110,8 @@ export async function createClassMembershipsBulk(studentIds, classId, effectiveD
       class_id: normalizedClassId,
     });
   }
+
+  const auditRows = auditDataList.length > 0 ? await prepareAdministrativeAudits(auditDataList) : [];
 
   if (newMemberships.length > 0) {
     if (!SPREADSHEET_ID) {
@@ -164,7 +165,7 @@ export async function moveClassMembershipsBulk(studentIds, newClassId, effective
   const skipped = [];
   const updateRequests = [];
   const newMembershipRows = [];
-  const auditRows = [];
+  const auditDataList = [];
 
   const now = new Date().toISOString();
 
@@ -255,7 +256,7 @@ export async function moveClassMembershipsBulk(studentIds, newClassId, effective
       },
     });
 
-    const oldAuditRow = await prepareAdministrativeAudit(
+    auditDataList.push(
       createMembershipAuditData(
         auditData,
         "UPDATE",
@@ -270,9 +271,8 @@ export async function moveClassMembershipsBulk(studentIds, newClassId, effective
       ),
     );
 
-    const newAuditRow = await prepareAdministrativeAudit(createMembershipAuditData(auditData, "CREATE", newMembershipId, null, newMembership, "Perpindahan kelas secara massal"));
+    auditDataList.push(createMembershipAuditData(auditData, "CREATE", newMembershipId, null, newMembership, "Perpindahan kelas secara massal"));
 
-    auditRows.push(oldAuditRow, newAuditRow);
     newMembershipRows.push(newMembership);
 
     processed.push({
@@ -283,6 +283,8 @@ export async function moveClassMembershipsBulk(studentIds, newClassId, effective
       new_membership_id: newMembershipId,
     });
   }
+
+  const auditRows = auditDataList.length > 0 ? await prepareAdministrativeAudits(auditDataList) : [];
 
   if (processed.length > 0) {
     if (!SPREADSHEET_ID) {
@@ -342,7 +344,7 @@ export async function endClassMembershipsBulk(studentIds, effectiveDate, auditDa
   const skipped = [];
   const updateRequests = [];
   const deletionIndexes = [];
-  const auditRows = [];
+  const auditDataList = [];
 
   const now = new Date().toISOString();
 
@@ -369,9 +371,8 @@ export async function endClassMembershipsBulk(studentIds, effectiveDate, auditDa
     const oldData = getMembershipSnapshot(current);
 
     if (current.effective_from === normalizedDate) {
-      const auditRow = await prepareAdministrativeAudit(createMembershipAuditData(auditData, "DELETE", current.membership_id, oldData, null, "Pembatalan keanggotaan kelas secara massal"));
+      auditDataList.push(createMembershipAuditData(auditData, "DELETE", current.membership_id, oldData, null, "Pembatalan keanggotaan kelas secara massal"));
 
-      auditRows.push(auditRow);
       deletionIndexes.push(current.row_number - 1);
 
       processed.push({
@@ -390,7 +391,7 @@ export async function endClassMembershipsBulk(studentIds, effectiveDate, auditDa
       row: toRowData(updatedRow),
     });
 
-    const auditRow = await prepareAdministrativeAudit(
+    auditDataList.push(
       createMembershipAuditData(
         auditData,
         "UPDATE",
@@ -405,8 +406,6 @@ export async function endClassMembershipsBulk(studentIds, effectiveDate, auditDa
       ),
     );
 
-    auditRows.push(auditRow);
-
     processed.push({
       student_id: studentId,
       membership_id: current.membership_id,
@@ -414,6 +413,8 @@ export async function endClassMembershipsBulk(studentIds, effectiveDate, auditDa
       effective_to: normalizedDate,
     });
   }
+
+  const auditRows = auditDataList.length > 0 ? await prepareAdministrativeAudits(auditDataList) : [];
 
   if (processed.length > 0) {
     if (!SPREADSHEET_ID) {
