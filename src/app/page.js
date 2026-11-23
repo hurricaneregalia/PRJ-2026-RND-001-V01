@@ -1,13 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
+import React from "react";
 
 export default function Home() {
-  return (
-    <div>
-      home
-      <div>
-        <Link href="/admin">dashboard</Link>
-      </div>
-    </div>
-  );
+  return <div>Home</div>;
 }
