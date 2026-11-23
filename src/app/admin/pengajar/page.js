@@ -1,7 +1,7 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export const metadata = {
-  title: 'Data Pengajar',
+  title: "Data Pengajar",
 };
 
 export default function DaftarPengajarPage() {
@@ -10,7 +10,9 @@ export default function DaftarPengajarPage() {
       <header>
         <h1>Data Pengajar</h1>
         <p>Kelola informasi dan akun pengajar.</p>
-        <p><Link href="/admin/pengajar/tambah">+ Tambah Pengajar</Link></p>
+        <p>
+          <Link href="/admin/pengajar/tambah">+ Tambah Pengajar</Link>
+        </p>
       </header>
 
       <section>
@@ -34,8 +36,12 @@ export default function DaftarPengajarPage() {
         <h2>Tabel Data Pengajar</h2>
         <ul>
           <li>No. | Nama | Email | Kelas | Status | Aksi</li>
-          <li>1 | Budi | budi@email.com | 3 | Aktif | <Link href="/admin/pengajar/detail">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus</li>
-          <li>2 | Siti | siti@email.com | 2 | Aktif | <Link href="/admin/pengajar/detail">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus</li>
+          <li>
+            1 | Budi | budi@email.com | 3 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus
+          </li>
+          <li>
+            2 | Siti | siti@email.com | 2 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus
+          </li>
         </ul>
       </section>
 

@@ -35,10 +35,10 @@ export default function AdminDashboardPage() {
         <h2>Daftar Kelas</h2>
         <ul>
           <li>
-            Matematika A | Budi | 15 siswa | <Link href="tentukan-link-yang-cocok">detail kelas</Link>
+            Matematika A | Budi | 15 siswa | <Link href="/admin/kelas/2">detail kelas</Link>
           </li>
           <li>
-            Bahasa Inggris B | Siti | 12 siswa | <Link href="tentukan-link-yang-cocok">detail kelas</Link>
+            Bahasa Inggris B | Siti | 12 siswa | <Link href="/admin/kelas/2">detail kelas</Link>
           </li>
         </ul>
       </section>
@@ -46,10 +46,10 @@ export default function AdminDashboardPage() {
         <h2>Daftar Guru</h2>
         <ul>
           <li>
-            Budi | 2 kelas | <Link href="tentukan-link-yang-cocok">detail profile</Link>
+            Budi | 2 kelas | <Link href="/admin/pengajar/3">profile</Link>
           </li>
           <li>
-            Siti | 1 kelas | <Link href="tentukan-link-yang-cocok">detail profile</Link>
+            Siti | 1 kelas | <Link href="/admin/pengajar/3">profile</Link>
           </li>
         </ul>
       </section>
@@ -58,10 +58,10 @@ export default function AdminDashboardPage() {
         <h2>Tidak Hadir Tanpa Keterangan 3 Kali</h2>
         <ul>
           <li>
-            Andi | Matematika A | Alpa 3 | <Link href="tentukan-link-yang-cocok">beri peringatan</Link>
+            Andi | Matematika A | Alpa 3 | <Link href="/admin/kelas/2">beri peringatan</Link>
           </li>
           <li>
-            Citra | Bahasa Inggris B | Alpa 6 | <Link href="tentukan-link-yang-cocok">beri peringatan</Link>
+            Citra | Bahasa Inggris B | Alpa 6 | <Link href="/admin/kelas/2">beri peringatan</Link>
           </li>
         </ul>
       </section>

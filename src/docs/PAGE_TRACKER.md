@@ -27,9 +27,9 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Manajemen Kelas
 
-- [ ] Daftar Kelas
-- [ ] Tambah Kelas
-- [ ] Edit Kelas
+- [x] Daftar Kelas
+- [x] Tambah Kelas
+- [x] Edit Kelas
 
 ### Manajemen Jadwal
 

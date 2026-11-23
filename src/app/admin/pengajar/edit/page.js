@@ -10,7 +10,7 @@ export default function EditPengajarPage() {
       <header>
         <h1>Edit Pengajar</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pengajar">Pengajar</Link> / Edit Pengajar
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pengajar">Manajemen Pengajar</Link> / Edit Pengajar
         </p>
       </header>
 

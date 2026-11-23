@@ -11,7 +11,7 @@ export default function TambahPengajarPage() {
         <h1>Tambah Pengajar</h1>
         <p>Tambahkan pengajar baru ke dalam sistem.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pengajar">Pengajar</Link> / Tambah Pengajar
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pengajar">Manajemen Pengajar</Link> / Tambah Pengajar
         </p>
       </header>
 

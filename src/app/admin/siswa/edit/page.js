@@ -11,7 +11,7 @@ export default function EditSiswaPage() {
         <h1>Edit Data Siswa</h1>
         <p>Perbarui informasi siswa.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Siswa</Link> / Edit Siswa
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Edit Siswa
         </p>
       </header>
 

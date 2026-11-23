@@ -69,6 +69,7 @@ public/ # aset statis
 - Eksternal link wajib menggunakan <a .../>
 - Elemen interaktif wajib punya state focus dan disabled bila relevan
 - Form wajib punya label yang terhubung
+- Gaya breadcrumb harus mirip seperti ini <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / Edit Kelas
 
 ## Data
 
@@ -91,5 +92,6 @@ public/ # aset statis
 - Error message jelas, tanpa stack trace ke user
 
 ## Penandaan Halaman
+
 - Halaman tidak boleh ditandai selesai sebelum informasinya dimasukkan.
 - Halaman kosong bukan berarti selesai dibuat.

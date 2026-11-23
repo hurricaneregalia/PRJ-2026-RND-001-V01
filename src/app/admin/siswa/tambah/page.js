@@ -11,7 +11,7 @@ export default function TambahSiswaPage() {
         <h1>Tambah Siswa</h1>
         <p>Masukkan informasi siswa baru.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Siswa</Link> / Tambah Siswa
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Tambah Siswa
         </p>
       </header>
 
