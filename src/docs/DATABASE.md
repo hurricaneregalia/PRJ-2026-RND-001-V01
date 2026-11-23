@@ -243,7 +243,8 @@ Menyimpan sesi absensi per kelas dan tanggal pertemuan.
 | teacher_user_id  | VARCHAR(36)  | FK, NOT NULL | Guru pembuat                    |
 | academic_year_id | VARCHAR(9)   | NOT NULL     | Identitas tahun ajaran otomatis |
 | attendance_date  | DATE         | NOT NULL     | Tanggal pertemuan               |
-| location_name    | VARCHAR(150) | NOT NULL     | Nama lokasi                     |
+| location_type    | VARCHAR(20)  | NOT NULL     | IN_CLASS/OUTSIDE_CLASS          |
+| location_name    | VARCHAR(150) | NOT NULL     | Nama lokasi, kosong untuk in-class |
 | location_note    | TEXT         | NULL         | Catatan lokasi                  |
 | lesson_material  | TEXT         | NOT NULL     | Materi pelajaran                |
 | created_at       | TIMESTAMP    | NOT NULL     | Waktu pembuatan                 |
@@ -267,7 +268,7 @@ Aturan:
 9. `academic_year_id` dihitung otomatis berdasarkan `attendance_date`.
 10. `teacher_user_id` mencatat identitas guru yang benar-benar membuat sesi.
 11. Guru hanya dapat membuat sesi untuk kelas yang penugasannya berlaku pada `attendance_date`.
-12. `location_name` wajib diisi.
+12. `location_type` wajib diisi dengan nilai `IN_CLASS` atau `OUTSIDE_CLASS`; `location_name` wajib diisi untuk `OUTSIDE_CLASS` dan kosong untuk `IN_CLASS`.
 13. Lokasi default adalah ruang kelas reguler.
 14. Kegiatan dapat berlangsung di luar kelas atau di luar area sekolah.
 15. `location_note` digunakan untuk memberikan penjelasan tambahan tentang lokasi.

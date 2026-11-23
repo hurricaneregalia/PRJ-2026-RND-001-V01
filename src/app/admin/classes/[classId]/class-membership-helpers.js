@@ -1,15 +1,4 @@
-export function getTodayWIB() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-
-  return `${values.year}-${values.month}-${values.day}`;
-}
+import { getTodayWIB } from "@/lib/attendance-date-utils";
 
 export function isMembershipActive(membership, today) {
   return membership.effective_from <= today && (!membership.effective_to || membership.effective_to >= today);

@@ -9,7 +9,7 @@ import { getAllUsers, getUserById, findUserByEmail, createUser, updateUser, bind
 
 import { getTeacherAssignmentsByTeacherId } from "@/repositories/teacher-assignment-repository";
 import { bulkEndTeacherAssignments } from "@/repositories/teacher-assignment-repository-bulk";
-import { getTodayWIB } from "@/services/class-member-service-utils";
+import { getTodayWIB } from "@/lib/attendance-date-utils";
 import { getPreviousDate } from "@/repositories/class-member-repository-validation";
 
 async function requireAdministrator() {

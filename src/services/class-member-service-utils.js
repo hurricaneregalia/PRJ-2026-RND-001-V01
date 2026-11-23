@@ -29,19 +29,6 @@ export function validateReason(value) {
   return value.trim();
 }
 
-export function getTodayWIB() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
-
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
 export function validateBulkStudentIds(studentIds) {
   if (!Array.isArray(studentIds) || studentIds.length === 0) {
     throw new Error("STUDENT_IDS_REQUIRED");

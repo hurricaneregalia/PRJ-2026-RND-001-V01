@@ -11,18 +11,7 @@ import { getAllTeacherAssignmentsService } from "@/services/teacher-assignment-s
 
 import StudentManagement from "./student-management";
 
-function getTodayWIB() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-
-  return `${values.year}-${values.month}-${values.day}`;
-}
+import { getTodayWIB } from "@/lib/attendance-date-utils";
 
 function isActiveOnDate(record, today) {
   return record.effective_from <= today && (!record.effective_to || record.effective_to >= today);

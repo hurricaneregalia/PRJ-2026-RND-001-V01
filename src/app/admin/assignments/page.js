@@ -7,18 +7,7 @@ import Link from "next/link";
 import { getTeacherAssignmentPageDataService } from "@/services/teacher-assignment-service";
 import AssignmentManagement from "./assignment-management";
 
-function getTodayWIB() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
-
-  return `${values.year}-${values.month}-${values.day}`;
-}
+import { getTodayWIB } from "@/lib/attendance-date-utils";
 
 async function AssignmentsContent() {
   await connection();

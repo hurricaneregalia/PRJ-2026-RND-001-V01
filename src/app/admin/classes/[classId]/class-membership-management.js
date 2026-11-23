@@ -2,7 +2,8 @@
 
 "use client";
 
-import { getTodayWIB, isMembershipActive } from "./class-membership-helpers";
+import { getTodayWIB } from "@/lib/attendance-date-utils";
+import { isMembershipActive } from "./class-membership-helpers";
 
 import { useClassMembershipActions } from "./class-membership-actions";
 

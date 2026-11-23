@@ -4,7 +4,8 @@ import "server-only";
 
 import { requireRole } from "@/lib/authorization";
 
-import { validateBulkStudentIds, validateReason, validateDate, getTodayWIB, validateStudentData, validateClassData, enrichBulkResult } from "./class-member-service-utils";
+import { validateBulkStudentIds, validateReason, validateDate, validateStudentData, validateClassData, enrichBulkResult } from "./class-member-service-utils";
+import { getTodayWIB } from "@/lib/attendance-date-utils";
 
 import { getAllStudents } from "@/repositories/student-repository";
 import { getClassById } from "@/repositories/class-repository";

@@ -13,7 +13,7 @@ export const DATABASE_SCHEMA = {
 
   Teacher_Assignments: ["assignment_id", "user_id", "class_id", "effective_from", "effective_to", "created_at", "updated_at"],
 
-  Attendance_Sessions: ["session_id", "class_id", "teacher_user_id", "academic_year_id", "attendance_date", "location_name", "location_note", "lesson_material", "created_at", "updated_at"],
+  Attendance_Sessions: ["session_id", "class_id", "teacher_user_id", "academic_year_id", "attendance_date", "location_type", "location_name", "location_note", "lesson_material", "created_at", "updated_at"],
 
   Attendance_Records: ["attendance_id", "session_id", "student_id", "membership_id", "status", "created_at", "updated_at"],
 
