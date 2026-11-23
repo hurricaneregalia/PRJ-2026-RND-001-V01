@@ -7,40 +7,49 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 ## Admin
 
 ### Dashboard
-- [ ] Ringkasan Kehadiran
-- [ ] Total Siswa dan Pengajar
-- [ ] Jadwal Hari Ini
+
+- [x] Ringkasan Kehadiran
+- [x] Total Siswa dan Pengajar
+- [ ] Jadwal Hari Ini (cancel)
 
 ### Manajemen Pengguna
-- [ ] Data Pengajar
-  - [ ] Daftar Pengajar
-  - [ ] Tambah Pengajar
-  - [ ] Edit Pengajar
-- [ ] Data Siswa
-  - [ ] Daftar Siswa
-  - [ ] Tambah Siswa
-  - [ ] Edit Siswa
+
+- [x] Data Pengajar
+  - [x] Daftar Pengajar
+  - [x] Tambah Pengajar
+  - [x] Edit Pengajar
+  - [x] Detail Pengajar
+- [x] Data Siswa
+  - [x] Daftar Siswa
+  - [x] Tambah Siswa
+  - [x] Edit Siswa
+  - [x] Detail Siswa
 
 ### Manajemen Kelas
+
 - [ ] Daftar Kelas
 - [ ] Tambah Kelas
 - [ ] Edit Kelas
 
 ### Manajemen Jadwal
+
 - [ ] Daftar Jadwal
 - [ ] Tambah Jadwal
 - [ ] Edit Jadwal
 
 ### Manajemen Absensi
+
 - [ ] Daftar Absensi
 - [ ] Detail Absensi
 - [ ] Edit Status Absensi
 
 ### Laporan Absensi
+
 - [ ] Rekap Kehadiran
 - [ ] Detail Laporan
 
 ### Profil
+
 - [ ] Lihat Profil
 - [ ] Edit Profil
 - [ ] Ubah Foto Profil
@@ -49,29 +58,35 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 ## Pengajar
 
 ### Dashboard
+
 - [ ] Ringkasan Kehadiran Kelas
 - [ ] Jadwal Mengajar Hari Ini
 
 ### Kelas Saya
+
 - [ ] Daftar Kelas
 - [ ] Detail Kelas
   - [ ] Daftar Siswa
 
 ### Jadwal Mengajar
+
 - [ ] Daftar Jadwal
 - [ ] Detail Jadwal
 
 ### Absensi
+
 - [ ] Pilih Kelas
 - [ ] Daftar Siswa
 - [ ] Input Absensi
 - [ ] Riwayat Absensi
 
 ### Laporan Absensi
+
 - [ ] Rekap Kehadiran Kelas
 - [ ] Detail Laporan
 
 ### Profil
+
 - [ ] Lihat Profil
 - [ ] Edit Profil
 - [ ] Ubah Foto Profil

@@ -89,3 +89,7 @@ public/ # aset statis
 
 - Skrip harus exit code 0 saat sukses, non-zero saat gagal
 - Error message jelas, tanpa stack trace ke user
+
+## Penandaan Halaman
+- Halaman tidak boleh ditandai selesai sebelum informasinya dimasukkan.
+- Halaman kosong bukan berarti selesai dibuat.
