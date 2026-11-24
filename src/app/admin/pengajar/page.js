@@ -37,10 +37,10 @@ export default function DaftarPengajarPage() {
         <ul>
           <li>No. | Nama | Email | Kelas | Status | Aksi</li>
           <li>
-            1 | Budi | budi@email.com | 3 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus
+            1 | Budi | budi@email.com | 3 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/3/edit">Edit</Link> | Hapus
           </li>
           <li>
-            2 | Siti | siti@email.com | 2 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/edit">Edit</Link> | Hapus
+            2 | Siti | siti@email.com | 2 | Aktif | <Link href="/admin/pengajar/3">Detail</Link> | <Link href="/admin/pengajar/3/edit">Edit</Link> | Hapus
           </li>
         </ul>
       </section>

@@ -39,10 +39,10 @@ export default function DaftarKelasPage() {
         <ul>
           <li>No. | Kode Kelas | Nama Kelas | Pengajar | Jumlah Siswa | Status | Aksi</li>
           <li>
-            1 | KLS-001 | Matematika A | Budi | 15 | Aktif | <Link href="/admin/kelas/2">Detail</Link> | <Link href="/admin/kelas/edit">Edit</Link> | Hapus
+            1 | KLS-001 | Matematika A | Budi | 15 | Aktif | <Link href="/admin/kelas/2">Detail</Link> | <Link href="/admin/kelas/2/edit">Edit</Link> | Hapus
           </li>
           <li>
-            2 | KLS-002 | Bahasa Inggris B | Siti | 12 | Aktif | <Link href="/admin/kelas/2">Detail</Link> | <Link href="/admin/kelas/edit">Edit</Link> | Hapus
+            2 | KLS-002 | Bahasa Inggris B | Siti | 12 | Aktif | <Link href="/admin/kelas/2">Detail</Link> | <Link href="/admin/kelas/2/edit">Edit</Link> | Hapus
           </li>
         </ul>
       </section>

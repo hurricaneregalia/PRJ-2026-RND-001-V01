@@ -33,9 +33,9 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Manajemen Jadwal
 
-- [ ] Daftar Jadwal
-- [ ] Tambah Jadwal
-- [ ] Edit Jadwal
+- [x] Daftar Jadwal
+- [x] Tambah Jadwal
+- [x] Edit Jadwal
 
 ### Manajemen Absensi
 

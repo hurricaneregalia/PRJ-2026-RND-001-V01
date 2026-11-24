@@ -38,10 +38,10 @@ export default function DaftarSiswaPage() {
         <ul>
           <li>No. | Nama | NIS | Jenis Kelamin | Kelas | Status | Aksi</li>
           <li>
-            1 | Andi | 2026001 | Laki-laki | Matematika A | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/edit">Edit</Link> | Hapus
+            1 | Andi | 2026001 | Laki-laki | Matematika A | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/4/edit">Edit</Link> | Hapus
           </li>
           <li>
-            2 | Citra | 2026002 | Perempuan | Bahasa Inggris B | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/edit">Edit</Link> | Hapus
+            2 | Citra | 2026002 | Perempuan | Bahasa Inggris B | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/4/edit">Edit</Link> | Hapus
           </li>
         </ul>
       </section>
