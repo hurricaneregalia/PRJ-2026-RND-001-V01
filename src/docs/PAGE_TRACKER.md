@@ -4,6 +4,10 @@ Proyek: AI-2026-017 — Aplikasi Absensi Bimbingan Belajar
 
 Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
+## Login
+
+- [x] Halaman Login
+
 ## Admin
 
 ### Dashboard

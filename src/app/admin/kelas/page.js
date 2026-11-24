@@ -46,30 +46,6 @@ export default function DaftarKelasPage() {
           </li>
         </ul>
       </section>
-
-      <section>
-        <h2>Detail Kelas</h2>
-        <ul>
-          <li>Kode dan nama kelas.</li>
-          <li>Mata pelajaran.</li>
-          <li>Deskripsi kelas.</li>
-          <li>Nama pengajar.</li>
-          <li>Daftar siswa.</li>
-          <li>Jumlah siswa.</li>
-          <li>Jadwal kelas.</li>
-          <li>Status kelas.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Aksi</h2>
-        <ul>
-          <li>Detail: Melihat informasi lengkap kelas.</li>
-          <li>Edit: Mengubah informasi kelas.</li>
-          <li>Hapus: Menghapus kelas jika belum memiliki keterkaitan data penting.</li>
-          <li>Nonaktifkan: Menonaktifkan kelas tanpa menghilangkan riwayatnya.</li>
-        </ul>
-      </section>
     </main>
   );
 }

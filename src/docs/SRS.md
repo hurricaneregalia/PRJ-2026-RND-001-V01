@@ -198,6 +198,8 @@ src
 │   │   └── auth
 │   │       └── [...nextauth]
 │   │           └── route.js
+│   ├── login/
+│   │   └── page.js
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.js
