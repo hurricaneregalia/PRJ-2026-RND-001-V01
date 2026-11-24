@@ -10,7 +10,7 @@ export default function EditAbsensiPage() {
       <header>
         <h1>Edit Absensi</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/absensi">Absensi</Link> / <Link href="/admin/absensi/2">Detail Absensi</Link> / Edit
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/absensi">Manajemen Absensi</Link> / <Link href="/admin/absensi/2">Detail Absensi</Link> / Edit
         </p>
       </header>
 

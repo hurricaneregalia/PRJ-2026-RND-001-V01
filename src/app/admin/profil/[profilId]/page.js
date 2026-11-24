@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
@@ -9,12 +10,17 @@ export default function LihatProfilPage() {
     <main>
       <header>
         <h1>Lihat Profil</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / Lihat Profil
+        </p>
       </header>
 
       <section>
         <h2>Informasi Identitas Admin</h2>
         <ul>
-          <li>Foto Profil: foto</li>
+          <li>
+            Foto Profil: <Image src="https://i.pravatar.cc/150?img=12" alt="Foto profil" width={150} height={150} />
+          </li>
           <li>Nama Lengkap: Admin</li>
           <li>Email: admin@email.com</li>
           <li>Nomor HP: 081234567890</li>

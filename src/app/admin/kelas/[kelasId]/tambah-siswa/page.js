@@ -26,7 +26,7 @@ export default function TambahSiswaKelasPage() {
       <header>
         <h1>Tambah Siswa ke Kelas Matematika A</h1>
         <p>Pengajar: Bapak Budi</p>
-        <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas/2">Detail Kelas</Link> / Tambah Siswa
+        <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / <Link href="/admin/kelas/2">Detail Kelas</Link> / Tambah Siswa
       </header>
 
       <section>

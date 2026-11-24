@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 export const metadata = {
@@ -18,6 +19,7 @@ export default function TambahPengajarPage() {
       <form>
         <section>
           <h2>Data Pengajar</h2>
+          <Image src="https://i.pravatar.cc/150?img=12" alt="Foto profil" width={150} height={150} />
           <p>
             <label htmlFor="nama">Nama lengkap (wajib)</label>
             <input id="nama" name="nama" type="text" required />

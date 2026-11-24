@@ -1,7 +1,7 @@
-import Link from 'next/link';
+import Link from "next/link";
 
 export const metadata = {
-  title: 'Data Absensi',
+  title: "Data Absensi",
 };
 
 export default function DaftarAbsensiPage() {
@@ -10,7 +10,9 @@ export default function DaftarAbsensiPage() {
       <header>
         <h1>Data Absensi</h1>
         <p>Kelola dan pantau catatan kehadiran siswa.</p>
-        <p><Link href="/admin/laporan">Rekap Absensi</Link></p>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/absensi">Manajemen Absensi</Link>
+        </p>
       </header>
 
       <section>
@@ -39,8 +41,12 @@ export default function DaftarAbsensiPage() {
         <h2>Daftar Absensi</h2>
         <ul>
           <li>No. | Kelas | Tanggal | Jam | Pengajar | Jumlah Siswa | Hadir | Izin | Sakit | Alpa | Aksi</li>
-          <li>1 | Matematika A | 24 Nov 2026 | 08.00–09.30 | Budi | 15 | 12 | 1 | 1 | 1 | <Link href="/admin/absensi/1">Detail absensi</Link></li>
-          <li>2 | Bahasa Inggris A | 25 Nov 2026 | 10.00–11.30 | Sinta | 12 | 10 | 1 | 0 | 1 | <Link href="/admin/absensi/2">Detail absensi</Link></li>
+          <li>
+            1 | Matematika A | 24 Nov 2026 | 08.00–09.30 | Budi | 15 | 12 | 1 | 1 | 1 | <Link href="/admin/absensi/1">Detail absensi</Link>
+          </li>
+          <li>
+            2 | Bahasa Inggris A | 25 Nov 2026 | 10.00–11.30 | Sinta | 12 | 10 | 1 | 0 | 1 | <Link href="/admin/absensi/2">Detail absensi</Link>
+          </li>
         </ul>
       </section>
 
@@ -55,6 +61,12 @@ export default function DaftarAbsensiPage() {
           <li>Waktu pencatatan.</li>
           <li>Nama pengajar yang mencatat absensi.</li>
         </ul>
+      </section>
+      <section>
+        <h2>Akses Cepat</h2>
+        <p>
+          <Link href="/admin/laporan">Rekap Absensi</Link>
+        </p>
       </section>
     </main>
   );

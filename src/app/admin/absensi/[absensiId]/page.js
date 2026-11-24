@@ -10,20 +10,20 @@ export default function DetailAbsensiPage() {
       <header>
         <h1>Detail Absensi</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/absensi">Absensi</Link> / Detail Absensi
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/absensi">Manajemen Absensi</Link> / Detail Absensi
         </p>
       </header>
 
       <section>
         <h2>Informasi Utama</h2>
         <ul>
-          <li>Kelas: Matematika 7A</li>
+          <li>Kelas: Matematika A</li>
           <li>Mata Pelajaran: Matematika</li>
-          <li>Pengajar: Budi Santoso</li>
+          <li>Pengajar: Budi</li>
           <li>Hari: Senin</li>
           <li>Tanggal: 23 November 2026</li>
-          <li>Waktu: 15.30–17.00</li>
-          <li>Ruangan: Ruang 2</li>
+          <li>Waktu: 08.00–09.30</li>
+          <li>Ruangan: Ruang 1</li>
           <li>Status Absensi: Sudah Dicatat</li>
         </ul>
       </section>

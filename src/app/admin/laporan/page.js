@@ -10,6 +10,9 @@ export default function LaporanPage() {
       <header>
         <h1>Laporan</h1>
         <p>Rekapitulasi dan pemantauan aktivitas pembelajaran.</p>
+        <p>
+          <Link href="/admin">Dashboard</Link> / Laporan
+        </p>
       </header>
 
       <section>

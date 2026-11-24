@@ -9,6 +9,9 @@ export default function DetailJadwalPage() {
     <main>
       <header>
         <h1>Detail Jadwal</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/jadwal">Manajemen Jadwal</Link> / Detail Jadwal
+        </p>
       </header>
       <section>
         <h2>Informasi Jadwal</h2>

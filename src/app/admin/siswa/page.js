@@ -9,6 +9,9 @@ export default function DaftarSiswaPage() {
     <main>
       <header>
         <h1>Data Siswa</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link>
+        </p>
         <p>Kelola informasi dan data siswa bimbingan belajar.</p>
         <p>
           <Link href="/admin/siswa/tambah">+ Tambah Siswa</Link>

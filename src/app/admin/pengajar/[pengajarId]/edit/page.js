@@ -1,7 +1,8 @@
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata = {
-  title: 'Edit Pengajar',
+  title: "Edit Pengajar",
 };
 
 export default function EditPengajarPage() {
@@ -17,7 +18,12 @@ export default function EditPengajarPage() {
       <form>
         <section>
           <h2>Informasi Pribadi</h2>
+          <Image src="https://i.pravatar.cc/150?img=12" alt="Foto profil" width={150} height={150} />
           <p>Semua field otomatis terisi dengan data pengajar sebelumnya.</p>
+          <p>
+            <label htmlFor="username">Username</label>
+            <input id="username" name="username" type="text" defaultValue="Budi" />
+          </p>{" "}
           <p>
             <label htmlFor="nama">Nama lengkap</label>
             <input id="nama" name="nama" type="text" defaultValue="Budi" />
@@ -34,23 +40,6 @@ export default function EditPengajarPage() {
             <label htmlFor="foto">Foto profil</label>
             <input id="foto" name="foto" type="file" />
           </p>
-        </section>
-
-        <section>
-          <h2>Informasi Akun</h2>
-          <p>
-            <label htmlFor="username">Username (jika digunakan)</label>
-            <input id="username" name="username" type="text" defaultValue="budi" />
-          </p>
-          <p>
-            <label htmlFor="password-baru">Password baru (opsional)</label>
-            <input id="password-baru" name="password-baru" type="password" />
-          </p>
-          <p>
-            <label htmlFor="konfirmasi-password-baru">Konfirmasi password baru (opsional)</label>
-            <input id="konfirmasi-password-baru" name="konfirmasi-password-baru" type="password" />
-          </p>
-          <p>Password dikosongkan secara default. Jika tidak diubah, password lama tetap berlaku.</p>
         </section>
 
         <section>

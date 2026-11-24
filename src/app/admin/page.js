@@ -57,11 +57,18 @@ export default function AdminDashboardPage() {
       <section>
         <h2>Tidak Hadir Tanpa Keterangan 3 Kali</h2>
         <ul>
+          <li>No. | Nama Siswa | NIS | Nama Kelas | Alpa | Ditangani | Nama Guru | Aksi</li>
           <li>
-            Andi | Matematika A | Alpa 3 | <Link href="/admin/kelas/2">beri peringatan</Link>
+            1 | Andi | 2026001 | Matematika A | 5 | Sudah | Rudi | <Link href="/admin/laporan/hubungi-pengajar/3">Hubungi guru</Link>
           </li>
           <li>
-            Citra | Bahasa Inggris B | Alpa 6 | <Link href="/admin/kelas/2">beri peringatan</Link>
+            2 | Citra | 2026002 | Bahasa Inggris A | 4 | Belum | Andy | <Link href="/admin/laporan/hubungi-pengajar/3">Hubungi guru</Link>
+          </li>
+          <li>
+            3 | Dina | 2026003 | Matematika A | 3 | Belum | Gofar | <Link href="/admin/laporan/hubungi-pengajar/3">Hubungi guru</Link>
+          </li>
+          <li>
+            4 | Rudi | 2026004 | Bahasa Inggris A | 3 | Sudah | Lala | <Link href="/admin/laporan/hubungi-pengajar/3">Hubungi guru</Link>
           </li>
         </ul>
       </section>

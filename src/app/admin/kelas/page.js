@@ -10,7 +10,7 @@ export default function DaftarKelasPage() {
       <header>
         <h1>Data Kelas</h1>
         <p>Kelola kelas bimbingan belajar.</p>
-        <Link href="/admin">Dashboard</Link> / Kelas
+        <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link>
         <p>
           <Link href="/admin/kelas/tambah">+ Tambah Kelas</Link>
         </p>

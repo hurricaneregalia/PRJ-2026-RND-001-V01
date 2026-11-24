@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 export const metadata = {
-  title: 'Detail Siswa',
+  title: "Detail Siswa",
 };
 
 export default function DetailSiswaPage() {
@@ -7,11 +9,14 @@ export default function DetailSiswaPage() {
     <main>
       <header>
         <h1>Detail Siswa</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Detail Siswa
+        </p>
       </header>
       <section>
         <h2>Informasi Siswa</h2>
         <ul>
-          <li>Foto profil: foto</li>
+          <li>Foto profil: https://i.pravatar.cc/150?img=12</li>
           <li>NIS: 2026001</li>
           <li>Nama lengkap: Andi</li>
           <li>Jenis kelamin: Laki-laki</li>
@@ -21,6 +26,7 @@ export default function DetailSiswaPage() {
           <li>Kelas yang diikuti: Matematika A</li>
           <li>Tanggal pendaftaran: 01 Januari 2026</li>
         </ul>
+        <Link href="/admin/siswa/2/edit">Edit</Link>
       </section>
       <section>
         <h2>Riwayat Absensi</h2>

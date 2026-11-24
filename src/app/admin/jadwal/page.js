@@ -9,6 +9,9 @@ export default function DaftarJadwalPage() {
     <main>
       <header>
         <h1>Manajemen Jadwal</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/jadwal">Manajemen Jadwal</Link>
+        </p>
         <p>Kelola jadwal kegiatan belajar seluruh kelas.</p>
         <p>
           <Link href="/admin/jadwal/tambah">+ Tambah Jadwal</Link>

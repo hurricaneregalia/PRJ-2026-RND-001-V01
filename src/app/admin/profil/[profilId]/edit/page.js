@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
@@ -9,11 +10,16 @@ export default function EditProfilPage() {
     <main>
       <header>
         <h1>Edit Profil</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/profil/3">Manajemen Profil</Link> / Edit Profil
+        </p>
       </header>
 
       <form>
         <section>
           <h2>Informasi Identitas Admin</h2>
+          <Image src="https://i.pravatar.cc/150?img=12" alt="Foto profil" width={150} height={150} />
+
           <p>
             <label htmlFor="foto">Foto Profil</label>
             <input id="foto" name="foto" type="file" />
@@ -45,6 +51,7 @@ export default function EditProfilPage() {
 
         <p>
           <button type="submit">Simpan</button>
+          <Link href="/admin/profil">Batal</Link>
         </p>
       </form>
     </main>

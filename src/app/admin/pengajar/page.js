@@ -9,6 +9,9 @@ export default function DaftarPengajarPage() {
     <main>
       <header>
         <h1>Data Pengajar</h1>
+        <p>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pengajar">Manajemen Pengajar</Link>
+        </p>
         <p>Kelola informasi dan akun pengajar.</p>
         <p>
           <Link href="/admin/pengajar/tambah">+ Tambah Pengajar</Link>

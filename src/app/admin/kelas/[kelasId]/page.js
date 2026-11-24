@@ -24,7 +24,7 @@ export default function DetailKelasPage() {
           <li>Mata pelajaran: Matematika</li>
           <li>Deskripsi: Kelas bimbingan matematika dasar.</li>
           <li>Nama pengajar: Budi</li>
-          <li>Jumlah siswa: 3</li>
+          <li>Jumlah siswa: 15</li>
           <li>Jadwal Kelas: Senin, 08:00 - 09:30</li>
         </ul>
       </section>
