@@ -39,9 +39,9 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Manajemen Absensi
 
-- [ ] Daftar Absensi
-- [ ] Detail Absensi
-- [ ] Edit Status Absensi
+- [x] Daftar Absensi
+- [x] Detail Absensi
+- [x] Edit Status Absensi
 
 ### Laporan Absensi
 
