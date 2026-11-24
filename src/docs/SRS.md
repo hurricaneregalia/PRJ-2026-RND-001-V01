@@ -127,6 +127,96 @@ Pengajar
 
 Dokumen ini merupakan spesifikasi awal berdasarkan keputusan proyek saat ini, bukan spesifikasi teknis lengkap. Detail seperti metode autentikasi, status absensi yang tersedia, aturan keterlambatan, format laporan, serta teknologi yang digunakan dapat ditentukan pada tahap berikutnya.
 
+Halaman yang telah dibuat dan statusnya dicatat di `src/docs/PAGE_TRACKER.md`.
+
+## 7. Struktur Projek
+
+```text
+src
+├── app
+│   ├── admin
+│   │   ├── absensi
+│   │   │   ├── [absensiId]
+│   │   │   │   ├── edit
+│   │   │   │   │   └── page.js
+│   │   │   │   └── page.js
+│   │   │   └── page.js
+│   │   ├── jadwal
+│   │   │   ├── [jadwalId]
+│   │   │   │   ├── edit
+│   │   │   │   │   └── page.js
+│   │   │   │   └── page.js
+│   │   │   ├── page.js
+│   │   │   └── tambah
+│   │   │       └── page.js
+│   │   ├── kelas
+│   │   │   ├── [kelasId]
+│   │   │   │   ├── edit
+│   │   │   │   │   └── page.js
+│   │   │   │   ├── page.js
+│   │   │   │   └── tambah-siswa
+│   │   │   │       └── page.js
+│   │   │   ├── page.js
+│   │   │   └── tambah
+│   │   │       └── page.js
+│   │   ├── laporan
+│   │   │   ├── aktivitas-kelas
+│   │   │   │   └── page.js
+│   │   │   ├── hubungi-pengajar
+│   │   │   │   └── [pengajarId]
+│   │   │   │       └── page.js
+│   │   │   ├── kehadiran-pengajar
+│   │   │   │   └── page.js
+│   │   │   ├── kehadiran-siswa
+│   │   │   │   └── page.js
+│   │   │   ├── page.js
+│   │   │   └── rekap-pembelajaran
+│   │   │       └── page.js
+│   │   ├── page.js
+│   │   ├── pengajar
+│   │   │   ├── [pengajarId]
+│   │   │   │   ├── edit
+│   │   │   │   │   └── page.js
+│   │   │   │   └── page.js
+│   │   │   ├── page.js
+│   │   │   └── tambah
+│   │   │       └── page.js
+│   │   ├── profil
+│   │   │   └── [profilId]
+│   │   │       ├── edit
+│   │   │       │   └── page.js
+│   │   │       └── page.js
+│   │   └── siswa
+│   │       ├── [siswaId]
+│   │       │   ├── edit
+│   │       │   │   └── page.js
+│   │       │   └── page.js
+│   │       ├── page.js
+│   │       └── tambah
+│   │           └── page.js
+│   ├── api
+│   │   └── auth
+│   │       └── [...nextauth]
+│   │           └── route.js
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.js
+│   └── page.js
+├── auth.js
+├── components
+│   ├── common
+│   ├── dashboard
+│   ├── layout
+│   └── ui
+├── config
+├── docs
+│   ├── PAGE_TRACKER.md
+│   └── SRS.md
+├── hooks
+├── lib
+└── services
+```
+
 ---
 
 **Akhir Dokumen — AI-2026-017**

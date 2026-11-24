@@ -54,10 +54,10 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Profil
 
-- [ ] Lihat Profil
-- [ ] Edit Profil
-- [ ] Ubah Foto Profil
-- [ ] Ubah Password
+- [x] Lihat Profil
+- [x] Edit Profil
+- [ ] Ubah Foto Profil cancel, digabung ke edit profil
+- [ ] Ubah Password cancel, akan diganti google auth dan next auth
 
 ## Pengajar
 
