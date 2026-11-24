@@ -28,31 +28,31 @@ export default function AbsensiPengajarPage() {
         <ul>
           <li>Tanggal | Kelas| Siswa| Hadir | Izin | Sakit | Alpa | Aksi</li>{" "}
           <li>
-            03 Des 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/3/absensi/2">Detail</Link>
+            03 Des 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/2/absensi/2">Detail</Link>
           </li>
           <li>
             02 Des 2026 | Matematika A | 15 | 12 | 1 | 1 | 1 | <Link href="/pengajar/kelas/3/absensi/1">Detail</Link>
           </li>
           <li>
-            01 Des 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/3/absensi/2">Detail</Link>
+            01 Des 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/2/absensi/2">Detail</Link>
           </li>
           <li>
             30 Nov 2026 | Matematika A | 15 | 12 | 1 | 1 | 1 | <Link href="/pengajar/kelas/3/absensi/1">Detail</Link>
           </li>
           <li>
-            29 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/3/absensi/2">Detail</Link>
+            29 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/2/absensi/2">Detail</Link>
           </li>
           <li>
             28 Nov 2026 | Matematika A | 15 | 12 | 1 | 1 | 1 | <Link href="/pengajar/kelas/3/absensi/1">Detail</Link>
           </li>
           <li>
-            27 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/3/absensi/2">Detail</Link>
+            27 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/2/absensi/2">Detail</Link>
           </li>
           <li>
             26 Nov 2026 | Matematika A | 15 | 12 | 1 | 1 | 1 | <Link href="/pengajar/kelas/3/absensi/1">Detail</Link>
           </li>
           <li>
-            25 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/3/absensi/2">Detail</Link>
+            25 Nov 2026 | Bahasa Inggris A | 12 | 10 | 1 | 0 | 1 | <Link href="/pengajar/kelas/2/absensi/2">Detail</Link>
           </li>
           <li>
             24 Nov 2026 | Matematika A | 15 | 12 | 1 | 1 | 1 | <Link href="/pengajar/kelas/3/absensi/1">Detail</Link>

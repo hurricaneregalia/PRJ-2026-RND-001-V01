@@ -67,35 +67,39 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Dashboard
 
-- [ ] Ringkasan Kehadiran Kelas
-- [ ] Jadwal Mengajar Hari Ini
+- [x] Ringkasan Kehadiran Kelas
+- [ ] Jadwal Mengajar Hari Ini (cancel)
 
 ### Kelas Saya
 
-- [ ] Daftar Kelas
-- [ ] Detail Kelas
-  - [ ] Daftar Siswa
+- [ ] Daftar Kelas (dipindah ke http://localhost:3000/pengajar)
+- [x] Detail Kelas
+  - [x] Daftar Siswa
+  - [x] Riwayat Pertemuan
 
 ### Jadwal Mengajar
 
-- [ ] Daftar Jadwal
-- [ ] Detail Jadwal
+- [ ] Daftar Jadwal (dipindah ke http://localhost:3000/pengajar)
+- [ ] Detail Jadwal (dipindah ke http://localhost:3000/pengajar)
 
 ### Absensi
 
-- [ ] Pilih Kelas
-- [ ] Daftar Siswa
-- [ ] Input Absensi
-- [ ] Riwayat Absensi
+- [x] Daftar Sesi Absensi
+- [x] Daftar Siswa
+- [x] Input Absensi
+- [x] Detail Absensi
+- [x] Edit Absensi
+- [x] Riwayat Absensi
+- [ ] Pilih Kelas (dipindah ke http://localhost:3000/pengajar)
 
 ### Laporan Absensi
 
-- [ ] Rekap Kehadiran Kelas
-- [ ] Detail Laporan
+- [x] Rekap Kehadiran Kelas
+- [ ] Detail Laporan (dipindah ke http://localhost:3000/pengajar/kelas)
 
 ### Profil
 
-- [ ] Lihat Profil
-- [ ] Edit Profil
-- [ ] Ubah Foto Profil
-- [ ] Ubah Password
+- [x] Lihat Profil
+- [x] Edit Profil
+- [ ] Ubah Foto Profil (dipindah ke http://localhost:3000/pengajar/profil/edit)
+- [ ] Ubah Password (cancel, diganti dengan google auth dan next auth nanti)

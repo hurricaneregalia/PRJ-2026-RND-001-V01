@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Hubungi Pengajar",
@@ -50,7 +51,7 @@ export default function HubungiPengajarPage() {
         <a href="https://wa.me/6281234567890?text=Halo%20Bapak%20Rudi" target="_blank" rel="noreferrer">
           Kirim melalui WhatsApp
         </a>
-        <Link href="/admin/laporan">Batal</Link>
+        <BackButton btnText="Batal" />
       </p>
     </main>
   );

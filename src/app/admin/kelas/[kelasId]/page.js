@@ -12,7 +12,7 @@ export default function DetailKelasPage() {
       <header>
         <h1>Detail Kelas</h1>
         <p>Informasi lengkap dan pengelolaan kelas.</p>
-        <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / Detail
+        <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / Detail Kelas
       </header>
 
       <section>

@@ -21,10 +21,10 @@ export default function DashboardPengajarPage() {
         <ul>
           <li>No | Kelas | Pelajaran | Waktu | Siswa | Aksi</li>
           <li>
-            1 | Matematika A | Matematika | Selasa 10.00–11.30 |15 | <Link href="/pengajar/kelas">Lihat Kelas</Link>
+            1 | Matematika A | Matematika | Selasa 10.00–11.30 |15 | <Link href="/pengajar/kelas/3">Lihat Kelas</Link>
           </li>
           <li>
-            2 | Bahasa Inggris A | Bahasa Inggris | Senin 10.00–11.30 | 12 | <Link href="/pengajar/kelas">Lihat Kelas</Link>
+            2 | Bahasa Inggris A | Bahasa Inggris | Senin 10.00–11.30 | 12 | <Link href="/pengajar/kelas/2">Lihat Kelas</Link>
           </li>
         </ul>
       </section>

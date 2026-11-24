@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Edit Profil",
@@ -11,7 +12,7 @@ export default function EditProfilPage() {
       <header>
         <h1>Edit Profil</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/profil/3">Manajemen Profil</Link> / Edit Profil
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/profil/2">Lihat Profil</Link> / Edit Profil
         </p>
       </header>
 
@@ -51,7 +52,7 @@ export default function EditProfilPage() {
 
         <p>
           <button type="submit">Simpan</button>
-          <Link href="/admin/profil">Batal</Link>
+          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>

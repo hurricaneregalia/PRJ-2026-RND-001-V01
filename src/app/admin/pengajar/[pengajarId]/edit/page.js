@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Edit Pengajar",
@@ -65,7 +66,7 @@ export default function EditPengajarPage() {
 
         <p>
           <button type="submit">Simpan Perubahan</button>
-          <Link href="/admin/pengajar">Batal</Link>
+          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>

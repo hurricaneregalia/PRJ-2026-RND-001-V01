@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Edit Kelas",
@@ -73,7 +74,7 @@ export default function EditKelasPage() {
         </section>
 
         <p>
-          <Link href="/admin/kelas">Batal</Link>
+          <BackButton btnText="Batal" />
           <button type="submit">Simpan Perubahan</button>
         </p>
       </form>

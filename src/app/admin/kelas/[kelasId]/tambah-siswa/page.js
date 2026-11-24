@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BackButton from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Tambah Siswa ke Kelas",
@@ -61,7 +62,7 @@ export default function TambahSiswaKelasPage() {
       </section>
 
       <footer>
-        <Link href="/admin/kelas/1">Batal</Link>
+        <BackButton btnText="Batal" />
 
         <button type="button" disabled>
           Tambahkan Siswa (0)

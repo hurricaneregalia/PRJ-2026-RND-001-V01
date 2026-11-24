@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import BackButton from '@/components/ui/back-button';
 
 export const metadata = {
   title: 'Tambah Pengajar',
@@ -81,7 +82,7 @@ export default function TambahPengajarPage() {
 
         <p>
           <button type="submit">Simpan Pengajar</button>
-          <Link href="/admin/pengajar">Batal</Link>
+          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>
