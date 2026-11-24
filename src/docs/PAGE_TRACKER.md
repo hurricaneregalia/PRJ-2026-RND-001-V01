@@ -45,8 +45,12 @@ Legenda: `[x]` sudah dibuat, `[ ]` belum dibuat.
 
 ### Laporan Absensi
 
-- [ ] Rekap Kehadiran
-- [ ] Detail Laporan
+- [x] Dashboard Laporan
+- [x] Laporan Kehadiran Siswa
+- [x] Laporan Kehadiran Pengajar
+- [x] Laporan Aktivitas Kelas
+- [x] Laporan Rekap Pembelajaran
+- [x] Hubungi Pengajar
 
 ### Profil
 
