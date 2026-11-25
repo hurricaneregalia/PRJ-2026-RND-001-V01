@@ -1,43 +1,99 @@
-import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { connection } from "next/server";
+
+import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
+import { getUserById, updateUser } from "@/repositories/user-repository";
+
+export const instant = false;
 
 export const metadata = {
   title: "Edit Profil",
 };
 
-export default function EditProfilPengajarPage() {
+export default async function EditProfilPengajarPage() {
+  await connection();
+  const session = await auth();
+  const user = session?.user?.id ? await getUserById(session.user.id) : null;
+
+  if (!user) {
+    return (
+      <main>
+        <h1>Edit Profil</h1>
+        <p>Profil tidak ditemukan.</p>
+        <p>
+          <Link href="/pengajar">Dashboard</Link>
+        </p>
+      </main>
+    );
+  }
+
+  async function simpanProfil(formData) {
+    "use server";
+
+    const session = await auth();
+    if (!session?.user?.id) {
+      redirect("/login");
+    }
+
+    await updateUser(session.user.id, {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      no_hp: formData.get("no_hp"),
+    });
+
+    redirect("/pengajar/profil");
+  }
+
   return (
     <main>
       <header>
         <h1>Edit Profil</h1>
         <p>
-          <Link href="/pengajar">Dashboard</Link> / <Link href="/pengajar/profil/edit">Profil Saya</Link> / Edit Profil
+          <Link href="/pengajar">Dashboard</Link> /{" "}
+          <Link href="/pengajar/profil">Profil Saya</Link> / Edit Profil
         </p>
       </header>
-      <form>
+
+      <form action={simpanProfil}>
         <section>
           <h2>Informasi Profil</h2>
-          <Image src="https://i.pravatar.cc/150?img=12" alt="Foto profil" width={150} height={150} />
-          <p>
-            <label htmlFor="foto">Foto Profil</label>
-            <input id="foto" name="foto" type="file" accept="image/*" />
-          </p>
-          <p>
-            <label htmlFor="username">Username</label>
-            <input id="username" name="username" type="text" defaultValue="Budi32" />
-          </p>{" "}
           <p>
             <label htmlFor="nama">Nama Lengkap</label>
-            <input id="nama" name="nama" type="text" defaultValue="Budi" />
+            <br />
+            <input
+              id="nama"
+              name="name"
+              type="text"
+              defaultValue={user.name}
+              autoComplete="name"
+              required
+            />
           </p>
           <p>
             <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" defaultValue="budi@email.com" />
+            <br />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              defaultValue={user.email}
+              autoComplete="email"
+              required
+            />
           </p>
           <p>
             <label htmlFor="nomor-hp">Nomor HP</label>
-            <input id="nomor-hp" name="nomor-hp" type="tel" defaultValue="08123456789" />
+            <br />
+            <input
+              id="nomor-hp"
+              name="no_hp"
+              type="tel"
+              defaultValue={user.no_hp}
+              autoComplete="tel"
+            />
           </p>
         </section>
         <p>

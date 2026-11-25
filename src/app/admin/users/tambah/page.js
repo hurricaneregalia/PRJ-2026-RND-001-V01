@@ -13,6 +13,7 @@ export default function TambahPenggunaPage() {
 
     const name = formData.get("name");
     const email = formData.get("email");
+    const noHp = formData.get("no_hp");
     const role = formData.get("role");
     const accountStatus = formData.get("account_status");
 
@@ -23,6 +24,7 @@ export default function TambahPenggunaPage() {
       role,
       account_status: accountStatus,
       photo_url: "",
+      no_hp: noHp,
     });
 
     redirect("/admin/users");
@@ -50,6 +52,11 @@ export default function TambahPenggunaPage() {
             <label htmlFor="email">Email (wajib)</label>
             <br />
             <input id="email" name="email" type="email" autoComplete="email" required />
+          </p>
+          <p>
+            <label htmlFor="no_hp">Nomor WhatsApp</label>
+            <br />
+            <input id="no_hp" name="no_hp" type="tel" autoComplete="tel" />
           </p>
           <p>
             <label htmlFor="role">Role</label>

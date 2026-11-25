@@ -20,8 +20,7 @@ export default async function ManajemenPenggunaPage() {
         <h1>Manajemen Pengguna</h1>
         <p>Kelola akun Admin dan Pengajar.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> /{" "}
-          <Link href="/admin/users">Manajemen Pengguna</Link>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/users">Manajemen Pengguna</Link>
         </p>
         <p>
           <Link href="/admin/users/tambah">+ Tambah Pengguna</Link>
@@ -36,8 +35,7 @@ export default async function ManajemenPenggunaPage() {
           <ul>
             {users.map((user) => (
               <li key={user.user_id}>
-                {user.user_id} | {user.name} | {user.email} | {user.role} |{" "}
-                {user.account_status}
+                {user.user_id} | {user.name} | {user.email} | {user.role} | {user.account_status} | <Link href={`/admin/users/${user.user_id}/edit`}>Edit</Link>
               </li>
             ))}
           </ul>

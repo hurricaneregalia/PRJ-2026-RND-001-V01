@@ -13,6 +13,7 @@ const fields = {
     allowedValues: ACCOUNT_STATUSES,
   },
   photo_url: { type: 'string', maxLength: 1000 },
+  no_hp: { type: 'string', maxLength: 30 },
 };
 
 const repository = createTableRepository({
