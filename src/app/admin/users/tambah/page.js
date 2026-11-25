@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { auth } from "@/auth";
 import { createUser } from "@/repositories/user-repository";
+import { recordAuditCreate } from "@/repositories/audit-log-repository";
 
 export const metadata = {
   title: "Tambah Pengguna",
@@ -11,13 +13,14 @@ export default function TambahPenggunaPage() {
   async function tambahPengguna(formData) {
     "use server";
 
+    const session = await auth();
     const name = formData.get("name");
     const email = formData.get("email");
     const noHp = formData.get("no_hp");
     const role = formData.get("role");
     const accountStatus = formData.get("account_status");
 
-    await createUser({
+    const created = await createUser({
       auth_user_id: email,
       email,
       name,
@@ -25,6 +28,14 @@ export default function TambahPenggunaPage() {
       account_status: accountStatus,
       photo_url: "",
       no_hp: noHp,
+    });
+
+    await recordAuditCreate({
+      tableName: "users",
+      recordId: created.user_id,
+      userId: session?.user?.id || "",
+      after: created,
+      note: "Penambahan pengguna dari halaman admin",
     });
 
     redirect("/admin/users");

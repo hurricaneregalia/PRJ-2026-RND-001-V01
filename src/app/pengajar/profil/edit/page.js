@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
 import { getUserById, updateUser } from "@/repositories/user-repository";
+import { recordAuditUpdate } from "@/repositories/audit-log-repository";
 
 export const instant = false;
 
@@ -38,10 +39,20 @@ export default async function EditProfilPengajarPage() {
       redirect("/login");
     }
 
-    await updateUser(session.user.id, {
+    const before = await getUserById(session.user.id);
+    const after = await updateUser(session.user.id, {
       name: formData.get("name"),
       email: formData.get("email"),
       no_hp: formData.get("no_hp"),
+    });
+
+    await recordAuditUpdate({
+      tableName: "users",
+      recordId: session.user.id,
+      userId: session.user.id,
+      before,
+      after,
+      note: "Perubahan profil pengajar",
     });
 
     redirect("/pengajar/profil");

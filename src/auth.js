@@ -9,6 +9,8 @@ import {
   updateUser,
 } from "@/repositories/user-repository";
 
+import { recordAuditLogin, recordAuditLogout } from "@/repositories/audit-log-repository";
+
 import { connectGoogleAccount } from "@/services/user-management-service";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -23,6 +25,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   session: {
     strategy: "jwt",
+  },
+
+  events: {
+    async signOut({ token }) {
+      const userId = token?.userId || token?.authUserId;
+
+      if (userId) {
+        await recordAuditLogout({
+          tableName: "users",
+          recordId: userId,
+          userId,
+          note: "Logout pengguna",
+        });
+      }
+    },
   },
 
   callbacks: {
@@ -43,17 +60,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             await updateUser(user.user_id, { photo_url: profile.picture });
           }
 
+          if (user.account_status === "active") {
+            await recordAuditLogin({
+              tableName: "users",
+              recordId: user.user_id,
+              userId: user.user_id,
+              note: "Login pengguna",
+            });
+          }
+
           return user.account_status === "active";
         }
 
         if (await isUserBootstrapAvailable()) {
-          await createUser({
+          const created = await createUser({
             auth_user_id: authUserId,
             email,
             name: profile?.name || email,
             role: "Admin",
             account_status: "active",
             photo_url: profile?.picture || "",
+          });
+
+          await recordAuditLogin({
+            tableName: "users",
+            recordId: created.user_id,
+            userId: created.user_id,
+            note: "Login bootstrap admin pertama",
           });
 
           return true;
@@ -63,6 +96,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (existingByEmail) {
           await connectGoogleAccount(email, authUserId, profile?.picture || "");
+
+          if (existingByEmail.account_status === "active") {
+            await recordAuditLogin({
+              tableName: "users",
+              recordId: existingByEmail.user_id,
+              userId: existingByEmail.user_id,
+              note: "Login pengguna",
+            });
+          }
         }
 
         return Boolean(existingByEmail && existingByEmail.account_status === "active");

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 
 import { connection } from "next/server";
 
+import { auth } from "@/auth";
 import { getUserById, updateUser } from "@/repositories/user-repository";
+import { recordAuditUpdate } from "@/repositories/audit-log-repository";
 
 export const instant = false;
 
@@ -30,12 +32,23 @@ export default async function EditPenggunaPage({ params }) {
   async function simpanPengguna(formData) {
     "use server";
 
-    await updateUser(userId, {
+    const session = await auth();
+    const before = await getUserById(userId);
+    const after = await updateUser(userId, {
       name: formData.get("name"),
       email: formData.get("email"),
       role: formData.get("role"),
       account_status: formData.get("account_status"),
       no_hp: formData.get("no_hp"),
+    });
+
+    await recordAuditUpdate({
+      tableName: "users",
+      recordId: userId,
+      userId: session?.user?.id || "",
+      before,
+      after,
+      note: "Perubahan pengguna dari halaman admin",
     });
 
     redirect("/admin/users");
