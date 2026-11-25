@@ -1,92 +1,87 @@
 import Link from "next/link";
 
+import { connection } from "next/server";
+
+import { listSiswa } from "@/repositories/siswa-repository";
+import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
+import { listKelas } from "@/repositories/kelas-repository";
+import { listUsers } from "@/repositories/user-repository";
+
+export const instant = false;
+
 export const metadata = {
   title: "Data Siswa",
 };
 
-export default function DaftarSiswaPage() {
+export default async function DaftarSiswaPage() {
+  await connection();
+  const siswa = await listSiswa();
+  const memberships = await listKelasSiswa();
+  const kelas = await listKelas();
+  const users = await listUsers();
+  const kelasById = new Map(kelas.map((item) => [item.kelas_id, item]));
+  const userById = new Map(users.map((item) => [item.user_id, item]));
+  const activeMembershipBySiswa = new Map(
+    memberships
+      .filter((item) => item.status_keanggotaan === "aktif")
+      .map((item) => [item.siswa_id, item]),
+  );
+
   return (
     <main>
       <header>
         <h1>Data Siswa</h1>
+        <p>Kelola data siswa.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link>
+          <Link href="/admin">Dashboard</Link> /{" "}
+          <Link href="/admin/siswa">Manajemen Siswa</Link>
         </p>
-        <p>Kelola informasi dan data siswa bimbingan belajar.</p>
         <p>
           <Link href="/admin/siswa/tambah">+ Tambah Siswa</Link>
         </p>
       </header>
 
       <section>
-        <h2>Ringkasan</h2>
-        <ul>
-          <li>Total Siswa: 120</li>
-          <li>Siswa Aktif: 110</li>
-          <li>Siswa Nonaktif: 10</li>
-        </ul>
-      </section>
+        <h2>Daftar Siswa</h2>
+        {siswa.length === 0 ? (
+          <p>Belum ada siswa.</p>
+        ) : (
+          <ol>
+            {siswa.map((item) => {
+              const membership = activeMembershipBySiswa.get(item.siswa_id);
+              const kelasItem = membership
+                ? kelasById.get(membership.kelas_id)
+                : null;
+              const pengajar = kelasItem
+                ? userById.get(kelasItem.pengajar_id)
+                : null;
 
-      <section>
-        <h2>Pencarian dan Filter</h2>
-        <ul>
-          <li>Pencarian berdasarkan nama atau nomor induk.</li>
-          <li>Filter status siswa (Aktif / Nonaktif).</li>
-          <li>Filter kelas.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Tabel Data Siswa</h2>
-        <ul>
-          <li>No. | Nama | NIS | Jenis Kelamin | Kelas | Status | Aksi</li>
-          <li>
-            1 | Andi | 2026001 | Laki-laki | Matematika A | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/4/edit">Edit</Link> | Hapus
-          </li>
-          <li>
-            2 | Citra | 2026002 | Perempuan | Bahasa Inggris B | Aktif | <Link href="/admin/siswa/4">Detail</Link> | <Link href="/admin/siswa/4/edit">Edit</Link> | Hapus
-          </li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Aksi</h2>
-        <ul>
-          <li>Detail: Melihat informasi lengkap siswa.</li>
-          <li>Edit: Mengubah informasi siswa.</li>
-          <li>Hapus / Nonaktifkan: Menghapus atau menonaktifkan data siswa.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Detail Siswa</h2>
-        <ul>
-          <li>Foto profil.</li>
-          <li>NIS.</li>
-          <li>Nama lengkap.</li>
-          <li>Jenis kelamin.</li>
-          <li>Tanggal lahir.</li>
-          <li>Alamat.</li>
-          <li>Nomor HP.</li>
-          <li>Kelas yang diikuti.</li>
-          <li>Tanggal pendaftaran.</li>
-          <li>Riwayat absensi.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Akses Cepat</h2>
-        <ul>
-          <li>
-            <Link href="/admin/siswa/tambah">Tambah Siswa</Link>
-          </li>
-          <li>
-            <Link href="/admin/laporan">Lihat Laporan Absensi</Link>
-          </li>
-          <li>
-            <Link href="/admin/kelas">Kelola Kelas</Link>
-          </li>
-        </ul>
+              return (
+                <li key={item.siswa_id}>
+                  {item.nis || "-"} | {item.nama} |{" "}
+                  {kelasItem ? (
+                    <Link href={`/admin/kelas/${kelasItem.kelas_id}`}>
+                      {kelasItem.nama_kelas}
+                    </Link>
+                  ) : (
+                    "-"
+                  )}{" "}
+                  |{" "}
+                  {pengajar ? (
+                    <Link href={`/admin/users/${pengajar.user_id}`}>
+                      {pengajar.name}
+                    </Link>
+                  ) : (
+                    "-"
+                  )}{" "}
+                  | {item.status} |{" "}
+                  <Link href={`/admin/siswa/${item.siswa_id}`}>Detail</Link> |{" "}
+                  <Link href={`/admin/siswa/${item.siswa_id}/edit`}>Edit</Link>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </section>
     </main>
   );

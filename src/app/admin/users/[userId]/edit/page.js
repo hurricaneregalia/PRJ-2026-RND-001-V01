@@ -34,13 +34,21 @@ export default async function EditPenggunaPage({ params }) {
 
     const session = await auth();
     const before = await getUserById(userId);
-    const after = await updateUser(userId, {
+    const nextEmail = formData.get("email");
+    const update = {
       name: formData.get("name"),
-      email: formData.get("email"),
+      email: nextEmail,
       role: formData.get("role"),
       account_status: formData.get("account_status"),
       no_hp: formData.get("no_hp"),
-    });
+      limit_kelas: Number(formData.get("limit_kelas") || 0),
+    };
+
+    if (before?.auth_user_id && before.auth_user_id === before.email) {
+      update.auth_user_id = nextEmail;
+    }
+
+    const after = await updateUser(userId, update);
 
     await recordAuditUpdate({
       tableName: "users",
@@ -120,6 +128,17 @@ export default async function EditPenggunaPage({ params }) {
               type="tel"
               defaultValue={user.no_hp}
               autoComplete="tel"
+            />
+          </p>
+          <p>
+            <label htmlFor="limit_kelas">Limit Kelas (khusus Pengajar)</label>
+            <br />
+            <input
+              id="limit_kelas"
+              name="limit_kelas"
+              type="number"
+              min="0"
+              defaultValue={user.limit_kelas}
             />
           </p>
         </section>

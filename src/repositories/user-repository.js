@@ -14,6 +14,7 @@ const fields = {
   },
   photo_url: { type: 'string', maxLength: 1000 },
   no_hp: { type: 'string', maxLength: 30 },
+  limit_kelas: { type: 'integer', min: 0, max: 10000 },
 };
 
 const repository = createTableRepository({

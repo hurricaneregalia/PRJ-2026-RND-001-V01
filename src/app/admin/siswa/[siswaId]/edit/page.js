@@ -1,75 +1,223 @@
 import Link from "next/link";
-import BackButton from "@/components/ui/back-button";
+import { redirect } from "next/navigation";
+
+import { connection } from "next/server";
+
+import { auth } from "@/auth";
+import { getSiswaById, updateSiswa } from "@/repositories/siswa-repository";
+import {
+  createKelasSiswa,
+  findActiveKelasSiswaBySiswaId,
+  listKelasSiswa,
+  closeKelasSiswa,
+  updateKelasSiswa,
+} from "@/repositories/kelas-siswa-repository";
+import { getKelasById, listKelas } from "@/repositories/kelas-repository";
+import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import {
+  recordAuditCreate,
+  recordAuditUpdate,
+} from "@/repositories/audit-log-repository";
+import { todayDate } from "@/lib/date-time";
+
+export const instant = false;
 
 export const metadata = {
   title: "Edit Data Siswa",
 };
 
-export default function EditSiswaPage() {
+export default async function EditSiswaPage({ params }) {
+  await connection();
+  const { siswaId } = await params;
+  const siswa = await getSiswaById(siswaId);
+
+  if (!siswa) {
+    return (
+      <main>
+        <h1>Siswa tidak ditemukan</h1>
+        <p>
+          <Link href="/admin/siswa">Kembali ke Manajemen Siswa</Link>
+        </p>
+      </main>
+    );
+  }
+
+  const membership = await findActiveKelasSiswaBySiswaId(siswaId);
+  const currentKelas = membership
+    ? await getKelasById(membership.kelas_id)
+    : null;
+  const kelas = await listKelas();
+  const allMemberships = await listKelasSiswa();
+  const activeCountByKelas = new Map();
+
+  allMemberships
+    .filter((item) => item.status_keanggotaan === "aktif")
+    .forEach((item) => {
+      activeCountByKelas.set(
+        item.kelas_id,
+        (activeCountByKelas.get(item.kelas_id) || 0) + 1,
+      );
+    });
+
+  const availableKelas = kelas.filter((item) => {
+    if (item.status_kelas !== "aktif") {
+      return false;
+    }
+
+    if (item.kelas_id === currentKelas?.kelas_id) {
+      return true;
+    }
+
+    const active = activeCountByKelas.get(item.kelas_id) || 0;
+    return active < Number(item.kapasitas || 0);
+  });
+
+  async function simpanSiswa(formData) {
+    "use server";
+
+    const session = await auth();
+    const before = await getSiswaById(siswaId);
+    const after = await updateSiswa(siswaId, {
+      nama: formData.get("nama"),
+      nis: formData.get("nis"),
+      jenis_kelamin: formData.get("jenis_kelamin"),
+      tanggal_lahir: formData.get("tanggal_lahir") || "",
+      alamat: formData.get("alamat") || "",
+      no_hp: formData.get("no_hp") || "",
+      status: formData.get("status"),
+    });
+
+    await recordAuditUpdate({
+      tableName: "siswa",
+      recordId: siswaId,
+      userId: session?.user?.id || "",
+      before,
+      after,
+      note: "Perubahan siswa dari halaman admin",
+    });
+
+    const selectedKelasId = formData.get("kelas_id");
+    const activeMembership = await findActiveKelasSiswaBySiswaId(siswaId);
+
+    if (activeMembership?.kelas_id !== selectedKelasId) {
+      if (activeMembership) {
+        const newMembership = await createKelasSiswa({
+          kelas_id: selectedKelasId,
+          siswa_id: siswaId,
+          tanggal_mulai: todayDate(),
+          status_keanggotaan: "pending",
+        });
+
+        await closeKelasSiswa(activeMembership.kelas_siswa_id, todayDate());
+        await updateKelasSiswa(newMembership.kelas_siswa_id, {
+          status_keanggotaan: "aktif",
+        });
+
+        await recordAuditCreate({
+          tableName: "kelas_siswa",
+          recordId: newMembership.kelas_siswa_id,
+          userId: session?.user?.id || "",
+          after: newMembership,
+          note: "Perpindahan kelas saat edit siswa",
+        });
+      } else {
+        const newMembership = await createKelasSiswa({
+          kelas_id: selectedKelasId,
+          siswa_id: siswaId,
+          tanggal_mulai: todayDate(),
+          status_keanggotaan: "aktif",
+        });
+
+        await recordAuditCreate({
+          tableName: "kelas_siswa",
+          recordId: newMembership.kelas_siswa_id,
+          userId: session?.user?.id || "",
+          after: newMembership,
+          note: "Penambahan keanggotaan kelas saat edit siswa",
+        });
+      }
+    }
+
+    redirect(`/admin/siswa/${siswaId}`);
+  }
+
   return (
     <main>
       <header>
         <h1>Edit Data Siswa</h1>
         <p>Perbarui informasi siswa.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Edit Siswa
+          <Link href="/admin">Dashboard</Link> /{" "}
+          <Link href="/admin/siswa">Manajemen Siswa</Link> / Edit Siswa
         </p>
       </header>
 
-      <form>
+      <form action={simpanSiswa}>
         <section>
-          <h2>Data Siswa</h2>
-          <p>Semua field otomatis terisi berdasarkan data siswa sebelumnya.</p>
-
           <p>
-            <label htmlFor="nis">NIS (unik)</label>
-            <input id="nis" name="nis" type="text" defaultValue="2026001" />
+            <label htmlFor="nama">Nama lengkap (wajib)</label>
+            <br />
+            <input
+              id="nama"
+              name="nama"
+              type="text"
+              defaultValue={siswa.nama}
+              required
+            />
           </p>
           <p>
-            <label htmlFor="nama">Nama lengkap</label>
-            <input id="nama" name="nama" type="text" defaultValue="Andi" />
+            <label htmlFor="nis">NIS (wajib)</label>
+            <br />
+            <input
+              id="nis"
+              name="nis"
+              type="text"
+              defaultValue={siswa.nis}
+              required
+            />
           </p>
           <p>
-            <label htmlFor="jenis-kelamin">Jenis kelamin</label>
-            <select id="jenis-kelamin" name="jenis-kelamin" defaultValue="laki-laki">
-              <option value="laki-laki">Laki-laki</option>
-              <option value="perempuan">Perempuan</option>
+            <label htmlFor="jenis_kelamin">Jenis Kelamin</label>
+            <br />
+            <select
+              id="jenis_kelamin"
+              name="jenis_kelamin"
+              defaultValue={siswa.jenis_kelamin}
+            >
+              <option value="">Pilih</option>
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
             </select>
           </p>
           <p>
-            <label htmlFor="tempat-lahir">Tempat lahir</label>
-            <input id="tempat-lahir" name="tempat-lahir" type="text" defaultValue="Jakarta" />
-          </p>
-          <p>
-            <label htmlFor="tanggal-lahir">Tanggal lahir</label>
-            <input id="tanggal-lahir" name="tanggal-lahir" type="date" defaultValue="2010-01-01" />
-          </p>
-          <p>
-            <label htmlFor="nomor-hp">Nomor HP</label>
-            <input id="nomor-hp" name="nomor-hp" type="tel" defaultValue="08123456789" />
+            <label htmlFor="tanggal_lahir">Tanggal Lahir</label>
+            <br />
+            <input
+              id="tanggal_lahir"
+              name="tanggal_lahir"
+              type="date"
+              defaultValue={siswa.tanggal_lahir}
+            />
           </p>
           <p>
             <label htmlFor="alamat">Alamat</label>
-            <textarea id="alamat" name="alamat" defaultValue="Jl. Contoh No. 1" />
-          </p>
-        </section>
-
-        <section>
-          <h2>Data Pendaftaran</h2>
-          <p>
-            <label htmlFor="kelas">Kelas yang diikuti</label>
-            <select id="kelas" name="kelas" defaultValue="matematika-a">
-              <option value="matematika-a">Matematika A</option>
-              <option value="bahasa-inggris-b">Bahasa Inggris B</option>
-            </select>
+            <br />
+            <textarea id="alamat" name="alamat" defaultValue={siswa.alamat} />
           </p>
           <p>
-            <label htmlFor="tanggal-pendaftaran">Tanggal pendaftaran</label>
-            <input id="tanggal-pendaftaran" name="tanggal-pendaftaran" type="date" defaultValue="2026-01-01" />
+            <label htmlFor="no_hp">Nomor HP</label>
+            <br />
+            <input
+              id="no_hp"
+              name="no_hp"
+              type="tel"
+              defaultValue={siswa.no_hp}
+            />
           </p>
           <p>
-            <label htmlFor="status">Status siswa</label>
-            <select id="status" name="status" defaultValue="aktif">
+            <label htmlFor="status">Status Siswa</label>
+            <br />
+            <select id="status" name="status" defaultValue={siswa.status}>
               <option value="aktif">Aktif</option>
               <option value="nonaktif">Nonaktif</option>
             </select>
@@ -77,32 +225,35 @@ export default function EditSiswaPage() {
         </section>
 
         <section>
-          <h2>Informasi Orang Tua</h2>
+          <h2>Kelas</h2>
           <p>
-            <label htmlFor="nama-ortu">Nama orang tua</label>
-            <input id="nama-ortu" name="nama-ortu" type="text" defaultValue="Bapak Andi" />
+            <label htmlFor="kelas_id">Kelas (wajib)</label>
+            <br />
+            <select
+              id="kelas_id"
+              name="kelas_id"
+              defaultValue={currentKelas?.kelas_id || ""}
+              required
+            >
+              <option value="">Pilih kelas dengan kapasitas tersedia</option>
+              {availableKelas.map((item) => {
+                const active = activeCountByKelas.get(item.kelas_id) || 0;
+                return (
+                  <option key={item.kelas_id} value={item.kelas_id}>
+                    <ClassCapacityLabel
+                      namaKelas={item.nama_kelas}
+                      terisi={active}
+                      kapasitas={item.kapasitas}
+                    />
+                  </option>
+                );
+              })}
+            </select>
           </p>
-          <p>
-            <label htmlFor="hp-ortu">Nomor HP orang tua</label>
-            <input id="hp-ortu" name="hp-ortu" type="tel" defaultValue="08111222333" />
-          </p>
-        </section>
-
-        <section>
-          <h2>Validasi</h2>
-          <ul>
-            <li>NIS tidak boleh kosong atau duplikat dengan siswa lain.</li>
-            <li>Nama lengkap wajib diisi.</li>
-            <li>Jenis kelamin wajib dipilih.</li>
-            <li>Kelas harus berasal dari daftar kelas yang tersedia.</li>
-            <li>Tanggal lahir tidak boleh melebihi tanggal saat ini.</li>
-            <li>Tampilkan notifikasi berhasil atau gagal.</li>
-          </ul>
         </section>
 
         <p>
           <button type="submit">Simpan Perubahan</button>
-          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>

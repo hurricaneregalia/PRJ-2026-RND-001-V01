@@ -20,7 +20,9 @@ export async function connectGoogleAccount(email, authUserId, photoUrl = "") {
   }
 
   const isTemporaryAuthId =
-    !user.auth_user_id || user.auth_user_id === user.email;
+    !user.auth_user_id ||
+    user.auth_user_id === user.email ||
+    user.auth_user_id.includes("@");
 
   if (!isTemporaryAuthId && user.auth_user_id !== authUserId) {
     throw new Error("authUserId does not match existing user");

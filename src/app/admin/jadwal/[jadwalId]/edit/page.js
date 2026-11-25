@@ -1,83 +1,151 @@
-import Link from 'next/link';
-import BackButton from '@/components/ui/back-button';
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { connection } from "next/server";
+
+import { auth } from "@/auth";
+import { listKelas } from "@/repositories/kelas-repository";
+import { getJadwalById, updateJadwal } from "@/repositories/jadwal-repository";
+import { HARI } from "@/lib/domain-constants";
+import { recordAuditUpdate } from "@/repositories/audit-log-repository";
+
+export const instant = false;
 
 export const metadata = {
-  title: 'Edit Jadwal',
+  title: "Edit Jadwal",
 };
 
-export default function EditJadwalPage() {
+export default async function EditJadwalPage({ params }) {
+  await connection();
+  const { jadwalId } = await params;
+  const jadwal = await getJadwalById(jadwalId);
+  const kelas = await listKelas();
+
+  if (!jadwal) {
+    return (
+      <main>
+        <h1>Jadwal tidak ditemukan</h1>
+        <p>
+          <Link href="/admin/jadwal">Kembali ke Manajemen Jadwal</Link>
+        </p>
+      </main>
+    );
+  }
+
+  async function simpanJadwal(formData) {
+    "use server";
+
+    const session = await auth();
+    const before = await getJadwalById(jadwalId);
+    const after = await updateJadwal(jadwalId, {
+      kelas_id: formData.get("kelas_id"),
+      hari: formData.get("hari"),
+      jam_mulai: formData.get("jam_mulai"),
+      jam_selesai: formData.get("jam_selesai"),
+      ruangan: formData.get("ruangan"),
+      status_jadwal: formData.get("status_jadwal"),
+    });
+
+    await recordAuditUpdate({
+      tableName: "jadwal",
+      recordId: jadwalId,
+      userId: session?.user?.id || "",
+      before,
+      after,
+      note: "Perubahan jadwal dari halaman admin",
+    });
+
+    redirect("/admin/jadwal");
+  }
+
   return (
     <main>
       <header>
         <h1>Edit Jadwal</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/jadwal">Manajemen Jadwal</Link> / Edit Jadwal
+          <Link href="/admin">Dashboard</Link> /{" "}
+          <Link href="/admin/jadwal">Manajemen Jadwal</Link> / Edit Jadwal
         </p>
       </header>
 
-      <form>
+      <form action={simpanJadwal}>
         <section>
-          <h2>Form Jadwal</h2>
           <p>
-            <label htmlFor="kelas">Kelas</label>
-            <select id="kelas" name="kelas" defaultValue="matematika-a">
-              <option value="matematika-a">Matematika A</option>
-              <option value="bahasa-inggris-b">Bahasa Inggris B</option>
+            <label htmlFor="kelas_id">Kelas (wajib)</label>
+            <br />
+            <select
+              id="kelas_id"
+              name="kelas_id"
+              defaultValue={jadwal.kelas_id}
+              required
+            >
+              <option value="">Pilih kelas</option>
+              {kelas.map((item) => (
+                <option key={item.kelas_id} value={item.kelas_id}>
+                  {item.nama_kelas} ({item.kode_kelas})
+                </option>
+              ))}
             </select>
           </p>
           <p>
-            <label htmlFor="mata-pelajaran">Mata pelajaran</label>
-            <input id="mata-pelajaran" name="mata-pelajaran" type="text" defaultValue="Matematika" />
-          </p>
-          <p>
-            <label htmlFor="pengajar">Pengajar</label>
-            <input id="pengajar" name="pengajar" type="text" defaultValue="Budi" />
-          </p>
-          <p>
-            <label htmlFor="hari">Hari</label>
-            <select id="hari" name="hari" defaultValue="senin">
-              <option value="senin">Senin</option>
-              <option value="selasa">Selasa</option>
-              <option value="rabu">Rabu</option>
-              <option value="kamis">Kamis</option>
-              <option value="jumat">Jumat</option>
-              <option value="sabtu">Sabtu</option>
-              <option value="minggu">Minggu</option>
+            <label htmlFor="hari">Hari (wajib)</label>
+            <br />
+            <select id="hari" name="hari" defaultValue={jadwal.hari} required>
+              {HARI.map((hari) => (
+                <option key={hari} value={hari}>
+                  {hari}
+                </option>
+              ))}
             </select>
           </p>
           <p>
-            <label htmlFor="jam-mulai">Jam mulai</label>
-            <input id="jam-mulai" name="jam-mulai" type="time" defaultValue="08:00" />
+            <label htmlFor="jam_mulai">Jam Mulai (wajib)</label>
+            <br />
+            <input
+              id="jam_mulai"
+              name="jam_mulai"
+              type="time"
+              defaultValue={jadwal.jam_mulai}
+              required
+            />
           </p>
           <p>
-            <label htmlFor="jam-selesai">Jam selesai</label>
-            <input id="jam-selesai" name="jam-selesai" type="time" defaultValue="09:30" />
-          </p>
-          <p>
-            <label htmlFor="tanggal-mulai">Tanggal mulai berlaku</label>
-            <input id="tanggal-mulai" name="tanggal-mulai" type="date" defaultValue="2026-01-01" />
-          </p>
-          <p>
-            <label htmlFor="tanggal-selesai">Tanggal akhir (opsional)</label>
-            <input id="tanggal-selesai" name="tanggal-selesai" type="date" />
+            <label htmlFor="jam_selesai">Jam Selesai (wajib)</label>
+            <br />
+            <input
+              id="jam_selesai"
+              name="jam_selesai"
+              type="time"
+              defaultValue={jadwal.jam_selesai}
+              required
+            />
           </p>
           <p>
             <label htmlFor="ruangan">Ruangan (opsional)</label>
-            <input id="ruangan" name="ruangan" type="text" defaultValue="Ruang 1" />
+            <br />
+            <input
+              id="ruangan"
+              name="ruangan"
+              type="text"
+              defaultValue={jadwal.ruangan}
+            />
           </p>
           <p>
-            <label htmlFor="status">Status jadwal</label>
-            <select id="status" name="status" defaultValue="aktif">
+            <label htmlFor="status_jadwal">Status</label>
+            <br />
+            <select
+              id="status_jadwal"
+              name="status_jadwal"
+              defaultValue={jadwal.status_jadwal}
+            >
               <option value="aktif">Aktif</option>
-              <option value="nonaktif">Tidak Aktif</option>
+              <option value="nonaktif">Nonaktif</option>
             </select>
           </p>
-          <p>Kelas, mata pelajaran, dan pengajar sebaiknya saling konsisten. Jika kelas sudah memiliki pengajar dan mata pelajaran utama, keduanya bisa ditampilkan otomatis dari data kelas.</p>
         </section>
 
         <p>
           <button type="submit">Simpan Perubahan</button>
-          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>

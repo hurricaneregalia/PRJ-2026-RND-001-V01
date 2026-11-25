@@ -1,8 +1,10 @@
 import Link from "next/link";
 
+import { listKelas } from "@/repositories/kelas-repository";
 import { listUsers } from "@/repositories/user-repository";
 
 import { connection } from "next/server";
+import CapacityInfo from "@/components/ui/capacity-info";
 
 export const instant = false;
 
@@ -13,6 +15,17 @@ export const metadata = {
 export default async function ManajemenPenggunaPage() {
   await connection();
   const users = await listUsers();
+  const kelas = await listKelas();
+  const activeCountByTeacher = new Map();
+
+  kelas
+    .filter((item) => item.status_kelas === "aktif")
+    .forEach((item) => {
+      activeCountByTeacher.set(
+        item.pengajar_id,
+        (activeCountByTeacher.get(item.pengajar_id) || 0) + 1,
+      );
+    });
 
   return (
     <main>
@@ -32,13 +45,20 @@ export default async function ManajemenPenggunaPage() {
         {users.length === 0 ? (
           <p>Belum ada pengguna.</p>
         ) : (
-          <ul>
+          <ol>
             {users.map((user) => (
               <li key={user.user_id}>
-                {user.user_id} | {user.name} | {user.email} | {user.role} | {user.account_status} | <Link href={`/admin/users/${user.user_id}/edit`}>Edit</Link>
+                {user.user_id} | {user.role === "Pengajar" ? (
+                  <CapacityInfo
+                    item={user.name}
+                    count={activeCountByTeacher.get(user.user_id) || 0}
+                    max={user.limit_kelas}
+                  />
+                ) : user.name} | {user.role} |{" "}
+                {user.account_status} | <Link href={`/admin/users/${user.user_id}`}>Detail</Link> | <Link href={`/admin/users/${user.user_id}/edit`}>Edit</Link>
               </li>
             ))}
-          </ul>
+          </ol>
         )}
       </section>
     </main>

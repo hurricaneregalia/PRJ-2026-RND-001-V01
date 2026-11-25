@@ -19,6 +19,7 @@ export const WORKSHEET_SCHEMAS = Object.freeze({
     'account_status',
     'photo_url',
     'no_hp',
+    'limit_kelas',
     'created_at',
     'updated_at',
   ]),

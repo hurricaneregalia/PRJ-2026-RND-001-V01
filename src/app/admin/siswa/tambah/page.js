@@ -1,76 +1,143 @@
 import Link from "next/link";
-import BackButton from "@/components/ui/back-button";
+import { redirect } from "next/navigation";
+
+import { connection } from "next/server";
+
+import { auth } from "@/auth";
+import { createSiswa } from "@/repositories/siswa-repository";
+import { createKelasSiswa } from "@/repositories/kelas-siswa-repository";
+import { listKelas } from "@/repositories/kelas-repository";
+import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
+import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import { recordAuditCreate } from "@/repositories/audit-log-repository";
+import { todayDate } from "@/lib/date-time";
+
+export const instant = false;
 
 export const metadata = {
   title: "Tambah Siswa",
 };
 
-export default function TambahSiswaPage() {
+export default async function TambahSiswaPage() {
+  await connection();
+  const kelas = await listKelas();
+  const memberships = await listKelasSiswa();
+  const activeCountByKelas = new Map();
+
+  memberships
+    .filter((item) => item.status_keanggotaan === "aktif")
+    .forEach((item) => {
+      activeCountByKelas.set(
+        item.kelas_id,
+        (activeCountByKelas.get(item.kelas_id) || 0) + 1,
+      );
+    });
+
+  const availableKelas = kelas.filter((item) => {
+    if (item.status_kelas !== "aktif") {
+      return false;
+    }
+
+    const active = activeCountByKelas.get(item.kelas_id) || 0;
+    return active < Number(item.kapasitas || 0);
+  });
+
+  async function simpanSiswa(formData) {
+    "use server";
+
+    const session = await auth();
+    const created = await createSiswa({
+      nama: formData.get("nama"),
+      nis: formData.get("nis"),
+      jenis_kelamin: formData.get("jenis_kelamin"),
+      tanggal_lahir: formData.get("tanggal_lahir") || "",
+      alamat: formData.get("alamat") || "",
+      no_hp: formData.get("no_hp") || "",
+      status: formData.get("status") || "aktif",
+    });
+
+    await recordAuditCreate({
+      tableName: "siswa",
+      recordId: created.siswa_id,
+      userId: session?.user?.id || "",
+      after: created,
+      note: "Penambahan siswa dari halaman admin",
+    });
+
+    const kelasId = formData.get("kelas_id");
+
+    if (kelasId) {
+      const membership = await createKelasSiswa({
+        kelas_id: kelasId,
+        siswa_id: created.siswa_id,
+        tanggal_mulai: todayDate(),
+        status_keanggotaan: "aktif",
+      });
+
+      await recordAuditCreate({
+        tableName: "kelas_siswa",
+        recordId: membership.kelas_siswa_id,
+        userId: session?.user?.id || "",
+        after: membership,
+        note: "Penambahan keanggotaan kelas saat siswa dibuat",
+      });
+    }
+
+    redirect("/admin/siswa");
+  }
+
   return (
     <main>
       <header>
         <h1>Tambah Siswa</h1>
         <p>Masukkan informasi siswa baru.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Tambah Siswa
+          <Link href="/admin">Dashboard</Link> /{" "}
+          <Link href="/admin/siswa">Manajemen Siswa</Link> / Tambah Siswa
         </p>
       </header>
 
-      <form>
+      <form action={simpanSiswa}>
         <section>
           <h2>Data Siswa</h2>
-
-          <p>
-            <label htmlFor="nis">NIS (wajib dan unik)</label>
-            <input id="nis" name="nis" type="text" required />
-          </p>
           <p>
             <label htmlFor="nama">Nama lengkap (wajib)</label>
+            <br />
             <input id="nama" name="nama" type="text" required />
           </p>
           <p>
-            <label htmlFor="jenis-kelamin">Jenis kelamin</label>
-            <select id="jenis-kelamin" name="jenis-kelamin" required>
+            <label htmlFor="nis">NIS (wajib dan unik)</label>
+            <br />
+            <input id="nis" name="nis" type="text" required />
+          </p>
+          <p>
+            <label htmlFor="jenis_kelamin">Jenis Kelamin</label>
+            <br />
+            <select id="jenis_kelamin" name="jenis_kelamin" required>
               <option value="">Pilih</option>
-              <option value="laki-laki">Laki-laki</option>
-              <option value="perempuan">Perempuan</option>
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
             </select>
           </p>
           <p>
-            <label htmlFor="tempat-lahir">Tempat lahir (opsional)</label>
-            <input id="tempat-lahir" name="tempat-lahir" type="text" />
+            <label htmlFor="tanggal_lahir">Tanggal Lahir</label>
+            <br />
+            <input id="tanggal_lahir" name="tanggal_lahir" type="date" />
           </p>
           <p>
-            <label htmlFor="tanggal-lahir">Tanggal lahir (opsional)</label>
-            <input id="tanggal-lahir" name="tanggal-lahir" type="date" />
-          </p>
-          <p>
-            <label htmlFor="nomor-hp">Nomor HP (opsional)</label>
-            <input id="nomor-hp" name="nomor-hp" type="tel" />
-          </p>
-          <p>
-            <label htmlFor="alamat">Alamat (opsional)</label>
+            <label htmlFor="alamat">Alamat</label>
+            <br />
             <textarea id="alamat" name="alamat" />
           </p>
-        </section>
-
-        <section>
-          <h2>Data Pendaftaran</h2>
           <p>
-            <label htmlFor="kelas">Kelas</label>
-            <select id="kelas" name="kelas">
-              <option value="">Pilih kelas</option>
-              <option value="matematika-a">Matematika A</option>
-              <option value="bahasa-inggris-b">Bahasa Inggris B</option>
-            </select>
+            <label htmlFor="no_hp">Nomor HP</label>
+            <br />
+            <input id="no_hp" name="no_hp" type="tel" />
           </p>
           <p>
-            <label htmlFor="tanggal-pendaftaran">Tanggal pendaftaran</label>
-            <input id="tanggal-pendaftaran" name="tanggal-pendaftaran" type="date" />
-          </p>
-          <p>
-            <label htmlFor="status">Status siswa</label>
-            <select id="status" name="status">
+            <label htmlFor="status">Status Siswa</label>
+            <br />
+            <select id="status" name="status" defaultValue="aktif">
               <option value="aktif">Aktif</option>
               <option value="nonaktif">Nonaktif</option>
             </select>
@@ -78,33 +145,30 @@ export default function TambahSiswaPage() {
         </section>
 
         <section>
-          <h2>Informasi Orang Tua (MVP)</h2>
+          <h2>Kelas</h2>
           <p>
-            <label htmlFor="nama-ortu">Nama orang tua</label>
-            <input id="nama-ortu" name="nama-ortu" type="text" />
+            <label htmlFor="kelas_id">Kelas (wajib)</label>
+            <br />
+            <select id="kelas_id" name="kelas_id" required>
+              <option value="">Pilih kelas dengan kapasitas tersedia</option>
+              {availableKelas.map((item) => {
+                const active = activeCountByKelas.get(item.kelas_id) || 0;
+                return (
+                  <option key={item.kelas_id} value={item.kelas_id}>
+                    <ClassCapacityLabel
+                      namaKelas={item.nama_kelas}
+                      terisi={active}
+                      kapasitas={item.kapasitas}
+                    />
+                  </option>
+                );
+              })}
+            </select>
           </p>
-          <p>
-            <label htmlFor="hp-ortu">Nomor HP orang tua</label>
-            <input id="hp-ortu" name="hp-ortu" type="tel" />
-          </p>
-          <p>Untuk kebutuhan pengembangan berikutnya. Untuk MVP, bagian ini boleh disediakan sebagai informasi tambahan tanpa membuat akun orang tua.</p>
-        </section>
-
-        <section>
-          <h2>Validasi</h2>
-          <ul>
-            <li>NIS wajib diisi dan tidak boleh duplikat.</li>
-            <li>Nama lengkap wajib diisi.</li>
-            <li>Jenis kelamin wajib dipilih.</li>
-            <li>Kelas wajib dipilih jika pendaftaran langsung memasukkan siswa ke kelas.</li>
-            <li>Tanggal lahir tidak boleh melebihi tanggal saat ini.</li>
-            <li>Tampilkan notifikasi ketika penyimpanan berhasil atau gagal.</li>
-          </ul>
         </section>
 
         <p>
           <button type="submit">Simpan Siswa</button>
-          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>

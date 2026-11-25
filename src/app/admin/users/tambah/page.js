@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { createUser } from "@/repositories/user-repository";
 import { recordAuditCreate } from "@/repositories/audit-log-repository";
+import RoleSelectWithLimit from "@/components/ui/role-select-with-limit";
 
 export const metadata = {
   title: "Tambah Pengguna",
@@ -19,6 +20,7 @@ export default function TambahPenggunaPage() {
     const noHp = formData.get("no_hp");
     const role = formData.get("role");
     const accountStatus = formData.get("account_status");
+    const limitKelas = Number(formData.get("limit_kelas") || 2);
 
     const created = await createUser({
       auth_user_id: email,
@@ -28,6 +30,7 @@ export default function TambahPenggunaPage() {
       account_status: accountStatus,
       photo_url: "",
       no_hp: noHp,
+      limit_kelas: limitKelas,
     });
 
     await recordAuditCreate({
@@ -69,14 +72,8 @@ export default function TambahPenggunaPage() {
             <br />
             <input id="no_hp" name="no_hp" type="tel" autoComplete="tel" />
           </p>
-          <p>
-            <label htmlFor="role">Role</label>
-            <br />
-            <select id="role" name="role" defaultValue="Pengajar">
-              <option value="Admin">Admin</option>
-              <option value="Pengajar">Pengajar</option>
-            </select>
-          </p>
+
+          <RoleSelectWithLimit />
           <p>
             <label htmlFor="account_status">Status Akun</label>
             <br />

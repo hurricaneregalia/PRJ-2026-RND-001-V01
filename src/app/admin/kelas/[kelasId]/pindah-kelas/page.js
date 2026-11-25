@@ -1,221 +1,156 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { connection } from "next/server";
+
+import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
 import NoteBox from "@/components/layout/note-box";
+import { getKelasById, listKelas } from "@/repositories/kelas-repository";
+import {
+  listKelasSiswa,
+  listKelasSiswaByKelasId,
+} from "@/repositories/kelas-siswa-repository";
+import { listSiswa } from "@/repositories/siswa-repository";
+import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import { getUserById } from "@/repositories/user-repository";
+import { transferStudents } from "@/services/class-transfer-service";
+import { todayDate } from "@/lib/date-time";
+import { recordAuditAdmin } from "@/repositories/audit-log-repository";
+
+export const instant = false;
 
 export const metadata = {
-  title: "Pindah Kelas dari Kelas",
+  title: "Pindah Kelas",
 };
 
-const KELAS_ASAL = {
-  kelas_id: "KLS-0001",
-  kode_kelas: "MAT-A",
-  nama_kelas: "Matematika A",
-  pengajar: "Budi Santoso",
-  jadwal: "Senin, 08:00 - 09:30",
-  ruangan: "R-101",
-  kapasitas: 20,
-  jumlah_siswa: 15,
-  status_kelas: "aktif",
-};
+export default async function PindahKelasKelasPage({ params }) {
+  await connection();
+  const { kelasId } = await params;
+  const kelasAsal = await getKelasById(kelasId);
+  const memberships = kelasAsal ? await listKelasSiswaByKelasId(kelasAsal.kelas_id) : [];
+  const siswaList = await listSiswa();
+  const siswaById = new Map(siswaList.map((item) => [item.siswa_id, item]));
+  const allKelas = await listKelas();
+  const allMemberships = await listKelasSiswa();
+  const activeCountByKelas = new Map();
 
-const ANGGOTA_AKTIF = [
-  {
-    kelas_siswa_id: "KRS-0001",
-    siswa_id: "SIS-0001",
-    nis: "2026001",
-    nama: "Andi Pratama",
-    jenis_kelamin: "Laki-laki",
-    tanggal_mulai: "05 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-  {
-    kelas_siswa_id: "KRS-0002",
-    siswa_id: "SIS-0002",
-    nis: "2026002",
-    nama: "Citra Lestari",
-    jenis_kelamin: "Perempuan",
-    tanggal_mulai: "05 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-  {
-    kelas_siswa_id: "KRS-0003",
-    siswa_id: "SIS-0003",
-    nis: "2026003",
-    nama: "Dina Maulida",
-    jenis_kelamin: "Perempuan",
-    tanggal_mulai: "05 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-  {
-    kelas_siswa_id: "KRS-0004",
-    siswa_id: "SIS-0004",
-    nis: "2026004",
-    nama: "Fajar Nugroho",
-    jenis_kelamin: "Laki-laki",
-    tanggal_mulai: "12 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-  {
-    kelas_siswa_id: "KRS-0005",
-    siswa_id: "SIS-0005",
-    nis: "2026005",
-    nama: "Gita Permata",
-    jenis_kelamin: "Perempuan",
-    tanggal_mulai: "12 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-  {
-    kelas_siswa_id: "KRS-0006",
-    siswa_id: "SIS-0006",
-    nis: "2026006",
-    nama: "Hendra Wijaya",
-    jenis_kelamin: "Laki-laki",
-    tanggal_mulai: "19 Januari 2026",
-    status_keanggotaan: "aktif",
-  },
-];
+  allMemberships
+    .filter((item) => item.status_keanggotaan === "aktif")
+    .forEach((item) => {
+      activeCountByKelas.set(
+        item.kelas_id,
+        (activeCountByKelas.get(item.kelas_id) || 0) + 1,
+      );
+    });
 
-export default function PindahKelasKelasPage() {
+  const targetKelas = allKelas.filter(
+    (item) =>
+      item.status_kelas === "aktif" &&
+      item.kelas_id !== kelasAsal?.kelas_id &&
+      (activeCountByKelas.get(item.kelas_id) || 0) < Number(item.kapasitas || 0),
+  );
+
+  if (!kelasAsal) {
+    return (
+      <main>
+        <h1>Kelas tidak ditemukan</h1>
+        <p>
+          <Link href="/admin/kelas">Kembali ke Manajemen Kelas</Link>
+        </p>
+      </main>
+    );
+  }
+
+  const activeMemberships = memberships.filter((item) => item.status_keanggotaan === "aktif");
+  const pengajar = await getUserById(kelasAsal.pengajar_id);
+
+  async function simpanPemindahan(formData) {
+    "use server";
+
+    const session = await auth();
+    const selectedIds = [...formData.keys()]
+      .filter((key) => key.startsWith("siswa_"))
+      .map((key) => formData.get(key))
+      .filter(Boolean);
+
+    const batch = await transferStudents({
+      kelasAsalId: kelasId,
+      kelasTujuanId: formData.get("kelas_tujuan_id"),
+      tanggalPemindahan: formData.get("tanggal_pemindahan") || todayDate(),
+      dilakukanOleh: session?.user?.id || "",
+      siswaIds: selectedIds,
+    });
+
+    await recordAuditAdmin({
+      tableName: "pemindahan_kelas",
+      recordId: batch.pemindahan_id,
+      userId: session?.user?.id || "",
+      after: batch,
+      note: "Pemindahan kelas batch",
+    });
+
+    redirect(`/admin/kelas/${kelasId}`);
+  }
+
   return (
     <main>
       <header>
-        <h1>Pindah Kelas dari Kelas</h1>
-        <p>Halaman statis untuk evaluasi UI pemindahan beberapa siswa dari satu kelas. Data yang ditampilkan adalah ilustrasi.</p>
+        <h1>Pindah Kelas</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / <Link href="/admin/kelas/KLS-0001">Detail Kelas</Link> / Pindah Kelas
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / <Link href={`/admin/kelas/${kelasId}`}>Detail Kelas</Link> / Pindah Kelas
         </p>
       </header>
 
-      <section aria-labelledby="identitas-kelas-asal">
-        <h2 id="identitas-kelas-asal">Identitas Kelas Asal</h2>
-        <ul>
-          <li>
-            <strong>Kode kelas:</strong> {KELAS_ASAL.kode_kelas}
-          </li>
-          <li>
-            <strong>Nama kelas:</strong> {KELAS_ASAL.nama_kelas}
-          </li>
-          <li>
-            <strong>ID kelas:</strong> {KELAS_ASAL.kelas_id}
-          </li>
-          <li>
-            <strong>Pengajar:</strong> {KELAS_ASAL.pengajar}
-          </li>
-          <li>
-            <strong>Jadwal:</strong> {KELAS_ASAL.jadwal}
-          </li>
-          <li>
-            <strong>Ruangan:</strong> {KELAS_ASAL.ruangan}
-          </li>
-          <li>
-            <strong>Kapasitas:</strong> {KELAS_ASAL.jumlah_siswa} dari {KELAS_ASAL.kapasitas} siswa
-          </li>
-          <li>
-            <strong>Status kelas:</strong> {KELAS_ASAL.status_kelas}
-          </li>
-        </ul>
-      </section>
-
       <section aria-labelledby="anggota-aktif">
-        <h2 id="anggota-aktif">Daftar Siswa Aktif</h2>
-        <p>Hanya siswa dengan status keanggotaan aktif yang dapat dipilih untuk dipindahkan.</p>
+        <h2 id="anggota-aktif">Siswa Kelas {kelasAsal.nama_kelas}</h2>
         <ul>
-          {ANGGOTA_AKTIF.map((anggota) => (
+          {activeMemberships.map((anggota) => (
             <li key={anggota.kelas_siswa_id}>
-              {anggota.nama} | NIS {anggota.nis} | ID {anggota.siswa_id} | Keanggotaan {anggota.kelas_siswa_id} | Status {anggota.status_keanggotaan} | Mulai {anggota.tanggal_mulai}
+              <label>
+                <input type="checkbox" form="transfer-form" name={`siswa_${anggota.siswa_id}`} value={anggota.siswa_id} /> {siswaById.get(anggota.siswa_id)?.nama || anggota.siswa_id} | NIS{" "}
+                {siswaById.get(anggota.siswa_id)?.nis || "-"} | Status {anggota.status_keanggotaan}
+              </label>
             </li>
           ))}
         </ul>
       </section>
 
-      <section aria-labelledby="rencana-pemindahan">
-        <h2 id="rencana-pemindahan">Rencana Pemindahan</h2>
+      <form id="transfer-form" action={simpanPemindahan}>
+        <section aria-labelledby="rencana-pemindahan">
+          <h2 id="rencana-pemindahan">Rencana Pemindahan</h2>
 
-        <fieldset>
-          <legend>Pilih siswa yang dipindahkan</legend>
-          <p>Jumlah siswa terpilih: 3 dari {ANGGOTA_AKTIF.length}</p>
-          <ul>
-            <li>
-              <input type="checkbox" defaultChecked readOnly /> Andi Pratama | NIS 2026001 | ID SIS-0001 | Keanggotaan KRS-0001 | Status aktif
-            </li>
-            <li>
-              <input type="checkbox" defaultChecked readOnly /> Citra Lestari | NIS 2026002 | ID SIS-0002 | Keanggotaan KRS-0002 | Status aktif
-            </li>
-            <li>
-              <input type="checkbox" defaultChecked readOnly /> Dina Maulida | NIS 2026003 | ID SIS-0003 | Keanggotaan KRS-0003 | Status aktif
-            </li>
-            <li>
-              <input type="checkbox" readOnly /> Fajar Nugroho | NIS 2026004 | ID SIS-0004 | Keanggotaan KRS-0004 | Status aktif
-            </li>
-            <li>
-              <input type="checkbox" readOnly /> Gita Permata | NIS 2026005 | ID SIS-0005 | Keanggotaan KRS-0005 | Status aktif
-            </li>
-            <li>
-              <input type="checkbox" readOnly /> Hendra Wijaya | NIS 2026006 | ID SIS-0006 | Keanggotaan KRS-0006 | Status aktif
-            </li>
-          </ul>
-        </fieldset>
+          <p>
+            <label htmlFor="kelas_tujuan_id">Kelas Tujuan</label>
+            <br />
+            <select id="kelas_tujuan_id" name="kelas_tujuan_id" required>
+              <option value="">Pilih kelas tujuan</option>
+              {targetKelas.map((item) => {
+                const active = activeCountByKelas.get(item.kelas_id) || 0;
+                return (
+                  <option key={item.kelas_id} value={item.kelas_id}>
+                    <ClassCapacityLabel
+                      namaKelas={item.nama_kelas}
+                      terisi={active}
+                      kapasitas={item.kapasitas}
+                    />
+                  </option>
+                );
+              })}
+            </select>
+          </p>
 
-        <p>
-          <label htmlFor="kelas-tujuan-kelas">Kelas tujuan</label>
-          <br />
-          <select id="kelas-tujuan-kelas" defaultValue="KLS-0002">
-            <option value="KLS-0002">ENG-B - Bahasa Inggris B (Siti Aminah)</option>
-            <option value="KLS-0003">IPA-A - IPA Dasar A (Rina Wati)</option>
-            <option value="KLS-0004">MAT-B - Matematika B (Budi Santoso)</option>
-          </select>
-        </p>
+          <p>
+            <label htmlFor="tanggal_pemindahan">Tanggal Efektif Pemindahan</label>
+            <br />
+            <input id="tanggal_pemindahan" name="tanggal_pemindahan" type="date" defaultValue={todayDate()} />
+          </p>
 
-        <p>
-          <label htmlFor="tanggal-efektif-kelas">Tanggal efektif pemindahan</label>
-          <br />
-          <input id="tanggal-efektif-kelas" type="date" defaultValue="2026-11-25" />
-        </p>
-
-        <section aria-labelledby="ringkasan-pindah-kelas-kelas">
-          <h3 id="ringkasan-pindah-kelas-kelas">Ringkasan Pemindahan</h3>
-          <dl>
-            <dt>Kelas asal</dt>
-            <dd>MAT-A - Matematika A</dd>
-            <dt>Kelas tujuan</dt>
-            <dd>ENG-B - Bahasa Inggris B</dd>
-            <dt>Jumlah siswa terpilih</dt>
-            <dd>3 siswa</dd>
-            <dt>Daftar siswa terpilih</dt>
-            <dd>Andi Pratama (2026001), Citra Lestari (2026002), Dina Maulida (2026003)</dd>
-            <dt>Pengajar kelas tujuan</dt>
-            <dd>Siti Aminah</dd>
-            <dt>Jadwal kelas tujuan</dt>
-            <dd>Selasa, 10:00 - 11:30</dd>
-            <dt>Ruangan kelas tujuan</dt>
-            <dd>R-102</dd>
-            <dt>Tanggal efektif</dt>
-            <dd>2026-11-25</dd>
-            <dt>Dampak keanggotaan</dt>
-            <dd>Keanggotaan lama setiap siswa terpilih menjadi selesai; keanggotaan baru menjadi aktif.</dd>
-          </dl>
+          <p>
+            <button type="submit">Konfirmasi Pemindahan</button>
+          </p>
         </section>
-
-        <p>
-          <button type="button">Konfirmasi Pemindahan</button> <BackButton btnText="Batal" />
-        </p>
-
-        <p>Pratinjau konfirmasi: 3 siswa dari Matematika A ke Bahasa Inggris B pada 2026-11-25. Tidak ada data yang dikirim atau disimpan.</p>
-      </section>
-
-      <NoteBox
-        text={
-          <ol>
-            <li>Hanya boleh menampilkan daftar siswa yang aktif saja di kelas ini</li>
-            <li>Riwayat keanggotaan kelas lama tidak dihapus.</li>
-            <li>Setelah pemindahan, keanggotaan lama menjadi selesai dan keanggotaan baru menjadi aktif.</li>
-            <li>Setiap siswa diproses terpisah; kegagalan satu siswa tidak membatalkan siswa lain.</li>
-            <li>Absensi historis tetap merujuk kelas saat absensi dibuat.</li>
-            <li>Halaman ini belum menjalankan pemindahan atau menyimpan data ke Google Spreadsheet.</li>
-          </ol>
-        }
-      />
+      </form>
     </main>
   );
 }

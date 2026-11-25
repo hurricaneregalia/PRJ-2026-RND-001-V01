@@ -1,99 +1,113 @@
-import Link from 'next/link';
-import BackButton from '@/components/ui/back-button';
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { connection } from "next/server";
+
+import { createKelas } from "@/repositories/kelas-repository";
+import { listKelas } from "@/repositories/kelas-repository";
+import { listUsers } from "@/repositories/user-repository";
+
+export const instant = false;
 
 export const metadata = {
-  title: 'Tambah Kelas',
+  title: "Tambah Kelas",
 };
 
-export default function TambahKelasPage() {
+export default async function TambahKelasPage() {
+  await connection();
+  const users = await listUsers();
+  const kelas = await listKelas();
+  const activeCountByTeacher = new Map();
+  kelas
+    .filter((item) => item.status_kelas === "aktif")
+    .forEach((item) => {
+      activeCountByTeacher.set(
+        item.pengajar_id,
+        (activeCountByTeacher.get(item.pengajar_id) || 0) + 1,
+      );
+    });
+  const availableTeachers = users.filter((user) => {
+    if (user.role !== "Pengajar") {
+      return false;
+    }
+
+    const limit = Number(user.limit_kelas || 0);
+    const active = activeCountByTeacher.get(user.user_id) || 0;
+    return limit > 0 && active < limit;
+  });
+
+  async function simpanKelas(formData) {
+    "use server";
+
+    await createKelas({
+      kode_kelas: formData.get("kode_kelas"),
+      nama_kelas: formData.get("nama_kelas"),
+      pengajar_id: formData.get("pengajar_id"),
+      kapasitas: Number(formData.get("kapasitas") || 0),
+      status_kelas: formData.get("status_kelas") || "aktif",
+    });
+
+    redirect("/admin/kelas");
+  }
+
   return (
     <main>
       <header>
         <h1>Tambah Kelas</h1>
-        <p>Buat kelas bimbingan belajar baru.</p>
+        <p>Masukkan informasi kelas baru.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> / <Link href="/admin/kelas">Manajemen Kelas</Link> / Tambah Kelas
+          <Link href="/admin">Dashboard</Link> /{" "}
+          <Link href="/admin/kelas">Manajemen Kelas</Link> / Tambah Kelas
         </p>
       </header>
 
-      <form>
+      <form action={simpanKelas}>
         <section>
-          <h2>Data Kelas</h2>
           <p>
-            <label htmlFor="kode-kelas">Kode kelas (wajib dan unik)</label>
-            <input id="kode-kelas" name="kode-kelas" type="text" required />
+            <label htmlFor="kode_kelas">Kode Kelas (wajib)</label>
+            <br />
+            <input id="kode_kelas" name="kode_kelas" type="text" required />
           </p>
           <p>
-            <label htmlFor="nama-kelas">Nama kelas (wajib)</label>
-            <input id="nama-kelas" name="nama-kelas" type="text" required />
+            <label htmlFor="nama_kelas">Nama Kelas (wajib)</label>
+            <br />
+            <input id="nama_kelas" name="nama_kelas" type="text" required />
           </p>
           <p>
-            <label htmlFor="mata-pelajaran">Mata pelajaran (wajib)</label>
-            <input id="mata-pelajaran" name="mata-pelajaran" type="text" required />
+            <label htmlFor="pengajar_id">Pengajar (wajib)</label>
+            <br />
+            <select id="pengajar_id" name="pengajar_id" required>
+              <option value="">Pilih pengajar</option>
+              {availableTeachers.map((teacher) => {
+                const active = activeCountByTeacher.get(teacher.user_id) || 0;
+                const limit = Number(teacher.limit_kelas || 0);
+                return (
+                  <option key={teacher.user_id} value={teacher.user_id}>
+                    {teacher.name} ({active}/{limit})
+                  </option>
+                );
+              })}
+            </select>
           </p>
           <p>
-            <label htmlFor="deskripsi">Deskripsi kelas (opsional)</label>
-            <textarea id="deskripsi" name="deskripsi" />
+            <label htmlFor="kapasitas">
+              Kapasitas Siswa (jumlah maksimum siswa dalam kelas)
+            </label>
+            <br />
+            <input id="kapasitas" name="kapasitas" type="number" min="0" />
           </p>
           <p>
-            <label htmlFor="status-kelas">Status kelas</label>
-            <select id="status-kelas" name="status-kelas">
+            <label htmlFor="status_kelas">Status Kelas</label>
+            <br />
+            <select id="status_kelas" name="status_kelas" defaultValue="aktif">
               <option value="aktif">Aktif</option>
               <option value="nonaktif">Nonaktif</option>
             </select>
           </p>
         </section>
 
-        <section>
-          <h2>Pengajar</h2>
-          <p>
-            <label htmlFor="pengajar">Pilih pengajar (wajib)</label>
-            <select id="pengajar" name="pengajar" required>
-              <option value="">Pilih pengajar aktif</option>
-              <option value="budi">Budi</option>
-              <option value="siti">Siti</option>
-            </select>
-          </p>
-          <p>Hanya tampilkan pengajar dengan status akun Aktif. Satu kelas memiliki satu pengajar utama.</p>
-        </section>
-
-        <section>
-          <h2>Pemilihan Siswa</h2>
-          <p>Pilih siswa dari daftar siswa aktif.</p>
-          <p>Mendukung pemilihan beberapa siswa sekaligus.</p>
-          <p>Pencarian berdasarkan nama atau NIS.</p>
-          <p>Tampilkan daftar siswa yang sudah dipilih.</p>
-          <p>Tampilkan jumlah siswa terpilih.</p>
-        </section>
-
-        <section>
-          <h2>Jadwal (Opsional)</h2>
-          <p>Untuk MVP, jadwal bisa dikelola melalui halaman Manajemen Jadwal secara terpisah.</p>
-          <p>Jika ingin langsung membuat jadwal dari halaman ini, sediakan:</p>
-          <ul>
-            <li>Hari.</li>
-            <li>Jam mulai.</li>
-            <li>Jam selesai.</li>
-          </ul>
-          <p>Saya lebih menyarankan pengelolaan jadwal secara terpisah agar tidak terjadi duplikasi data.</p>
-        </section>
-
-        <section>
-          <h2>Validasi</h2>
-          <ul>
-            <li>Kode kelas wajib diisi dan unik.</li>
-            <li>Nama kelas wajib diisi.</li>
-            <li>Mata pelajaran wajib dipilih.</li>
-            <li>Pengajar wajib dipilih.</li>
-            <li>Pengajar harus berstatus aktif.</li>
-            <li>Siswa yang dipilih harus berstatus aktif.</li>
-            <li>Jam selesai harus lebih besar daripada jam mulai jika jadwal ditambahkan.</li>
-          </ul>
-        </section>
-
         <p>
           <button type="submit">Simpan Kelas</button>
-          <BackButton btnText="Batal" />
         </p>
       </form>
     </main>
