@@ -1,10 +1,17 @@
 import Link from "next/link";
 
+import { signIn } from "@/auth";
+
 export const metadata = {
   title: "Login",
 };
 
 export default function LoginPage() {
+  async function loginWithGoogle() {
+    "use server";
+    await signIn("google", { redirectTo: "/dashboard" });
+  }
+
   return (
     <main>
       <header>
@@ -15,15 +22,9 @@ export default function LoginPage() {
       <section>
         <h2>Selamat Datang</h2>
         <p>Silakan masuk menggunakan akun Google Anda untuk melanjutkan.</p>
-        <p>
-          <Link href="#">Masuk dengan Google</Link>
-        </p>{" "}
-        <p>
-          <Link href="/admin">admin</Link>
-        </p>{" "}
-        <p>
-          <Link href="/pengajar">guru</Link>
-        </p>
+        <form action={loginWithGoogle}>
+          <button type="submit">Masuk dengan Google</button>
+        </form>
       </section>
 
       <section>

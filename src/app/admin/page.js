@@ -11,6 +11,9 @@ export default function AdminDashboardPage() {
         <h1>Dashboard</h1>
         <p>Halo, Admin</p>
         <p>Hari ini: Senin, 23 November 2026</p>
+        <p>
+          <Link href="/admin/users">Manajemen Pengguna</Link>
+        </p>
       </header>
       <section>
         <h2>Grafik Absensi Siswa</h2>
@@ -77,16 +80,19 @@ export default function AdminDashboardPage() {
         <h2>Akses Cepat</h2>
         <ul>
           <li>
-            <Link href="/admin/siswa/tambah">Tambah Siswa</Link>
+            <Link href="/admin/absensi"> Absensi</Link>
           </li>
           <li>
-            <Link href="/admin/pengajar/tambah">Tambah Pengajar</Link>
+            <Link href="/admin/siswa"> Siswa</Link>
           </li>
           <li>
-            <Link href="/admin/kelas/tambah">Tambah Kelas</Link>
+            <Link href="/admin/pengajar/"> Pengajar</Link>
           </li>
           <li>
-            <Link href="/admin/jadwal/tambah">Buat Jadwal</Link>
+            <Link href="/admin/kelas/"> Kelas</Link>
+          </li>
+          <li>
+            <Link href="/admin/jadwal/">Jadwal</Link>
           </li>
           <li>
             <Link href="/admin/laporan">Lihat Laporan Absensi</Link>

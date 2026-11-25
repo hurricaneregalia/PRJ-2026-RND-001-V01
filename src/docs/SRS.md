@@ -221,4 +221,35 @@ src
 
 ---
 
+## 8. Fitur Pemantauan Ketidakhadiran Siswa
+
+- Sistem menghitung jumlah alfa setiap siswa dalam 30 hari terakhir.
+- Jika jumlah alfa > 2, siswa masuk daftar "Daftar Tindak Lanjut Ketidakhadiran".
+- Tampil: nama siswa, NIS/ID, jumlah alfa, status dihubungi (Belum/Sudah N kali), terakhir dihubungi, tindakan (Tangani/Hubungi).
+- Pengajar: tombol "Tangani" → pesan ke WhatsApp siswa.
+- Admin: tombol "Hubungi" → pesan ke WhatsApp pengajar penanggung jawab.
+- Pengiriman via tautan wa.me; sistem tidak menganggap pesan otomatis terkirim.
+- Riwayat komunikasi disimpan di worksheet `riwayat_kontak` (append-only).
+- Pemantauan menggunakan worksheet `pemantauan_ketidakhadiran` untuk membedakan kasus lama dan baru; `riwayat_kontak` memiliki `pemantauan_id`.
+
+## 9. Audit Trail
+
+- Perubahan data penting dicatat di worksheet `audit_log` (append-only).
+- Setiap catatan berisi pelaku (`user_id`), aksi, tabel, record, data sebelum/sesudah, keterangan, dan waktu.
+- Aktivitas dicatat: LOGIN, LOGOUT, CREATE, UPDATE, DELETE, dan perubahan penting lainnya oleh Admin/Pengajar.
+- `data_sebelum`/`data_sesudah` hanya menyimpan kolom yang berubah.
+- Audit tidak dapat diubah/dihapus melalui aplikasi.
+- Tidak menyimpan password, token, private key, atau rahasia lain.
+- Disimpan selama mungkin tanpa penghapusan otomatis.
+
+## 10. Riwayat Keanggotaan Kelas
+
+- Worksheet `kelas_siswa` menyimpan riwayat keanggotaan, bukan hanya daftar saat ini.
+- Kolom: `kelas_siswa_id`, `kelas_id`, `siswa_id`, `tanggal_mulai`, `tanggal_selesai`, `status_keanggotaan`, `created_at`, `updated_at`.
+- Pemindahan kelas menutup keanggotaan lama (`selesai`) dan membuat keanggotaan baru (`aktif`).
+- Riwayat lama tidak dihapus.
+- Satu siswa hanya boleh memiliki satu kelas aktif pada satu waktu.
+- `absensi_detail` tidak memiliki `kelas_id`; `absensi.kelas_id` menjadi referensi kelas historis dan tidak berubah saat siswa pindah kelas.
+- Laporan historis tidak berubah akibat pemindahan kelas.
+
 **Akhir Dokumen — AI-2026-017**

@@ -33,8 +33,13 @@ export default function DetailKelasPage() {
 
         <p>Daftar siswa yang saat ini menjadi anggota kelas ini.</p>
 
-        <button type="button">Keluarkan Siswa Terpilih</button>
-        <Link href="/admin/kelas/3/tambah-siswa">Tambah Siswa ke Kelas</Link>
+        <button type="button">Keluarkan</button>
+        <p>
+          <Link href="/admin/kelas/KLS-0001/pindah-kelas">Pindahkan</Link>
+        </p>
+        <p>
+          <Link href="/admin/kelas/3/tambah-siswa">Tambah Siswa</Link>
+        </p>
 
         <ul>
           <li>

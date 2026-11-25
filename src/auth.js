@@ -1,7 +1,13 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
-import { findUserByAuthId, isUserBootstrapAvailable } from "@/repositories/user-repository";
+import {
+  createUser,
+  findUserByEmail,
+  findUserByAuthId,
+  isUserBootstrapAvailable,
+  updateUser,
+} from "@/repositories/user-repository";
 
 import { connectGoogleAccount } from "@/services/user-management-service";
 
@@ -33,18 +39,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await findUserByAuthId(authUserId);
 
         if (user) {
+          if (profile?.picture && !user.photo_url) {
+            await updateUser(user.user_id, { photo_url: profile.picture });
+          }
+
           return user.account_status === "active";
         }
 
         if (await isUserBootstrapAvailable()) {
+          await createUser({
+            auth_user_id: authUserId,
+            email,
+            name: profile?.name || email,
+            role: "Admin",
+            account_status: "active",
+            photo_url: profile?.picture || "",
+          });
+
           return true;
         }
 
-        await connectGoogleAccount(email, authUserId);
+        const existingByEmail = await findUserByEmail(email);
 
-        return true;
+        if (existingByEmail) {
+          await connectGoogleAccount(email, authUserId, profile?.picture || "");
+        }
+
+        return Boolean(existingByEmail && existingByEmail.account_status === "active");
       } catch (error) {
-        console.error("Google sign-in validation failed:", error);
+        console.error("Google sign-in validation failed:", error?.message);
         return false;
       }
     },
