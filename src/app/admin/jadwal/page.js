@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { listJadwal } from "@/repositories/jadwal-repository";
+import StatusBadge from "@/components/ui/status-badge";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listUsers } from "@/repositories/user-repository";
 
@@ -64,7 +65,7 @@ export default async function DaftarJadwalPage() {
                   {kelasItem?.nama_kelas || item.kelas_id} |{" "}
                   {pengajar?.name || "-"} | {item.hari} | {item.jam_mulai}–
                   {item.jam_selesai} | {item.ruangan || "-"} |{" "}
-                  {item.status_jadwal} |{" "}
+                  {item.status_jadwal ? <StatusBadge value={item.status_jadwal} /> : null} |{" "}
                   <Link href={`/admin/jadwal/${item.jadwal_id}`}>Detail</Link> |{" "}
                   <Link href={`/admin/jadwal/${item.jadwal_id}/edit`}>Edit</Link>
                 </li>

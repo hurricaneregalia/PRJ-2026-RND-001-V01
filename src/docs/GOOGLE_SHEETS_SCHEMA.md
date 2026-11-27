@@ -115,11 +115,16 @@ Laporan/rekap dihitung dari data absensi; tidak disimpan sebagai entitas.
 | `auth_user_id` | string | Ya | Google `sub`. Unik. |
 | `email` | string | Ya | Email Google. Unik. |
 | `name` | string | Ya | Nama lengkap. |
+| `jenis_kelamin` | string | Ya (data baru) | `L` / `P`. Data lama boleh kosong. |
 | `role` | string | Ya | `Admin` / `Pengajar`. |
 | `account_status` | string | Ya | `active` / `inactive`. |
 | `photo_url` | string | Tidak | URL foto. |
+| `no_hp` | string | Tidak | Nomor HP/WhatsApp. |
+| `limit_kelas` | integer | Tidak | Batas jumlah kelas untuk Pengajar. |
 | `created_at` | datetime | Ya | Timestamp pembuatan. |
 | `updated_at` | datetime | Ya | Timestamp pembaruan. |
+
+Catatan: `jenis_kelamin` wajib di form tambah pengguna, tetapi descriptor repository dibuat opsional agar 5 baris lama tanpa nilai tetap dapat dibaca. Nilai tidak dapat diubah dari halaman edit.
 
 ### 3.3 `siswa`
 

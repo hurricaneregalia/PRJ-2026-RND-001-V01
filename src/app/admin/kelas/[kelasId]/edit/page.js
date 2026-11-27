@@ -5,6 +5,7 @@ import { connection } from "next/server";
 
 import { getKelasById, listKelas, updateKelas } from "@/repositories/kelas-repository";
 import { listUsers } from "@/repositories/user-repository";
+import EntitySelect from "@/components/ui/entity-select";
 
 export const instant = false;
 
@@ -103,25 +104,21 @@ export default async function EditKelasPage({ params }) {
           <p>
             <label htmlFor="pengajar_id">Pengajar (wajib)</label>
             <br />
-            <select
+            <EntitySelect
               id="pengajar_id"
               name="pengajar_id"
-              defaultValue={kelas.pengajar_id}
+              items={availableTeachers}
+              value={kelas.pengajar_id}
               required
-            >
-              <option value="">Pilih pengajar</option>
-              {availableTeachers.map((teacher) => {
+              placeholder="Pilih pengajar"
+              valueKey="user_id"
+              formatLabel={(teacher) => {
                 const active = activeCountByTeacher.get(teacher.user_id) || 0;
                 const limit = Number(teacher.limit_kelas || 0);
-                const displayActive =
-                  teacher.user_id === kelas?.pengajar_id ? active + 1 : active;
-                return (
-                  <option key={teacher.user_id} value={teacher.user_id}>
-                    {teacher.name} ({displayActive}/{limit})
-                  </option>
-                );
-              })}
-            </select>
+                const available = limit - active;
+                return `${teacher.name} Tersedia ${available} Kelas`;
+              }}
+            />
           </p>
           <p>
             <label htmlFor="kapasitas">Kapasitas</label>

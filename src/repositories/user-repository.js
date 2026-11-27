@@ -1,4 +1,4 @@
-import { ACCOUNT_STATUSES, USER_ROLES } from '@/lib/domain-constants';
+import { ACCOUNT_STATUSES, JENIS_KELAMIN, USER_ROLES } from '@/lib/domain-constants';
 import { validateFields } from '@/lib/field-validation';
 import { createTableRepository } from '@/repositories/sheet-table-repository';
 
@@ -6,6 +6,7 @@ const fields = {
   auth_user_id: { type: 'string', required: true, maxLength: 200 },
   email: { type: 'email', required: true },
   name: { type: 'string', required: true, maxLength: 200 },
+  jenis_kelamin: { type: 'enum', allowedValues: JENIS_KELAMIN },
   role: { type: 'enum', required: true, allowedValues: USER_ROLES },
   account_status: {
     type: 'enum',

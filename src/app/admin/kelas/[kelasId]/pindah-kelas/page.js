@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
 import NoteBox from "@/components/layout/note-box";
 import { getKelasById, listKelas } from "@/repositories/kelas-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import {
   listKelasSiswa,
   listKelasSiswaByKelasId,
@@ -123,21 +124,19 @@ export default async function PindahKelasKelasPage({ params }) {
           <p>
             <label htmlFor="kelas_tujuan_id">Kelas Tujuan</label>
             <br />
-            <select id="kelas_tujuan_id" name="kelas_tujuan_id" required>
-              <option value="">Pilih kelas tujuan</option>
-              {targetKelas.map((item) => {
+            <EntitySelect
+              id="kelas_tujuan_id"
+              name="kelas_tujuan_id"
+              items={targetKelas}
+              required
+              placeholder="Pilih kelas tujuan"
+              valueKey="kelas_id"
+              formatLabel={(item) => {
                 const active = activeCountByKelas.get(item.kelas_id) || 0;
-                return (
-                  <option key={item.kelas_id} value={item.kelas_id}>
-                    <ClassCapacityLabel
-                      namaKelas={item.nama_kelas}
-                      terisi={active}
-                      kapasitas={item.kapasitas}
-                    />
-                  </option>
-                );
-              })}
-            </select>
+                const available = Number(item.kapasitas || 0) - active;
+                return `${item.nama_kelas} Tersedia ${available} Kursi`;
+              }}
+            />
           </p>
 
           <p>

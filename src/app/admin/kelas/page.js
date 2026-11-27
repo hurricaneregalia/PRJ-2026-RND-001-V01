@@ -3,10 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { listKelas } from "@/repositories/kelas-repository";
+import TeacherCapacityLabel from "@/components/ui/teacher-capacity-label";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { listUsers } from "@/repositories/user-repository";
-import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import LinkDetail from "@/components/ui/link-detail";
 import CapacityInfo from "@/components/ui/capacity-info";
+import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import StatusBadge from "@/components/ui/status-badge";
 
 export const instant = false;
 
@@ -32,10 +35,7 @@ export default async function DaftarKelasPage() {
   kelas
     .filter((item) => item.status_kelas === "aktif")
     .forEach((item) => {
-      activeCountByTeacher.set(
-        item.pengajar_id,
-        (activeCountByTeacher.get(item.pengajar_id) || 0) + 1,
-      );
+      activeCountByTeacher.set(item.pengajar_id, (activeCountByTeacher.get(item.pengajar_id) || 0) + 1);
     });
 
   return (
@@ -62,25 +62,13 @@ export default async function DaftarKelasPage() {
 
               return (
                 <li key={item.kelas_id}>
-                  <ClassCapacityLabel
-                    namaKelas={item.nama_kelas}
-                    terisi={activeCountByKelas.get(item.kelas_id) || 0}
-                    kapasitas={item.kapasitas}
-                    pengajar={
-                      pengajar ? (
-                        <Link href={`/admin/users/${pengajar.user_id}`}>
-                          <CapacityInfo
-                            item={pengajar.name}
-                            count={activeCountByTeacher.get(pengajar.user_id) || 0}
-                            max={pengajar.limit_kelas}
-                          />
-                        </Link>
-                      ) : (
-                        "-"
-                      )
-                    }
-                  />{" "}
-                  | {item.status_kelas} | <Link href={`/admin/kelas/${item.kelas_id}`}>Detail</Link> | <Link href={`/admin/kelas/${item.kelas_id}/edit`}>Edit</Link>
+                  <LinkDetail href={`/admin/kelas/${item.kelas_id}`}>{item.nama_kelas}</LinkDetail> | <ClassCapacityLabel terisi={activeCountByKelas.get(item.kelas_id) || 0} kapasitas={item.kapasitas} /> | {pengajar ? (
+                    <>
+                      <LinkDetail href={`/admin/users/${pengajar.user_id}`}>{pengajar.name}</LinkDetail> | <TeacherCapacityLabel terisi={activeCountByTeacher.get(pengajar.user_id) || 0} limit={pengajar.limit_kelas} />
+                    </>
+                  ) : "-"}
+                  | {item.status_kelas ? <StatusBadge value={item.status_kelas} /> : null} | <Link href={`/admin/kelas/${item.kelas_id}`}>Detail</Link> |{" "}
+                  <Link href={`/admin/kelas/${item.kelas_id}/edit`}>Edit</Link>
                 </li>
               );
             })}

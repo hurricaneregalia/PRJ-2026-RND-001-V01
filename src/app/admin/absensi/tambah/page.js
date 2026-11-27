@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { createAbsensi } from "@/repositories/absensi-repository";
 import { createAbsensiDetail } from "@/repositories/absensi-detail-repository";
 import { listKelas } from "@/repositories/kelas-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import {
   listKelasSiswa,
   listKelasSiswaByKelasId,
@@ -14,6 +15,7 @@ import {
 import { listSiswa } from "@/repositories/siswa-repository";
 import { listJadwal } from "@/repositories/jadwal-repository";
 import { KEHADIRAN_STATUSES } from "@/lib/domain-constants";
+import { recordAuditCreate } from "@/repositories/audit-log-repository";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
 
 export const instant = false;
@@ -26,9 +28,19 @@ export default async function TambahAbsensiPage({ searchParams }) {
   await connection();
   const params = await searchParams;
   const selectedKelasId =
-    typeof params?.kelasId === "string" ? params.kelasId : "";
+    typeof params?.kelas_id === "string"
+      ? params.kelas_id
+      : typeof params?.kelasId === "string"
+        ? params.kelasId
+        : "";
   const kelas = await listKelas();
-  const activeKelas = kelas.filter((item) => item.status_kelas === "aktif");
+  const activeKelas = kelas
+    .filter((item) => item.status_kelas === "aktif")
+    .sort((a, b) =>
+      String(a.nama_kelas || "").localeCompare(String(b.nama_kelas || ""), "id", {
+        sensitivity: "base",
+      }),
+    );
   const selectedKelas = activeKelas.find(
     (item) => item.kelas_id === selectedKelasId,
   );
@@ -74,8 +86,16 @@ export default async function TambahAbsensiPage({ searchParams }) {
       jam_mulai: formData.get("jam_mulai"),
       jam_selesai: formData.get("jam_selesai"),
       topik: formData.get("topik"),
-      status_absensi: formData.get("status_absensi") || "draft",
+      status_absensi: "final",
       created_by: session?.user?.id || "",
+    });
+
+    await recordAuditCreate({
+      tableName: "absensi",
+      recordId: created.absensi_id,
+      userId: session?.user?.id || "",
+      after: created,
+      note: "Penambahan absensi dari halaman admin",
     });
 
     for (const student of students) {
@@ -108,21 +128,15 @@ export default async function TambahAbsensiPage({ searchParams }) {
           <p>
             <label htmlFor="kelasId">Kelas</label>
             <br />
-            <select id="kelasId" name="kelasId" defaultValue={selectedKelasId}>
-              <option value="">Pilih kelas aktif</option>
-              {activeKelas.map((item) => {
-                const active = activeCountByKelas.get(item.kelas_id) || 0;
-                return (
-                  <option key={item.kelas_id} value={item.kelas_id}>
-                    <ClassCapacityLabel
-                      namaKelas={item.nama_kelas}
-                      terisi={active}
-                      kapasitas={item.kapasitas}
-                    />
-                  </option>
-                );
-              })}
-            </select>
+            <EntitySelect
+              id="kelasId"
+              name="kelasId"
+              items={activeKelas}
+              value={selectedKelasId}
+              placeholder="Pilih kelas aktif"
+              labelKey="nama_kelas"
+              valueKey="kelas_id"
+            />
           </p>
           <p>
             <button type="submit">Tampilkan Siswa</button>
@@ -130,7 +144,12 @@ export default async function TambahAbsensiPage({ searchParams }) {
         </form>
       </section>
 
-      {selectedKelas ? (
+      {selectedKelas && students.length === 0 ? (
+        <section>
+          <h2>Tidak Dapat Mengisi Absensi</h2>
+          <p>Belum ada siswa yang masuk kelas {selectedKelas.nama_kelas}. Tambahkan siswa ke kelas ini terlebih dahulu sebelum mengisi absensi.</p>
+        </section>
+      ) : selectedKelas ? (
         <form action={simpanAbsensi}>
           <input type="hidden" name="kelas_id" value={selectedKelas.kelas_id} />
           <section>
@@ -162,18 +181,6 @@ export default async function TambahAbsensiPage({ searchParams }) {
               <label htmlFor="topik">Topik</label>
               <br />
               <input id="topik" name="topik" type="text" />
-            </p>
-            <p>
-              <label htmlFor="status_absensi">Status Absensi</label>
-              <br />
-              <select
-                id="status_absensi"
-                name="status_absensi"
-                defaultValue="draft"
-              >
-                <option value="draft">Draft</option>
-                <option value="final">Final</option>
-              </select>
             </p>
           </section>
 

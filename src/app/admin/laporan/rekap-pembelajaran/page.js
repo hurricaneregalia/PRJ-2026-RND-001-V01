@@ -4,6 +4,7 @@ import { connection } from "next/server";
 
 import { listAbsensi } from "@/repositories/absensi-repository";
 import { listAbsensiDetail } from "@/repositories/absensi-detail-repository";
+import AdminDataTable from "@/components/ui/admin-data-table";
 
 export const instant = false;
 
@@ -13,8 +14,13 @@ export const metadata = {
 
 export default async function LaporanRekapPembelajaranPage() {
   await connection();
-  const absensi = await listAbsensi();
-  const detail = await listAbsensiDetail();
+  const absensi = (await listAbsensi()).filter(
+    (item) => item.status_absensi === "final",
+  );
+  const finalAbsensiIds = new Set(absensi.map((item) => item.absensi_id));
+  const detail = (await listAbsensiDetail()).filter((item) =>
+    finalAbsensiIds.has(item.absensi_id),
+  );
   const absensiById = new Map(absensi.map((item) => [item.absensi_id, item]));
 
   const perDate = new Map();
@@ -49,6 +55,15 @@ export default async function LaporanRekapPembelajaranPage() {
   const average =
     totals.total === 0 ? 0 : Math.round((totals.hadir / totals.total) * 1000) / 10;
 
+  const rows = [...perDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([tanggal, item]) => ({
+      tanggal,
+      sesi: item.sesi.size,
+      total: item.total,
+      persentase: `${item.total === 0 ? 0 : Math.round((item.hadir / item.total) * 1000) / 10}%`,
+    }));
+
   return (
     <main>
       <header>
@@ -70,26 +85,17 @@ export default async function LaporanRekapPembelajaranPage() {
 
       <section>
         <h2>Rekap Pembelajaran Berdasarkan Periode</h2>
-        {perDate.size === 0 ? (
-          <p>Belum ada data pembelajaran.</p>
-        ) : (
-          <ol>
-            {[...perDate.entries()]
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([tanggal, item]) => {
-                const percentage =
-                  item.total === 0
-                    ? 0
-                    : Math.round((item.hadir / item.total) * 1000) / 10;
-                return (
-                  <li key={tanggal}>
-                    {tanggal} | Total Sesi: {item.sesi.size} | Total Catatan
-                    Absensi: {item.total} | Rata-rata Kehadiran: {percentage}%
-                  </li>
-                );
-              })}
-          </ol>
-        )}
+        <AdminDataTable
+          emptyMessage="Belum ada data pembelajaran."
+          rowKey={(item) => item.tanggal}
+          columns={[
+            { key: "tanggal", header: "Tanggal" },
+            { key: "sesi", header: "Total Sesi" },
+            { key: "total", header: "Total Catatan Absensi" },
+            { key: "persentase", header: "Rata-rata Kehadiran" },
+          ]}
+          rows={rows}
+        />
       </section>
     </main>
   );

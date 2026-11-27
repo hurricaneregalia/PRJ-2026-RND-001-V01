@@ -29,6 +29,22 @@ export const listSiswa = () => repository.list();
 export const getSiswaById = (siswaId) => repository.findById(siswaId);
 export const findSiswaByNis = (nis) =>
   repository.findOne((record) => record.nis === String(nis ?? '').trim());
+export async function searchSiswa(query) {
+  const keyword = String(query ?? '').trim().toLowerCase();
+
+  if (!keyword) {
+    return [];
+  }
+
+  const records = await repository.list();
+
+  return records.filter(
+    (record) =>
+      String(record.siswa_id ?? '').toLowerCase() === keyword ||
+      String(record.nis ?? '').trim().toLowerCase() === keyword ||
+      String(record.nama ?? '').toLowerCase().includes(keyword),
+  );
+}
 export const createSiswa = (data) => repository.create(data);
 export const updateSiswa = (siswaId, data) => repository.update(siswaId, data);
 export const deactivateSiswa = (siswaId) => repository.remove(siswaId);

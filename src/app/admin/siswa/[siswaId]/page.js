@@ -23,6 +23,22 @@ export default async function DetailSiswaPage({ params }) {
   const absensi = await listAbsensi();
   const detail = await listAbsensiDetail();
   const absensiDetail = detail.filter((item) => item.siswa_id === siswaId);
+  const finalAbsensiIds = new Set(
+    absensi
+      .filter((item) => item.status_absensi === "final")
+      .map((item) => item.absensi_id),
+  );
+  const rekapKehadiran = absensiDetail
+    .filter((item) => finalAbsensiIds.has(item.absensi_id))
+    .reduce(
+      (result, item) => {
+        if (result[item.status_kehadiran] !== undefined) {
+          result[item.status_kehadiran] += 1;
+        }
+        return result;
+      },
+      { hadir: 0, izin: 0, sakit: 0, alfa: 0 },
+    );
 
   if (!siswa) {
     return (
@@ -70,6 +86,16 @@ export default async function DetailSiswaPage({ params }) {
         <p>
           <Link href={`/admin/siswa/${siswaId}/edit`}>Edit</Link>
         </p>
+      </section>
+
+      <section>
+        <h2>Rekap Kehadiran</h2>
+        <ul>
+          <li>Hadir: {rekapKehadiran.hadir}</li>
+          <li>Izin: {rekapKehadiran.izin}</li>
+          <li>Sakit: {rekapKehadiran.sakit}</li>
+          <li>Alpa: {rekapKehadiran.alfa}</li>
+        </ul>
       </section>
 
       <section>

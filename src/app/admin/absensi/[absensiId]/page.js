@@ -7,6 +7,8 @@ import { listAbsensiDetailByAbsensiId } from "@/repositories/absensi-detail-repo
 import { getKelasById } from "@/repositories/kelas-repository";
 import { getSiswaById } from "@/repositories/siswa-repository";
 import { getUserById } from "@/repositories/user-repository";
+import StatusBadge from "@/components/ui/status-badge";
+import AdminDataTable from "@/components/ui/admin-data-table";
 
 export const instant = false;
 
@@ -69,7 +71,7 @@ export default async function DetailAbsensiPage({ params }) {
             Waktu: {absensi.jam_mulai || "-"}–{absensi.jam_selesai || "-"}
           </li>
           <li>Topik: {absensi.topik || "-"}</li>
-          <li>Status Absensi: {absensi.status_absensi}</li>
+          <li>Status Absensi: <StatusBadge value={absensi.status_absensi} /></li>
           <li>Dicatat oleh: {pencatat?.name || "-"}</li>
         </ul>
       </section>
@@ -87,18 +89,17 @@ export default async function DetailAbsensiPage({ params }) {
 
       <section>
         <h2>Daftar Siswa</h2>
-        {siswaList.length === 0 ? (
-          <p>Belum ada data kehadiran siswa.</p>
-        ) : (
-          <ol>
-            {siswaList.map(({ detail: item, siswa }) => (
-              <li key={item.absensi_detail_id}>
-                {siswa?.nis || "-"} | {siswa?.nama || item.siswa_id} |{" "}
-                {item.status_kehadiran} | {item.catatan || "-"}
-              </li>
-            ))}
-          </ol>
-        )}
+        <AdminDataTable
+          emptyMessage="Belum ada data kehadiran siswa."
+          rowKey={(item) => item.detail.absensi_detail_id}
+          columns={[
+            { key: "nis", header: "NIS", render: (item) => item.siswa?.nis || "-" },
+            { key: "nama", header: "Nama", render: (item) => item.siswa?.nama || item.detail.siswa_id },
+            { key: "status", header: "Status", render: (item) => <StatusBadge value={item.detail.status_kehadiran} /> },
+            { key: "catatan", header: "Catatan", render: (item) => item.detail.catatan || "-" },
+          ]}
+          rows={siswaList}
+        />
         <p>
           <Link href={`/admin/absensi/${absensi.absensi_id}/edit`}>
             Edit Status

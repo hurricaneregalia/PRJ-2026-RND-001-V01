@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { auth } from "@/auth";
 import { getUserById, updateUser } from "@/repositories/user-repository";
 import { recordAuditUpdate } from "@/repositories/audit-log-repository";
+import RoleSelectWithLimit from "@/components/ui/role-select-with-limit";
 
 export const instant = false;
 
@@ -100,14 +101,6 @@ export default async function EditPenggunaPage({ params }) {
             />
           </p>
           <p>
-            <label htmlFor="role">Role</label>
-            <br />
-            <select id="role" name="role" defaultValue={user.role}>
-              <option value="Admin">Admin</option>
-              <option value="Pengajar">Pengajar</option>
-            </select>
-          </p>
-          <p>
             <label htmlFor="account_status">Status Akun</label>
             <br />
             <select
@@ -130,17 +123,7 @@ export default async function EditPenggunaPage({ params }) {
               autoComplete="tel"
             />
           </p>
-          <p>
-            <label htmlFor="limit_kelas">Limit Kelas (khusus Pengajar)</label>
-            <br />
-            <input
-              id="limit_kelas"
-              name="limit_kelas"
-              type="number"
-              min="0"
-              defaultValue={user.limit_kelas}
-            />
-          </p>
+          <RoleSelectWithLimit user={user} />
         </section>
 
         <p>

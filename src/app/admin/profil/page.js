@@ -4,6 +4,7 @@ import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import AvatarImage from "@/components/ui/avatar-image";
+import { formatJenisKelamin } from "@/lib/domain-labels";
 import { getUserById } from "@/repositories/user-repository";
 
 export const instant = false;
@@ -43,6 +44,7 @@ export default async function ProfilAdminPage() {
         <ul>
           <li>Nama: {user.name}</li>
           <li>Email: {user.email}</li>
+          <li>Jenis Kelamin: {formatJenisKelamin(user.jenis_kelamin)}</li>
           <li>Nomor HP: {user.no_hp || "-"}</li>
           <li>Role: {user.role}</li>
         </ul>

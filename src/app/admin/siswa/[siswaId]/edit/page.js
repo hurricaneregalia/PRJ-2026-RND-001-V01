@@ -13,6 +13,7 @@ import {
   updateKelasSiswa,
 } from "@/repositories/kelas-siswa-repository";
 import { getKelasById, listKelas } from "@/repositories/kelas-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
 import {
   recordAuditCreate,
@@ -229,26 +230,20 @@ export default async function EditSiswaPage({ params }) {
           <p>
             <label htmlFor="kelas_id">Kelas (wajib)</label>
             <br />
-            <select
+            <EntitySelect
               id="kelas_id"
               name="kelas_id"
-              defaultValue={currentKelas?.kelas_id || ""}
+              items={availableKelas}
+              value={currentKelas?.kelas_id || ""}
               required
-            >
-              <option value="">Pilih kelas dengan kapasitas tersedia</option>
-              {availableKelas.map((item) => {
+              placeholder="Pilih kelas dengan kapasitas tersedia"
+              valueKey="kelas_id"
+              formatLabel={(item) => {
                 const active = activeCountByKelas.get(item.kelas_id) || 0;
-                return (
-                  <option key={item.kelas_id} value={item.kelas_id}>
-                    <ClassCapacityLabel
-                      namaKelas={item.nama_kelas}
-                      terisi={active}
-                      kapasitas={item.kapasitas}
-                    />
-                  </option>
-                );
-              })}
-            </select>
+                const available = Number(item.kapasitas || 0) - active;
+                return `${item.nama_kelas} Tersedia ${available} Kursi`;
+              }}
+            />
           </p>
         </section>
 

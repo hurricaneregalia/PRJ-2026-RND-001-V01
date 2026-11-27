@@ -1,20 +1,7 @@
-export default function ClassCapacityLabel({
-  namaKelas = "",
-  terisi = 0,
-  kapasitas = 0,
-  pengajar = null,
-}) {
+export default function ClassCapacityLabel({ terisi = 0, kapasitas = 0 }) {
   const jumlahTerisi = Number(terisi) || 0;
   const jumlahKapasitas = Number(kapasitas) || 0;
-  const label = `${namaKelas} (${jumlahTerisi}/${jumlahKapasitas})`;
+  const available = jumlahKapasitas - jumlahTerisi;
 
-  if (!pengajar) {
-    return <>{label}</>;
-  }
-
-  return (
-    <>
-      {label} | {pengajar}
-    </>
-  );
+  return <span>{available > 0 ? `Tersedia ${available} Kursi` : "Penuh"}</span>;
 }

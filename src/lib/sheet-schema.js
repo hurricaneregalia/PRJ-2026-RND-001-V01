@@ -15,6 +15,7 @@ export const WORKSHEET_SCHEMAS = Object.freeze({
     'auth_user_id',
     'email',
     'name',
+    'jenis_kelamin',
     'role',
     'account_status',
     'photo_url',

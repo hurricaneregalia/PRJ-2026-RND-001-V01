@@ -35,13 +35,9 @@ const repository = createTableRepository({
   deleteMode: { type: 'forbidden' },
   validateCreate: (data) =>
     validateTimes(
-      validateFields(
-        data.status_absensi === undefined
-          ? { status_absensi: 'draft', ...data }
-          : data,
-        fields,
-        { label: 'absensi' },
-      ),
+      validateFields({ ...data, status_absensi: 'final' }, fields, {
+        label: 'absensi',
+      }),
     ),
   validateUpdate: (data, previous) => {
     const patch = validateFields(data, fields, {

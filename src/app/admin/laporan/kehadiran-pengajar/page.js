@@ -6,6 +6,8 @@ import { listAbsensi } from "@/repositories/absensi-repository";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listJadwal } from "@/repositories/jadwal-repository";
 import { listUsers } from "@/repositories/user-repository";
+import StatusBadge from "@/components/ui/status-badge";
+import AdminDataTable from "@/components/ui/admin-data-table";
 
 export const instant = false;
 
@@ -18,7 +20,9 @@ export default async function LaporanKehadiranPengajarPage() {
   const users = await listUsers();
   const kelas = await listKelas();
   const jadwal = await listJadwal();
-  const absensi = await listAbsensi();
+  const absensi = (await listAbsensi()).filter(
+    (item) => item.status_absensi === "final",
+  );
   const pengajar = users.filter((user) => user.role === "Pengajar");
 
   const kelasByPengajar = new Map();
@@ -50,6 +54,15 @@ export default async function LaporanKehadiranPengajarPage() {
     );
   });
 
+  const rows = pengajar.map((item) => ({
+    id: item.user_id,
+    nama: item.name,
+    kelas: kelasByPengajar.get(item.user_id) || 0,
+    jadwal: jadwalByPengajar.get(item.user_id) || 0,
+    sesi: sesiByPengajar.get(item.user_id) || 0,
+    status: item.account_status,
+  }));
+
   return (
     <main>
       <header>
@@ -71,20 +84,18 @@ export default async function LaporanKehadiranPengajarPage() {
 
       <section>
         <h2>Rekap Aktivitas Pengajar</h2>
-        {pengajar.length === 0 ? (
-          <p>Belum ada pengajar.</p>
-        ) : (
-          <ol>
-            {pengajar.map((item) => (
-              <li key={item.user_id}>
-                {item.name} | Kelas: {kelasByPengajar.get(item.user_id) || 0} |
-                Jadwal: {jadwalByPengajar.get(item.user_id) || 0} | Sesi absensi
-                dicatat: {sesiByPengajar.get(item.user_id) || 0} | Status akun:{" "}
-                {item.account_status}
-              </li>
-            ))}
-          </ol>
-        )}
+        <AdminDataTable
+          emptyMessage="Belum ada pengajar."
+          rowKey={(item) => item.id}
+          columns={[
+            { key: "nama", header: "Nama" },
+            { key: "kelas", header: "Kelas" },
+            { key: "jadwal", header: "Jadwal" },
+            { key: "sesi", header: "Sesi Absensi Dicatat" },
+            { key: "status", header: "Status Akun", render: (item) => <StatusBadge value={item.status} /> },
+          ]}
+          rows={rows}
+        />
       </section>
 
       <p>

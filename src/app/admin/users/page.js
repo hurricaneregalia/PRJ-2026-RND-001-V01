@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { listKelas } from "@/repositories/kelas-repository";
 import { listUsers } from "@/repositories/user-repository";
+import StatusBadge from "@/components/ui/status-badge";
 
 import { connection } from "next/server";
 import CapacityInfo from "@/components/ui/capacity-info";
@@ -55,7 +56,7 @@ export default async function ManajemenPenggunaPage() {
                     max={user.limit_kelas}
                   />
                 ) : user.name} | {user.role} |{" "}
-                {user.account_status} | <Link href={`/admin/users/${user.user_id}`}>Detail</Link> | <Link href={`/admin/users/${user.user_id}/edit`}>Edit</Link>
+                {user.account_status ? <StatusBadge value={user.account_status} /> : null} | <Link href={`/admin/users/${user.user_id}`}>Detail</Link> | <Link href={`/admin/users/${user.user_id}/edit`}>Edit</Link>
               </li>
             ))}
           </ol>

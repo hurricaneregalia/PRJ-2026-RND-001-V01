@@ -5,6 +5,8 @@ import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import { listKelas } from "@/repositories/kelas-repository";
+import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import { createJadwal, listJadwal } from "@/repositories/jadwal-repository";
 import { HARI } from "@/lib/domain-constants";
 import { recordAuditCreate } from "@/repositories/audit-log-repository";
@@ -15,16 +17,21 @@ export const metadata = {
   title: "Tambah Jadwal",
 };
 
-export default async function TambahJadwalPage() {
+export default async function TambahJadwalPage({ searchParams }) {
   await connection();
+  const resolvedSearchParams = await searchParams;
   const kelas = await listKelas();
   const jadwal = await listJadwal();
   const scheduledKelasIds = new Set(jadwal.map((item) => item.kelas_id));
-  const availableKelas = kelas.filter(
-    (item) =>
-      item.status_kelas === "aktif" &&
-      !scheduledKelasIds.has(item.kelas_id),
-  );
+  const availableKelas = kelas.filter((item) => item.status_kelas === "aktif" && !scheduledKelasIds.has(item.kelas_id));
+  const activeCountByKelas = new Map();
+  (await listKelasSiswa())
+    .filter((item) => item.status_keanggotaan === "aktif")
+    .forEach((item) => {
+      activeCountByKelas.set(item.kelas_id, (activeCountByKelas.get(item.kelas_id) || 0) + 1);
+    });
+  const selectedKelasId = typeof resolvedSearchParams?.kelas_id === "string" ? resolvedSearchParams.kelas_id : "";
+  const selectedKelas = availableKelas.find((item) => item.kelas_id === selectedKelasId) ?? null;
 
   async function simpanJadwal(formData) {
     "use server";
@@ -50,14 +57,26 @@ export default async function TambahJadwalPage() {
     redirect("/admin/jadwal");
   }
 
+  if (availableKelas.length === 0) {
+    return (
+      <main>
+        <header>
+          <h1>Semua kelas sudah memiliki jadwal</h1>
+          <p>
+            <Link href="/admin/kelas/tambah">Buat Kelas Baru</Link>
+          </p>
+        </header>
+      </main>
+    );
+  }
+
   return (
     <main>
       <header>
         <h1>Tambah Jadwal</h1>
         <p>Tambahkan jadwal kegiatan belajar untuk kelas aktif.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> /{" "}
-          <Link href="/admin/jadwal">Manajemen Jadwal</Link> / Tambah Jadwal
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/jadwal">Manajemen Jadwal</Link> / Tambah Jadwal
         </p>
       </header>
 
@@ -66,14 +85,7 @@ export default async function TambahJadwalPage() {
           <p>
             <label htmlFor="kelas_id">Kelas (wajib)</label>
             <br />
-            <select id="kelas_id" name="kelas_id" required>
-              <option value="">Pilih kelas aktif</option>
-              {availableKelas.map((item) => (
-                <option key={item.kelas_id} value={item.kelas_id}>
-                  {item.nama_kelas}
-                </option>
-              ))}
-            </select>
+            <EntitySelect id="kelas_id" name="kelas_id" items={availableKelas} value={selectedKelasId} required placeholder="Pilih kelas aktif" valueKey="kelas_id" formatLabel={(item) => { const active = activeCountByKelas.get(item.kelas_id) || 0; const available = Number(item.kapasitas || 0) - active; return `${item.nama_kelas} Tersedia ${available} Kursi`; }} />
           </p>
           <p>
             <label htmlFor="hari">Hari (wajib)</label>

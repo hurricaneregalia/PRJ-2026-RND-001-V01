@@ -7,6 +7,8 @@ import { listJadwal } from "@/repositories/jadwal-repository";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { listUsers } from "@/repositories/user-repository";
+import StatusBadge from "@/components/ui/status-badge";
+import AdminDataTable from "@/components/ui/admin-data-table";
 
 export const instant = false;
 
@@ -17,7 +19,9 @@ export const metadata = {
 export default async function LaporanAktivitasKelasPage() {
   await connection();
   const kelas = await listKelas();
-  const absensi = await listAbsensi();
+  const absensi = (await listAbsensi()).filter(
+    (item) => item.status_absensi === "final",
+  );
   const jadwal = await listJadwal();
   const kelasSiswa = await listKelasSiswa();
   const users = await listUsers();
@@ -46,6 +50,17 @@ export default async function LaporanAktivitasKelasPage() {
 
   const activeKelas = kelas.filter((item) => item.status_kelas === "aktif");
 
+  const rows = kelas.map((item) => ({
+    id: item.kelas_id,
+    nama: item.nama_kelas,
+    kode: item.kode_kelas,
+    pengajar: userById.get(item.pengajar_id)?.name || item.pengajar_id,
+    siswaAktif: studentsByKelas.get(item.kelas_id) || 0,
+    jadwal: jadwalByKelas.get(item.kelas_id) || 0,
+    sesi: sessionsByKelas.get(item.kelas_id) || 0,
+    status: item.status_kelas,
+  }));
+
   return (
     <main>
       <header>
@@ -67,22 +82,20 @@ export default async function LaporanAktivitasKelasPage() {
 
       <section>
         <h2>Rekap Aktivitas Kelas</h2>
-        {kelas.length === 0 ? (
-          <p>Belum ada kelas.</p>
-        ) : (
-          <ol>
-            {kelas.map((item) => (
-              <li key={item.kelas_id}>
-                {item.nama_kelas} ({item.kode_kelas}) | Pengajar:{" "}
-                {userById.get(item.pengajar_id)?.name || item.pengajar_id} |
-                Siswa aktif: {studentsByKelas.get(item.kelas_id) || 0} | Jadwal:{" "}
-                {jadwalByKelas.get(item.kelas_id) || 0} | Sesi absensi:{" "}
-                {sessionsByKelas.get(item.kelas_id) || 0} | Status:{" "}
-                {item.status_kelas}
-              </li>
-            ))}
-          </ol>
-        )}
+        <AdminDataTable
+          emptyMessage="Belum ada kelas."
+          rowKey={(item) => item.id}
+          columns={[
+            { key: "nama", header: "Nama Kelas" },
+            { key: "kode", header: "Kode" },
+            { key: "pengajar", header: "Pengajar" },
+            { key: "siswaAktif", header: "Siswa Aktif" },
+            { key: "jadwal", header: "Jadwal" },
+            { key: "sesi", header: "Sesi Absensi" },
+            { key: "status", header: "Status", render: (item) => <StatusBadge value={item.status} /> },
+          ]}
+          rows={rows}
+        />
       </section>
     </main>
   );

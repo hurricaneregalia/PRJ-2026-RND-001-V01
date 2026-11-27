@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { getJadwalById } from "@/repositories/jadwal-repository";
+import StatusBadge from "@/components/ui/status-badge";
 import { getKelasById } from "@/repositories/kelas-repository";
 import { getUserById } from "@/repositories/user-repository";
 
@@ -54,7 +55,7 @@ export default async function DetailJadwalPage({ params }) {
             Waktu: {jadwal.jam_mulai}–{jadwal.jam_selesai}
           </li>
           <li>Ruangan: {jadwal.ruangan || "-"}</li>
-          <li>Status: {jadwal.status_jadwal}</li>
+          <li>Status: <StatusBadge value={jadwal.status_jadwal} /></li>
         </ul>
         <p>
           <Link href={`/admin/jadwal/${jadwal.jadwal_id}/edit`}>Edit</Link>

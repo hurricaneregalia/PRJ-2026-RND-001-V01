@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { createSiswa } from "@/repositories/siswa-repository";
 import { createKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { listKelas } from "@/repositories/kelas-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
 import { recordAuditCreate } from "@/repositories/audit-log-repository";
@@ -27,10 +28,7 @@ export default async function TambahSiswaPage() {
   memberships
     .filter((item) => item.status_keanggotaan === "aktif")
     .forEach((item) => {
-      activeCountByKelas.set(
-        item.kelas_id,
-        (activeCountByKelas.get(item.kelas_id) || 0) + 1,
-      );
+      activeCountByKelas.set(item.kelas_id, (activeCountByKelas.get(item.kelas_id) || 0) + 1);
     });
 
   const availableKelas = kelas.filter((item) => {
@@ -92,8 +90,7 @@ export default async function TambahSiswaPage() {
         <h1>Tambah Siswa</h1>
         <p>Masukkan informasi siswa baru.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> /{" "}
-          <Link href="/admin/siswa">Manajemen Siswa</Link> / Tambah Siswa
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / Tambah Siswa
         </p>
       </header>
 
@@ -149,21 +146,19 @@ export default async function TambahSiswaPage() {
           <p>
             <label htmlFor="kelas_id">Kelas (wajib)</label>
             <br />
-            <select id="kelas_id" name="kelas_id" required>
-              <option value="">Pilih kelas dengan kapasitas tersedia</option>
-              {availableKelas.map((item) => {
+            <EntitySelect
+              id="kelas_id"
+              name="kelas_id"
+              items={availableKelas}
+              required
+              placeholder="Pilih kelas"
+              valueKey="kelas_id"
+              formatLabel={(item) => {
                 const active = activeCountByKelas.get(item.kelas_id) || 0;
-                return (
-                  <option key={item.kelas_id} value={item.kelas_id}>
-                    <ClassCapacityLabel
-                      namaKelas={item.nama_kelas}
-                      terisi={active}
-                      kapasitas={item.kapasitas}
-                    />
-                  </option>
-                );
-              })}
-            </select>
+                const available = Number(item.kapasitas || 0) - active;
+                return `${item.nama_kelas} Tersedia ${available} Kursi`;
+              }}
+            />
           </p>
         </section>
 

@@ -5,6 +5,8 @@ import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import { listKelas } from "@/repositories/kelas-repository";
+import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import { getJadwalById, updateJadwal } from "@/repositories/jadwal-repository";
 import { HARI } from "@/lib/domain-constants";
 import { recordAuditUpdate } from "@/repositories/audit-log-repository";
@@ -20,6 +22,12 @@ export default async function EditJadwalPage({ params }) {
   const { jadwalId } = await params;
   const jadwal = await getJadwalById(jadwalId);
   const kelas = await listKelas();
+  const activeCountByKelas = new Map();
+  (await listKelasSiswa())
+    .filter((item) => item.status_keanggotaan === "aktif")
+    .forEach((item) => {
+      activeCountByKelas.set(item.kelas_id, (activeCountByKelas.get(item.kelas_id) || 0) + 1);
+    });
 
   if (!jadwal) {
     return (
@@ -73,19 +81,21 @@ export default async function EditJadwalPage({ params }) {
           <p>
             <label htmlFor="kelas_id">Kelas (wajib)</label>
             <br />
-            <select
+            <EntitySelect
               id="kelas_id"
               name="kelas_id"
-              defaultValue={jadwal.kelas_id}
+              items={kelas}
+              value={jadwal.kelas_id}
               required
-            >
-              <option value="">Pilih kelas</option>
-              {kelas.map((item) => (
-                <option key={item.kelas_id} value={item.kelas_id}>
-                  {item.nama_kelas} ({item.kode_kelas})
-                </option>
-              ))}
-            </select>
+              placeholder="Pilih kelas"
+              labelKey="nama_kelas"
+              valueKey="kelas_id"
+              formatLabel={(item) => {
+                const active = activeCountByKelas.get(item.kelas_id) || 0;
+                const available = Number(item.kapasitas || 0) - active;
+                return `${item.nama_kelas} Tersedia ${available} Kursi`;
+              }}
+            />
           </p>
           <p>
             <label htmlFor="hari">Hari (wajib)</label>

@@ -4,15 +4,10 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { auth } from "@/auth";
-import BackButton from "@/components/ui/back-button";
-import NoteBox from "@/components/layout/note-box";
 import { getSiswaById } from "@/repositories/siswa-repository";
-import {
-  findActiveKelasSiswaBySiswaId,
-  listKelasSiswa,
-} from "@/repositories/kelas-siswa-repository";
-import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import { findActiveKelasSiswaBySiswaId, listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { getKelasById, listKelas } from "@/repositories/kelas-repository";
+import EntitySelect from "@/components/ui/entity-select";
 import { transferStudents } from "@/services/class-transfer-service";
 import { todayDate } from "@/lib/date-time";
 import { recordAuditAdmin } from "@/repositories/audit-log-repository";
@@ -28,9 +23,7 @@ export default async function PindahKelasSiswaPage({ params }) {
   const { siswaId } = await params;
   const siswa = await getSiswaById(siswaId);
   const membership = await findActiveKelasSiswaBySiswaId(siswaId);
-  const kelasSekarang = membership
-    ? await getKelasById(membership.kelas_id)
-    : null;
+  const kelasSekarang = membership ? await getKelasById(membership.kelas_id) : null;
   const allKelas = await listKelas();
   const allMemberships = await listKelasSiswa();
   const activeCountByKelas = new Map();
@@ -38,17 +31,11 @@ export default async function PindahKelasSiswaPage({ params }) {
   allMemberships
     .filter((item) => item.status_keanggotaan === "aktif")
     .forEach((item) => {
-      activeCountByKelas.set(
-        item.kelas_id,
-        (activeCountByKelas.get(item.kelas_id) || 0) + 1,
-      );
+      activeCountByKelas.set(item.kelas_id, (activeCountByKelas.get(item.kelas_id) || 0) + 1);
     });
 
   const targetKelas = allKelas.filter(
-    (item) =>
-      item.status_kelas === "aktif" &&
-      item.kelas_id !== kelasSekarang?.kelas_id &&
-      (activeCountByKelas.get(item.kelas_id) || 0) < Number(item.kapasitas || 0),
+    (item) => item.status_kelas === "aktif" && item.kelas_id !== kelasSekarang?.kelas_id && (activeCountByKelas.get(item.kelas_id) || 0) < Number(item.kapasitas || 0),
   );
 
   if (!siswa) {
@@ -93,10 +80,7 @@ export default async function PindahKelasSiswaPage({ params }) {
         <h1>Pindah Kelas Siswa</h1>
         <p>Halaman pemindahan individual siswa.</p>
         <p>
-          <Link href="/admin">Dashboard</Link> /{" "}
-          <Link href="/admin/siswa">Manajemen Siswa</Link> /{" "}
-          <Link href={`/admin/siswa/${siswaId}`}>Detail Siswa</Link> / Pindah
-          Kelas
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/siswa">Manajemen Siswa</Link> / <Link href={`/admin/siswa/${siswaId}`}>Detail Siswa</Link> / Pindah Kelas
         </p>
       </header>
 
@@ -128,36 +112,25 @@ export default async function PindahKelasSiswaPage({ params }) {
           <p>
             <label htmlFor="kelas_tujuan_id">Kelas Tujuan</label>
             <br />
-            <select
+            <EntitySelect
               id="kelas_tujuan_id"
               name="kelas_tujuan_id"
+              items={targetKelas}
               required
-            >
-              <option value="">Pilih kelas tujuan</option>
-              {targetKelas.map((item) => {
+              placeholder="Pilih kelas tujuan"
+              valueKey="kelas_id"
+              formatLabel={(item) => {
                 const active = activeCountByKelas.get(item.kelas_id) || 0;
-                return (
-                  <option key={item.kelas_id} value={item.kelas_id}>
-                    <ClassCapacityLabel
-                      namaKelas={item.nama_kelas}
-                      terisi={active}
-                      kapasitas={item.kapasitas}
-                    />
-                  </option>
-                );
-              })}
-            </select>
+                const available = Number(item.kapasitas || 0) - active;
+                return `${item.nama_kelas} Tersedia ${available} Kursi`;
+              }}
+            />
           </p>
 
           <p>
             <label htmlFor="tanggal_pemindahan">Tanggal Efektif Pemindahan</label>
             <br />
-            <input
-              id="tanggal_pemindahan"
-              name="tanggal_pemindahan"
-              type="date"
-              defaultValue={todayDate()}
-            />
+            <input id="tanggal_pemindahan" name="tanggal_pemindahan" type="date" defaultValue={todayDate()} />
           </p>
 
           <p>
@@ -165,16 +138,6 @@ export default async function PindahKelasSiswaPage({ params }) {
           </p>
         </form>
       </section>
-
-      <NoteBox
-        text={
-          <ol>
-            <li>Riwayat keanggotaan kelas lama tidak dihapus.</li>
-            <li>Setelah pemindahan, keanggotaan lama menjadi selesai dan keanggotaan baru menjadi aktif.</li>
-            <li>Absensi historis tetap merujuk kelas saat absensi dibuat.</li>
-          </ol>
-        }
-      />
     </main>
   );
 }

@@ -4,7 +4,7 @@ export const SISWA_STATUSES = Object.freeze(['aktif', 'nonaktif']);
 export const JENIS_KELAMIN = Object.freeze(['L', 'P']);
 export const KELAS_STATUSES = Object.freeze(['aktif', 'nonaktif']);
 export const KEHADIRAN_STATUSES = Object.freeze(['hadir', 'izin', 'sakit', 'alfa']);
-export const ABSENSI_STATUSES = Object.freeze(['draft', 'final']);
+export const ABSENSI_STATUSES = Object.freeze(['final']);
 export const JADWAL_STATUSES = Object.freeze(['aktif', 'nonaktif']);
 export const HARI = Object.freeze([
   'Senin',

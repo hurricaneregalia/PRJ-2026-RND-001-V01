@@ -7,11 +7,17 @@ import { listAbsensiDetail } from "@/repositories/absensi-detail-repository";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { listSiswa } from "@/repositories/siswa-repository";
+import MonitoringList from "@/components/ui/monitoring-list";
+import { listJadwal } from "@/repositories/jadwal-repository";
 import { listUsers } from "@/repositories/user-repository";
 import CapacityInfo from "@/components/ui/capacity-info";
+import LinkDetail from "@/components/ui/link-detail";
+import ClassCard from "@/components/ui/class-card";
+import AdminList from "@/components/ui/admin-list";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
 
 import { todayDate } from "@/lib/date-time";
+import TeacherCapacityLabel from "@/components/ui/teacher-capacity-label";
 
 export const instant = false;
 
@@ -31,21 +37,26 @@ export default async function AdminDashboardPage() {
   const absensi = await listAbsensi();
   const detail = await listAbsensiDetail();
   const kelas = await listKelas();
+  const finalAbsensiIds = new Set(absensi.filter((item) => item.status_absensi === "final").map((item) => item.absensi_id));
+  const detailFinal = detail.filter((item) => finalAbsensiIds.has(item.absensi_id));
   const memberships = await listKelasSiswa();
   const siswa = await listSiswa();
   const users = await listUsers();
   const userById = new Map(users.map((item) => [item.user_id, item]));
   const siswaById = new Map(siswa.map((item) => [item.siswa_id, item]));
   const kelasById = new Map(kelas.map((item) => [item.kelas_id, item]));
+  const jadwal = await listJadwal();
+  const jadwalByKelasId = new Map(jadwal.map((item) => [item.kelas_id, item]));
+  const kelasTanpaJadwal = kelas.filter((item) => item.status_kelas === "aktif" && !jadwalByKelasId.has(item.kelas_id));
 
-  const counts = detail.reduce(
+  const counts = detailFinal.reduce(
     (result, item) => {
       result[item.status_kehadiran] = (result[item.status_kehadiran] || 0) + 1;
       return result;
     },
     { hadir: 0, izin: 0, sakit: 0, alfa: 0 },
   );
-  const totalKehadiran = detail.length;
+  const totalKehadiran = detailFinal.length;
   const persentaseByStatus =
     totalKehadiran === 0
       ? { hadir: 0, izin: 0, sakit: 0, alfa: 0 }
@@ -57,7 +68,7 @@ export default async function AdminDashboardPage() {
         };
 
   const detailByAbsensi = new Map();
-  detail.forEach((item) => {
+  detailFinal.forEach((item) => {
     const current = detailByAbsensi.get(item.absensi_id) || {
       hadir: 0,
       izin: 0,
@@ -71,7 +82,7 @@ export default async function AdminDashboardPage() {
   });
 
   const today = todayDate();
-  const absensiHariIni = absensi.filter((item) => item.tanggal === today);
+  const absensiHariIni = absensi.filter((item) => item.tanggal === today && item.status_absensi === "final");
   const countsHariIni = absensiHariIni.reduce(
     (result, item) => {
       const current = detailByAbsensi.get(item.absensi_id) || {
@@ -93,6 +104,7 @@ export default async function AdminDashboardPage() {
   const persentaseHariIni = countsHariIni.total === 0 ? 0 : Math.round((countsHariIni.hadir / countsHariIni.total) * 1000) / 10;
 
   const teachers = users.filter((item) => item.role === "Pengajar");
+  const totalLimitKelas = teachers.reduce((total, item) => total + (Number(item.limit_kelas) || 0), 0);
   const activeCountByKelas = new Map();
   const activeCountByTeacher = new Map();
 
@@ -168,7 +180,7 @@ export default async function AdminDashboardPage() {
       </header>
       <section>
         <h2>Grafik Absensi Siswa</h2>
-        {detail.length === 0 ? (
+        {detailFinal.length === 0 ? (
           <p>Belum ada data absensi.</p>
         ) : (
           <ul>
@@ -184,61 +196,74 @@ export default async function AdminDashboardPage() {
         <ul>
           <li>Total Siswa: {siswa.length}</li>
           <li>Total Pengajar: {teachers.length}</li>
-          <li>Total Kelas: {kelas.length}</li>
+          <li>Total Kelas: {totalLimitKelas}</li>
+          <li>Kelas Aktif: {kelas.length}</li>
+          <li>Kelas Belum Aktif: {totalLimitKelas - kelas.length}</li>
           <li>Tingkat Kehadiran Hari Ini: {persentaseHariIni}%</li>
         </ul>
       </section>
 
       <section>
-        <h2>Daftar Kelas</h2>
+        <h2>Daftar Kelas Aktif</h2>
         {kelas.length === 0 ? (
           <p>Belum ada kelas.</p>
         ) : (
           <ol>
             {kelas.map((item) => {
-              const pengajar = userById.get(item.pengajar_id);
+              const jadwal = jadwalByKelasId.has(item.kelas_id)
+                ? `${jadwalByKelasId.get(item.kelas_id).hari} ${jadwalByKelasId.get(item.kelas_id).jam_mulai}–${jadwalByKelasId.get(item.kelas_id).jam_selesai}`
+                : null;
 
               return (
                 <li key={item.kelas_id}>
-                  <Link href={`/admin/kelas/${item.kelas_id}`}>
-                    <CapacityInfo item={item.nama_kelas} count={activeCountByKelas.get(item.kelas_id) || 0} max={item.kapasitas} />
-                  </Link>
+                  <ClassCard kelas={item} href={`/admin/kelas/${item.kelas_id}`} jumlahSiswa={activeCountByKelas.get(item.kelas_id) || 0} jadwal={jadwal} />
                 </li>
               );
             })}
           </ol>
         )}
       </section>
+      {kelasTanpaJadwal.length > 0 ? (
+        <section>
+          <h2>Belum Ada Jadwal</h2>
+          <AdminList
+            items={kelasTanpaJadwal}
+            emptyMessage="Belum ada kelas aktif tanpa jadwal."
+            renderItem={(item) => (
+              <>
+                <Link href={`/admin/kelas/${item.kelas_id}`}>{item.nama_kelas}</Link> | <ClassCapacityLabel terisi={activeCountByKelas.get(item.kelas_id) || 0} kapasitas={item.kapasitas} /> |{" "}
+                <Link href={`/admin/jadwal/tambah?kelas_id=${item.kelas_id}`}>Buat Jadwal</Link>
+              </>
+            )}
+          />
+        </section>
+      ) : null}
       <section>
         <h2>Daftar Guru</h2>
         {teachers.length === 0 ? (
           <p>Belum ada pengajar.</p>
         ) : (
-          <ol>
-            {teachers.map((item) => (
-              <li key={item.user_id}>
-                <Link href={`/admin/users/${item.user_id}`}>
-                  <CapacityInfo item={item.name} count={activeCountByTeacher.get(item.user_id) || 0} max={item.limit_kelas} />{" "}
-                </Link>
-              </li>
-            ))}
-          </ol>
+          <AdminList
+            items={teachers}
+            emptyMessage="Belum ada pengajar."
+            renderItem={(item) => (
+              <>
+                <LinkDetail href={`/admin/users/${item.user_id}`}>{item.name}</LinkDetail> | <TeacherCapacityLabel terisi={activeCountByTeacher.get(item.user_id) || 0} limit={item.limit_kelas} />
+              </>
+            )}
+          />
         )}
       </section>
 
       <section>
-        <h2>Tidak Hadir Tanpa Keterangan 3 Kali</h2>
+        <h2>Pemantauan Siswa</h2>
         {daftarPemantauan.length === 0 ? (
           <p>Belum ada siswa yang mencapai ambang pemantauan.</p>
         ) : (
-          <ol>
-            {daftarPemantauan.map((item, index) => (
-              <li key={`${item.siswa_id}-${item.kelas_id}`}>
-                {index + 1}. {item.siswa?.nama || item.siswa_id} | NIS {item.siswa?.nis || "-"} | {item.kelas?.nama_kelas || item.kelas_id} | Jumlah Alfa: {item.jumlah_alpa} | Terakhir:{" "}
-                {item.terakhir}
-              </li>
-            ))}
-          </ol>
+          <MonitoringList
+            items={daftarPemantauan}
+            actions={(item) => <Link href={`/admin/laporan/hubungi-pengajar/${item.kelas?.pengajar_id}?siswaId=${item.siswa_id}&kelasId=${item.kelas_id}`}>Hubungi Pengajar</Link>}
+          />
         )}
       </section>
 

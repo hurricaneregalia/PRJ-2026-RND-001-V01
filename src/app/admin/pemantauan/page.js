@@ -6,6 +6,8 @@ import { listAbsensi } from "@/repositories/absensi-repository";
 import { listAbsensiDetail } from "@/repositories/absensi-detail-repository";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listSiswa } from "@/repositories/siswa-repository";
+import { listPemantauan } from "@/repositories/pemantauan-ketidakhadiran-repository";
+import MonitoringList from "@/components/ui/monitoring-list";
 
 function shiftDate(dateText, days) {
   const date = new Date(`${dateText}T00:00:00`);
@@ -28,6 +30,11 @@ export default async function DaftarPemantauanPage() {
   const siswa = await listSiswa();
   const kelasById = new Map(kelas.map((item) => [item.kelas_id, item]));
   const siswaById = new Map(siswa.map((item) => [item.siswa_id, item]));
+  const pemantauanBySiswaKelas = new Map();
+  const allPemantauan = await listPemantauan();
+  allPemantauan.forEach((item) => {
+    pemantauanBySiswaKelas.set(`${item.siswa_id}|${item.kelas_id}`, item);
+  });
 
   const periodStart = shiftDate(new Date().toISOString().slice(0, 10), -30);
   const monitored = new Map();
@@ -42,9 +49,7 @@ export default async function DaftarPemantauanPage() {
       continue;
     }
 
-    const kelasDetail = detail.filter(
-      (detailItem) => detailItem.absensi_id === item.absensi_id && detailItem.status_kehadiran === "alfa",
-    );
+    const kelasDetail = detail.filter((detailItem) => detailItem.absensi_id === item.absensi_id && detailItem.status_kehadiran === "alfa");
 
     for (const detailItem of kelasDetail) {
       const key = `${detailItem.siswa_id}|${item.kelas_id}`;
@@ -63,6 +68,7 @@ export default async function DaftarPemantauanPage() {
   const daftar = [...monitored.values()]
     .map((item) => ({
       ...item,
+      pemantauan_id: pemantauanBySiswaKelas.get(`${item.siswa_id}|${item.kelas_id}`)?.pemantauan_id ?? null,
       siswa: siswaById.get(item.siswa_id),
       kelas: kelasById.get(item.kelas_id),
     }))
@@ -74,28 +80,25 @@ export default async function DaftarPemantauanPage() {
       <header>
         <h1>Pemantauan Ketidakhadiran</h1>
         <p>
-          <Link href="/admin">Dashboard</Link> /{" "}
-          <Link href="/admin/pemantauan">Pemantauan Ketidakhadiran</Link>
+          <Link href="/admin">Dashboard</Link> / <Link href="/admin/pemantauan">Pemantauan Ketidakhadiran</Link>
         </p>
-        <p>
-          Menampilkan siswa dengan jumlah alfa pada 30 hari terakhir, ambang minimal 3.
-        </p>
+        <p>Menampilkan siswa dengan jumlah alfa pada 30 hari terakhir, ambang minimal 3.</p>
       </header>
 
       <section>
         <h2>Daftar Pemantauan</h2>
+
         {daftar.length === 0 ? (
           <p>Belum ada siswa yang mencapai ambang pemantauan.</p>
         ) : (
-          <ol>
-            {daftar.map((item, index) => (
-              <li key={`${item.siswa_id}-${item.kelas_id}`}>
-                {index + 1}. {item.siswa?.nama || item.siswa_id} | NIS{" "}
-                {item.siswa?.nis || "-"} | {item.kelas?.nama_kelas || item.kelas_id} |{" "}
-                Jumlah Alfa: {item.jumlah_alpa} | Terakhir: {item.terakhir}
-              </li>
-            ))}
-          </ol>
+          <MonitoringList
+            items={daftar}
+            actions={(item) => {
+              const pemantauanId = item.pemantauan_id;
+
+              return pemantauanId ? <Link href={`/admin/pemantauan/${pemantauanId}`}>Detail</Link> : <span>Data sementara</span>;
+            }}
+          />
         )}
       </section>
     </main>

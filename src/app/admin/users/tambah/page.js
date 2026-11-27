@@ -2,8 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { JENIS_KELAMIN } from "@/lib/domain-constants";
+import { requireEnum } from "@/lib/validation";
 import { createUser } from "@/repositories/user-repository";
 import { recordAuditCreate } from "@/repositories/audit-log-repository";
+import RequiredFieldsForm from "@/components/ui/required-fields-form";
 import RoleSelectWithLimit from "@/components/ui/role-select-with-limit";
 
 export const metadata = {
@@ -17,6 +20,11 @@ export default function TambahPenggunaPage() {
     const session = await auth();
     const name = formData.get("name");
     const email = formData.get("email");
+    const jenisKelamin = requireEnum(
+      formData.get("jenis_kelamin"),
+      "jenis_kelamin",
+      JENIS_KELAMIN,
+    );
     const noHp = formData.get("no_hp");
     const role = formData.get("role");
     const accountStatus = formData.get("account_status");
@@ -26,6 +34,7 @@ export default function TambahPenggunaPage() {
       auth_user_id: email,
       email,
       name,
+      jenis_kelamin: jenisKelamin,
       role,
       account_status: accountStatus,
       photo_url: "",
@@ -55,12 +64,32 @@ export default function TambahPenggunaPage() {
         </p>
       </header>
 
-      <form action={tambahPengguna}>
+      <RequiredFieldsForm
+        action={tambahPengguna}
+        submitText="Simpan Pengguna"
+        pendingText="Menyimpan..."
+      >
         <section>
           <p>
             <label htmlFor="name">Nama (wajib)</label>
             <br />
             <input id="name" name="name" type="text" autoComplete="name" required />
+          </p>
+          <p>
+            <label htmlFor="jenis_kelamin">Jenis Kelamin (wajib)</label>
+            <br />
+            <select
+              id="jenis_kelamin"
+              name="jenis_kelamin"
+              defaultValue=""
+              required
+            >
+              <option value="" disabled>
+                Pilih
+              </option>
+              <option value="L">Laki-laki</option>
+              <option value="P">Perempuan</option>
+            </select>
           </p>
           <p>
             <label htmlFor="email">Email (wajib)</label>
@@ -83,11 +112,7 @@ export default function TambahPenggunaPage() {
             </select>
           </p>
         </section>
-
-        <p>
-          <button type="submit">Simpan Pengguna</button>
-        </p>
-      </form>
+      </RequiredFieldsForm>
     </main>
   );
 }

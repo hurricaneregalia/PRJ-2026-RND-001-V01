@@ -10,6 +10,8 @@ import {
 } from "@/repositories/pemantauan-ketidakhadiran-repository";
 import { getSiswaById } from "@/repositories/siswa-repository";
 import { getKelasById } from "@/repositories/kelas-repository";
+import { listRiwayatKontakByPemantauanId } from "@/repositories/riwayat-kontak-repository";
+import ContactHistoryList from "@/components/ui/contact-history-list";
 import { todayDate } from "@/lib/date-time";
 import { recordAuditUpdate } from "@/repositories/audit-log-repository";
 
@@ -37,6 +39,8 @@ export default async function DetailPemantauanPage({ params }) {
 
   const siswa = await getSiswaById(pemantauan.siswa_id);
   const kelas = await getKelasById(pemantauan.kelas_id);
+  const riwayat = await listRiwayatKontakByPemantauanId(pemantauan.pemantauan_id);
+  const riwayatTerurut = [...riwayat].sort((left, right) => String(right.tanggal_kontak).localeCompare(String(left.tanggal_kontak)));
 
   async function selesaikanPemantauan() {
     "use server";
@@ -91,6 +95,11 @@ export default async function DetailPemantauanPage({ params }) {
           </p>
         </form>
       ) : null}
+
+      <section>
+        <h2>Riwayat Kontak</h2>
+        <ContactHistoryList riwayat={riwayatTerurut} />
+      </section>
     </main>
   );
 }

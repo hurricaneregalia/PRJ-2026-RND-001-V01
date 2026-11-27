@@ -3,10 +3,13 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { getKelasById } from "@/repositories/kelas-repository";
+import StatusBadge from "@/components/ui/status-badge";
 import { getUserById } from "@/repositories/user-repository";
 import { listKelasSiswaByKelasId } from "@/repositories/kelas-siswa-repository";
+import { listJadwalByKelasId } from "@/repositories/jadwal-repository";
 import { listSiswa } from "@/repositories/siswa-repository";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import LinkDetail from "@/components/ui/link-detail";
 
 export const instant = false;
 
@@ -33,6 +36,8 @@ export default async function DetailKelasPage({ params }) {
   const pengajar = await getUserById(kelas.pengajar_id);
   const memberships = await listKelasSiswaByKelasId(kelas.kelas_id);
   const activeMemberships = memberships.filter((item) => item.status_keanggotaan === "aktif");
+  const jadwal = await listJadwalByKelasId(kelas.kelas_id);
+  const jadwalAktif = jadwal.filter((item) => item.status_jadwal === "aktif");
   const siswa = await listSiswa();
   const siswaById = new Map(siswa.map((item) => [item.siswa_id, item]));
 
@@ -53,18 +58,28 @@ export default async function DetailKelasPage({ params }) {
         <h2>Kelas {kelas.nama_kelas}</h2>
         <ul>
           <li>Kode Kelas: {kelas.kode_kelas}</li>
-          <li>Pengajar: {pengajar?.name || kelas.pengajar_id}</li>
           <li>
-            <ClassCapacityLabel
-              namaKelas={kelas.nama_kelas}
-              terisi={activeMemberships.length}
-              kapasitas={kelas.kapasitas}
-            />
+            Pengajar: <LinkDetail href={`/admin/users/${kelas.pengajar_id}`}>{pengajar?.name || kelas.pengajar_id}</LinkDetail>{" "}
           </li>
-          <li>Status: {kelas.status_kelas}</li>
+          <li>
+            <ClassCapacityLabel namaKelas={kelas.nama_kelas} terisi={activeMemberships.length} kapasitas={kelas.kapasitas} />
+          </li>
+          {jadwalAktif.length === 0 ? (
+            <li>Hari: - | Jam: -</li>
+          ) : (
+            jadwalAktif.map((item) => (
+              <li key={item.jadwal_id}>
+                Hari: {item.hari} | Jam: {item.jam_mulai} - {item.jam_selesai}
+              </li>
+            ))
+          )}
+          <li>
+            Status: <StatusBadge value={kelas.status_kelas} />
+          </li>
         </ul>
         <p>
-          <Link href={`/admin/kelas/${kelas.kelas_id}/edit`}>Edit</Link> | <Link href={`/admin/kelas/${kelas.kelas_id}/pindah-kelas`}>Pindah Kelas</Link>
+          <Link href={`/admin/absensi/tambah?kelas_id=${kelas.kelas_id}`}>Isi Absensi</Link> | <Link href={`/admin/kelas/${kelas.kelas_id}/edit`}>Edit</Link> |{" "}
+          <Link href={`/admin/kelas/${kelas.kelas_id}/pindah-kelas`}>Pindah Kelas</Link> | <Link href={`/admin/kelas/${kelas.kelas_id}/tambah-siswa`}>Tambah Siswa</Link>
         </p>
       </section>
 
