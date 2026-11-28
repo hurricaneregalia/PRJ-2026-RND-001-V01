@@ -8,6 +8,7 @@ const fields = {
   tanggal: { type: 'date' },
   status: { type: 'enum', required: true, allowedValues: ['aktif', 'nonaktif'] },
   jumlah: { type: 'integer', min: 0, max: 100 },
+  logo: { type: 'url', maxLength: 1000 },
 };
 
 describe('field validation', () => {
@@ -37,6 +38,21 @@ describe('field validation', () => {
       ValidationError,
     );
     expect(() => validateFields({ status: 'aktif' }, fields)).toThrow(ValidationError);
+  });
+
+  it('accepts http URLs and root-relative asset paths, rejects other schemes', () => {
+    expect(
+      validateFields({ nama: 'Ani', status: 'aktif', logo: '/images/logo-sekolah.svg' }, fields),
+    ).toMatchObject({ logo: '/images/logo-sekolah.svg' });
+    expect(
+      validateFields({ nama: 'Ani', status: 'aktif', logo: 'https://example.com/logo.png' }, fields),
+    ).toMatchObject({ logo: 'https://example.com/logo.png' });
+    expect(() =>
+      validateFields({ nama: 'Ani', status: 'aktif', logo: 'javascript:alert(1)' }, fields),
+    ).toThrow(ValidationError);
+    expect(() =>
+      validateFields({ nama: 'Ani', status: 'aktif', logo: '//example.com/logo.png' }, fields),
+    ).toThrow(ValidationError);
   });
 
   it('allows partial updates but still rejects invalid supplied values', () => {

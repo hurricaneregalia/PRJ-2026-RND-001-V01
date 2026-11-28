@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
 import ClassCapacityLabel from "@/components/ui/class-capacity-label";
+import StatusBadge from "@/components/ui/status-badge";
 import { getKelasById } from "@/repositories/kelas-repository";
 import {
   createKelasSiswa,
@@ -123,7 +124,7 @@ export default async function TambahSiswaKelasPage({ params }) {
             terisi={jumlahTerisi}
             kapasitas={kelas.kapasitas}
           />{" "}
-          | {kelas.status_kelas}
+          | <StatusBadge value={kelas.status_kelas} />
         </p>
       </header>
 

@@ -7,14 +7,8 @@ export default function ClassCard({ kelas, href, jumlahSiswa = 0, jadwal }) {
   const terisi = Number(jumlahSiswa) || 0;
 
   return (
-    <section>
-      <h3>{href ? <Link href={href}>{nama}</Link> : nama}</h3>
-      {kode ? <p>Kode: {kode}</p> : null}
-      <p>
-        Kapasitas: {terisi}/{kapasitas}
-      </p>
-      <p>Tersedia: {kapasitas - terisi} Kursi</p>
-      <p>Jadwal: {jadwal ? jadwal : "Belum Ada"}</p>
-    </section>
+    <>
+      {href ? <Link href={href}>{nama}</Link> : nama} | {terisi}/{kapasitas} | Tersedia {kapasitas - terisi} Kursi | {jadwal ? jadwal : "Belum Ada"}
+    </>
   );
 }

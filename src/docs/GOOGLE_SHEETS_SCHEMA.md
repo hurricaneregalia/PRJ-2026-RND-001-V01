@@ -102,8 +102,10 @@ Laporan/rekap dihitung dari data absensi; tidak disimpan sebagai entitas.
 |---|---|---|---|
 | `sekolah_id` | string | Ya | PK. `SCH-NNNN`. |
 | `nama_sekolah` | string | Ya | Nama lembaga. |
-| `alamat` | string | Tidak | Alamat. |
-| `no_hp` | string | Tidak | Nomor kontak. |
+| `alamat` | string | Ya | Alamat. |
+| `no_hp` | string | Ya | Nomor kontak. |
+| `logo` | string | Tidak | URL atau path logo sekolah. |
+| `email` | email | Ya | Email sekolah. |
 | `created_at` | datetime | Ya | Timestamp pembuatan. |
 | `updated_at` | datetime | Ya | Timestamp pembaruan. |
 

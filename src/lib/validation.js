@@ -4,6 +4,7 @@ const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const DATE_TIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ROOT_RELATIVE_PATH_PATTERN = /^\/(?!\/)[^\s]*$/;
 
 export function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
@@ -98,6 +99,36 @@ export function requireEmail(value, field = 'email') {
     EMAIL_PATTERN,
     'a valid email address',
   );
+}
+
+export function requireUrl(value, field = 'url', { maxLength = 1000 } = {}) {
+  const text = requireString(value, field, { maxLength });
+
+  if (ROOT_RELATIVE_PATH_PATTERN.test(text)) {
+    return text;
+  }
+
+  let parsed;
+
+  try {
+    parsed = new URL(text);
+  } catch {
+    throw new ValidationError(`${field} must be a valid URL`, { field });
+  }
+
+  if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
+    throw new ValidationError(`${field} must be a valid http or https URL`, { field });
+  }
+
+  return text;
+}
+
+export function optionalUrl(value, field = 'url', options = {}) {
+  if (isBlank(value)) {
+    return '';
+  }
+
+  return requireUrl(value, field, options);
 }
 
 export function requireEnum(value, field, allowedValues) {

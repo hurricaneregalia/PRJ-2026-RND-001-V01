@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { connection } from "next/server";
 
+import StatusBadge from "@/components/ui/status-badge";
 import { listSiswa } from "@/repositories/siswa-repository";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { listKelas } from "@/repositories/kelas-repository";
@@ -74,7 +75,7 @@ export default async function DaftarSiswaPage() {
                   ) : (
                     "-"
                   )}{" "}
-                  | {item.status} |{" "}
+                  | <StatusBadge value={item.status} /> |{" "}
                   <Link href={`/admin/siswa/${item.siswa_id}`}>Detail</Link> |{" "}
                   <Link href={`/admin/siswa/${item.siswa_id}/edit`}>Edit</Link>
                 </li>

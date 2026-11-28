@@ -14,7 +14,15 @@ export default async function PengajarLayout({ children }) {
   const session = await auth();
   const user = session?.user;
 
-  if (!user || user.bootstrapPending || !["Pengajar", "Admin"].includes(user.role) || user.accountStatus !== "active") {
+  if (!user || user.bootstrapPending || user.accountStatus !== "active") {
+    redirect("/login");
+  }
+
+  if (user.role === "Admin") {
+    redirect("/admin");
+  }
+
+  if (user.role !== "Pengajar") {
     redirect("/login");
   }
 

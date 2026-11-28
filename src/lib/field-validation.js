@@ -17,6 +17,8 @@ import {
   requireInteger,
   requireString,
   requireTime,
+  requireUrl,
+  optionalUrl,
 } from '@/lib/validation';
 
 const VALIDATORS = {
@@ -25,6 +27,10 @@ const VALIDATORS = {
       ? requireString(value, field, descriptor)
       : optionalString(value, field, descriptor),
   email: (value, field) => requireEmail(value, field),
+  url: (value, field, descriptor) =>
+    descriptor.required
+      ? requireUrl(value, field, descriptor)
+      : optionalUrl(value, field, descriptor),
   enum: (value, field, descriptor) =>
     descriptor.required
       ? requireEnum(value, field, descriptor.allowedValues)

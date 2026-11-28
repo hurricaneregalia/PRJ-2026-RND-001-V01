@@ -5,6 +5,7 @@ import { connection } from "next/server";
 
 import { auth } from "@/auth";
 import BackButton from "@/components/ui/back-button";
+import StatusBadge from "@/components/ui/status-badge";
 import NoteBox from "@/components/layout/note-box";
 import { getKelasById, listKelas } from "@/repositories/kelas-repository";
 import EntitySelect from "@/components/ui/entity-select";
@@ -110,7 +111,7 @@ export default async function PindahKelasKelasPage({ params }) {
             <li key={anggota.kelas_siswa_id}>
               <label>
                 <input type="checkbox" form="transfer-form" name={`siswa_${anggota.siswa_id}`} value={anggota.siswa_id} /> {siswaById.get(anggota.siswa_id)?.nama || anggota.siswa_id} | NIS{" "}
-                {siswaById.get(anggota.siswa_id)?.nis || "-"} | Status {anggota.status_keanggotaan}
+                {siswaById.get(anggota.siswa_id)?.nis || "-"} | Status <StatusBadge value={anggota.status_keanggotaan} labels={{ pending: "Pending", selesai: "Selesai", dibatalkan: "Dibatalkan" }} />
               </label>
             </li>
           ))}

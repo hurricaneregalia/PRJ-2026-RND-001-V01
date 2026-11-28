@@ -7,6 +7,8 @@ export const WORKSHEET_SCHEMAS = Object.freeze({
     'nama_sekolah',
     'alamat',
     'no_hp',
+    'logo',
+    'email',
     'created_at',
     'updated_at',
   ]),

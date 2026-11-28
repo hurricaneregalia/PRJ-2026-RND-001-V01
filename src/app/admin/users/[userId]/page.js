@@ -3,7 +3,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { getUserById } from "@/repositories/user-repository";
+import ClassCapacityLabel from "@/components/ui/class-capacity-label";
 import StatusBadge from "@/components/ui/status-badge";
+import TeacherCapacityLabel from "@/components/ui/teacher-capacity-label";
 import { formatJenisKelamin } from "@/lib/domain-labels";
 import { listKelas } from "@/repositories/kelas-repository";
 import { listKelasSiswa } from "@/repositories/kelas-siswa-repository";
@@ -59,7 +61,6 @@ export default async function DetailUserPage({ params }) {
     }
     rekapBySiswa.set(item.siswa_id, rekap);
   });
-  const statusKelasTersedia = user.limit_kelas - kelasPengajar.length > 0 ? "Tersedia" : "Penuh";
   return (
     <main>
       <header>
@@ -76,14 +77,18 @@ export default async function DetailUserPage({ params }) {
           <li>Email: {user.email || "-"}</li>
           <li>Jenis Kelamin: {formatJenisKelamin(user.jenis_kelamin)}</li>
           <li>Jenis Akun: {user.role}</li>
-          <li>Status Akun: <StatusBadge value={user.account_status} /></li>
+          <li>
+            Status Akun: <StatusBadge value={user.account_status} />
+          </li>
           <li>Nomor WhatsApp: {user.no_hp || "-"}</li>
           {isPengajar ? (
             <>
               <li>Limit Kelas: {user.limit_kelas ?? 0}</li>
               <li>Kelas Aktif: {kelasPengajar.length}</li>
               <li>Sisa Kuota Kelas: {user.limit_kelas - kelasPengajar.length}</li>
-              <li>Status Kelas: {statusKelasTersedia}</li>
+              <li>
+                Status Kelas: <TeacherCapacityLabel terisi={kelasPengajar.length} limit={user.limit_kelas} />
+              </li>
             </>
           ) : null}
         </ul>
@@ -110,12 +115,21 @@ export default async function DetailUserPage({ params }) {
                 const jumlahLakiLaki = siswaKelas.filter((siswa) => siswa.jenis_kelamin === "L").length;
 
                 const jumlahPerempuan = siswaKelas.filter((siswa) => siswa.jenis_kelamin === "P").length;
+                const totalHadir = siswaKelas.reduce((total, siswa) => total + (rekapBySiswa.get(siswa.siswa_id)?.hadir || 0), 0);
 
-                const kapasitasKelasLabel = siswaKelas.length < kelas.kapasitas ? `${kelas.kapasitas - (siswaKelas.length || 0)} kursi tersedia` : "Penuh";
+                const totalSakit = siswaKelas.reduce((total, siswa) => total + (rekapBySiswa.get(siswa.siswa_id)?.sakit || 0), 0);
+
+                const totalIzin = siswaKelas.reduce((total, siswa) => total + (rekapBySiswa.get(siswa.siswa_id)?.izin || 0), 0);
+
+                const totalAlfa = siswaKelas.reduce((total, siswa) => total + (rekapBySiswa.get(siswa.siswa_id)?.alfa || 0), 0);
 
                 return (
                   <li key={kelas.kelas_id}>
-                    <Link href={`/admin/kelas/${kelas.kelas_id}`}>{kelas.nama_kelas}</Link> | Kapasitas Kelas ({siswaKelas.length}/{kelas.kapasitas}) | {kapasitasKelasLabel} | <Link href={`/admin/absensi/tambah?kelas_id=${kelas.kelas_id}`}>Isi Absensi</Link>
+                    <Link href={`/admin/kelas/${kelas.kelas_id}`}>{kelas.nama_kelas}</Link> | Kapasitas Kelas ({siswaKelas.length}/{kelas.kapasitas}) |{" "}
+                    <ClassCapacityLabel terisi={siswaKelas.length} kapasitas={kelas.kapasitas} /> | <Link href={`/admin/absensi/tambah?kelas_id=${kelas.kelas_id}`}>Isi Absensi</Link>
+                    <p>
+                      Hadir {totalHadir} | Sakit {totalSakit} | Izin {totalIzin} | Alfa {totalAlfa}
+                    </p>
                     <ol>
                       {siswaKelas.map((siswa) => {
                         const rekap = rekapBySiswa.get(siswa.siswa_id) || { hadir: 0, izin: 0, sakit: 0, alfa: 0 };
@@ -127,11 +141,9 @@ export default async function DetailUserPage({ params }) {
                         );
                       })}
                     </ol>
-                    <ul>
-                      <li>Jumlah Siswa: {siswaKelas.length}</li>
-                      <li>Jumlah Laki-laki: {jumlahLakiLaki}</li>
-                      <li>Jumlah Perempuan: {jumlahPerempuan}</li>
-                    </ul>
+                    <p>
+                      Siswa {siswaKelas.length} | Laki-laki {jumlahLakiLaki} | Perempuan {jumlahPerempuan}
+                    </p>
                   </li>
                 );
               })}

@@ -62,6 +62,9 @@ export default async function PencarianSiswaPage({ searchParams }) {
     <main>
       <header>
         <h1>Pencarian Absensi Siswa</h1>
+        <p>
+          <Link href="/sekolah">Informasi Sekolah</Link>
+        </p>
       </header>
 
       <StudentSearchForm key={JSON.stringify([q, periodeHari, sudahCari])} defaultQ={q} selectedPeriode={periodeHari} sudahCari={sudahCari}>

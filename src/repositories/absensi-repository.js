@@ -56,6 +56,7 @@ const repository = createTableRepository({
   },
 });
 
+export const absensiFields = fields;
 export const listAbsensi = () => repository.list();
 export const getAbsensiById = (absensiId) => repository.findById(absensiId);
 export const listAbsensiByKelasId = async (kelasId) => {

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { connection } from "next/server";
 
+import StatusBadge from "@/components/ui/status-badge";
 import { getSiswaById } from "@/repositories/siswa-repository";
 import { findActiveKelasSiswaBySiswaId } from "@/repositories/kelas-siswa-repository";
 import { listAbsensi } from "@/repositories/absensi-repository";
@@ -78,7 +79,7 @@ export default async function DetailSiswaPage({ params }) {
           <li>Tanggal lahir: {siswa.tanggal_lahir || "-"}</li>
           <li>Alamat: {siswa.alamat || "-"}</li>
           <li>Nomor HP: {siswa.no_hp || "-"}</li>
-          <li>Status: {siswa.status}</li>
+          <li>Status: <StatusBadge value={siswa.status} /></li>
           <li>
             Kelas yang diikuti: {kelas?.nama_kelas || "-"}
           </li>
@@ -111,7 +112,7 @@ export default async function DetailSiswaPage({ params }) {
 
               return (
                 <li key={item.absensi_id}>
-                  {item.tanggal} | {status || "-"}
+                  {item.tanggal} | {status ? <StatusBadge value={status} /> : "-"}
                 </li>
               );
             })}

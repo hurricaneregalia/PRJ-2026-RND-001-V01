@@ -288,6 +288,9 @@ export default async function AdminDashboardPage() {
           <li>
             <Link href="/admin/laporan">Lihat Laporan Absensi</Link>
           </li>
+          <li>
+            <Link href="/admin/sekolah">Informasi Sekolah</Link>
+          </li>
         </ul>
       </section>
     </main>

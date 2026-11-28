@@ -39,6 +39,7 @@ const repository = createTableRepository({
   },
 });
 
+export const absensiDetailFields = fields;
 export const listAbsensiDetail = () => repository.list();
 export const getAbsensiDetailById = (absensiDetailId) =>
   repository.findById(absensiDetailId);

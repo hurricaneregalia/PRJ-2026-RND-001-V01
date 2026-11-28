@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { auth } from "@/auth";
+import StatusBadge from "@/components/ui/status-badge";
 import { getSiswaById } from "@/repositories/siswa-repository";
 import { findActiveKelasSiswaBySiswaId, listKelasSiswa } from "@/repositories/kelas-siswa-repository";
 import { getKelasById, listKelas } from "@/repositories/kelas-repository";
@@ -89,7 +90,7 @@ export default async function PindahKelasSiswaPage({ params }) {
         <ul>
           <li>Nama: {siswa.nama}</li>
           <li>NIS: {siswa.nis || "-"}</li>
-          <li>Status: {siswa.status}</li>
+          <li>Status: <StatusBadge value={siswa.status} /></li>
         </ul>
       </section>
 
@@ -99,7 +100,7 @@ export default async function PindahKelasSiswaPage({ params }) {
           <ul>
             <li>Kelas: {kelasSekarang.nama_kelas}</li>
             <li>ID: {kelasSekarang.kelas_id}</li>
-            <li>Status: {kelasSekarang.status_kelas}</li>
+            <li>Status: <StatusBadge value={kelasSekarang.status_kelas} /></li>
           </ul>
         ) : (
           <p>Belum ada keanggotaan aktif.</p>
